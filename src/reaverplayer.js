@@ -6,7 +6,6 @@ class ReaverPlayer {
         // Создаем контейнер для видео
         this.videoContainer = document.createElement('div');
         this.videoContainer.className = 'video-container';
-        this.videoContainer.style.position = 'relative';
         root.appendChild(this.videoContainer);
 
         this.video = document.createElement('video');
@@ -21,11 +20,21 @@ class ReaverPlayer {
         this.loadingOverlay.className = 'loading-overlay';
         this.loadingOverlay.innerHTML = `
             <div class="loading-spinner"></div>
-            <div class="loading-text">Загрузка...</div>
         `;
         this.videoContainer.appendChild(this.loadingOverlay);
 
-        // Создаем модальное окно для горячих клавиш
+        // Создаем кнопку воспроизведения по центру
+        this.centerPlayBtn = document.createElement('div');
+        this.centerPlayBtn.className = 'center-play-btn';
+        this.centerPlayBtn.innerHTML = '<i class="fas fa-play"></i>';
+        this.videoContainer.appendChild(this.centerPlayBtn);
+
+        // Создаем превью для перемотки
+        this.scrubPreview = document.createElement('div');
+        this.scrubPreview.className = 'scrub-preview';
+        this.videoContainer.appendChild(this.scrubPreview);
+
+        // Модальное окно для горячих клавиш
         this.shortcutsModal = document.createElement('div');
         this.shortcutsModal.className = 'shortcuts-modal';
         this.shortcutsModal.innerHTML = `
@@ -45,7 +54,7 @@ class ReaverPlayer {
         `;
         this.videoContainer.appendChild(this.shortcutsModal);
 
-        // Создаем оверлей для модальных окон
+        // Оверлей для модальных окон
         this.modalOverlay = document.createElement('div');
         this.modalOverlay.className = 'modal-overlay';
         this.videoContainer.appendChild(this.modalOverlay);
@@ -59,6 +68,10 @@ class ReaverPlayer {
         
         // Показываем подсказку о горячих клавишах
         this.showShortcutsHint();
+        
+        // Таймер для скрытия контролов
+        this.controlsTimeout = null;
+        this.controlsVisible = false;
     }
 
     createControls() {
@@ -101,16 +114,20 @@ class ReaverPlayer {
         this.volumeBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
         this.volumeBtn.title = 'Volume (M)';
         
+        this.volumeSliderContainer = document.createElement('div');
+        this.volumeSliderContainer.className = 'volume-slider-container';
+        
         this.volumeSlider = document.createElement('input');
         this.volumeSlider.type = 'range';
         this.volumeSlider.className = 'volume-slider';
         this.volumeSlider.min = 0;
         this.volumeSlider.max = 1;
-        this.volumeSlider.step = 0.1;
+        this.volumeSlider.step = 0.05;
         this.volumeSlider.value = 1;
         
+        this.volumeSliderContainer.appendChild(this.volumeSlider);
         this.volumeContainer.appendChild(this.volumeBtn);
-        this.volumeContainer.appendChild(this.volumeSlider);
+        this.volumeContainer.appendChild(this.volumeSliderContainer);
         controls.appendChild(this.volumeContainer);
 
         // Полноэкранный режим
@@ -200,6 +217,17 @@ class ReaverPlayer {
 
     bindEvents() {
         this.playBtn.addEventListener('click', ()=>this.toggle());
+        
+        // Клик по видео для паузы/воспроизведения
+        this.video.addEventListener('click', (e) => {
+            // Предотвращаем срабатывание, если клик был на элементах управления
+            if (e.target.closest('.controls') || e.target.closest('.btn')) return;
+            this.toggle();
+            this.showCenterPlayButton();
+        });
+        
+        this.video.addEventListener('dblclick', () => this.toggleFullscreen());
+        
         this.video.addEventListener('timeupdate', ()=>this.updateProgress());
         this.video.addEventListener('progress', ()=>this.updateBuffer());
         this.video.addEventListener('loadedmetadata', ()=>this.updateTime());
@@ -211,13 +239,17 @@ class ReaverPlayer {
         this.video.addEventListener('waiting', ()=>this.showLoading());
         this.video.addEventListener('playing', ()=>this.hideLoading());
         this.video.addEventListener('error', ()=>this.hideLoading());
-
-        this.progressContainer.addEventListener('click', e=>{
-            const rect = this.progressContainer.getBoundingClientRect();
-            const pct = (e.clientX - rect.left)/rect.width;
-            this.video.currentTime = pct * this.video.duration;
-        });
-
+        
+        // Управление видимостью контролов
+        this.videoContainer.addEventListener('mousemove', () => this.showControls());
+        this.videoContainer.addEventListener('mouseleave', () => this.hideControls());
+        this.videoContainer.addEventListener('touchstart', () => this.toggleControls());
+        
+        // Перемотка
+        this.progressContainer.addEventListener('click', e=>this.seek(e));
+        this.progressContainer.addEventListener('mousemove', e=>this.previewSeek(e));
+        this.progressContainer.addEventListener('mouseleave', ()=>this.hideSeekPreview());
+        
         // Громкость
         this.volumeSlider.addEventListener('input', ()=>{
             this.video.volume = this.volumeSlider.value;
@@ -290,10 +322,12 @@ class ReaverPlayer {
         this.modalOverlay.addEventListener('click', () => {
             this.hideShortcutsModal();
         });
+        
+        // Обработка изменения размера окна
+        window.addEventListener('resize', () => this.handleResize());
     }
     
     setupFontAwesome() {
-        // Проверяем, есть ли уже Font Awesome
         if (!document.querySelector('link[href*="font-awesome"]')) {
             const link = document.createElement('link');
             link.rel = 'stylesheet';
@@ -304,47 +338,50 @@ class ReaverPlayer {
     
     setupKeyboardShortcuts() {
         document.addEventListener('keydown', (e) => {
-            // Игнорируем горячие клавиши, если фокус в поле ввода
             if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) {
                 return;
             }
             
             switch(e.key.toLowerCase()) {
-                case ' ': // Пробел - play/pause
+                case ' ':
                     e.preventDefault();
                     this.toggle();
+                    this.showCenterPlayButton();
                     break;
-                case 'k': // K - play/pause
+                case 'k':
                     this.toggle();
+                    this.showCenterPlayButton();
                     break;
-                case 's': // S - остановить
+                case 's':
                     this.video.pause();
                     this.video.currentTime = 0;
                     this.updatePlayButton();
                     break;
-                case 'arrowright': // Стрелка вправо - вперед на 5 сек
+                case 'arrowright':
                     this.video.currentTime = Math.min(this.video.currentTime + 5, this.video.duration);
+                    this.createRippleEffect(this.videoContainer, e);
                     break;
-                case 'arrowleft': // Стрелка влево - назад на 5 сек
+                case 'arrowleft':
                     this.video.currentTime = Math.max(this.video.currentTime - 5, 0);
+                    this.createRippleEffect(this.videoContainer, e);
                     break;
-                case 'arrowup': // Стрелка вверх - громкость +
+                case 'arrowup':
                     this.video.volume = Math.min(this.video.volume + 0.1, 1);
                     this.volumeSlider.value = this.video.volume;
                     this.updateVolumeIcon();
                     break;
-                case 'arrowdown': // Стрелка вниз - громкость -
+                case 'arrowdown':
                     this.video.volume = Math.max(this.video.volume - 0.1, 0);
                     this.volumeSlider.value = this.video.volume;
                     this.updateVolumeIcon();
                     break;
-                case 'f': // F - полноэкранный режим
+                case 'f':
                     this.toggleFullscreen();
                     break;
-                case 'p': // P - picture in picture
+                case 'p':
                     this.togglePip();
                     break;
-                case 'm': // M - mute/unmute
+                case 'm':
                     this.video.muted = !this.video.muted;
                     this.updateVolumeIcon();
                     break;
@@ -361,7 +398,6 @@ class ReaverPlayer {
     }
     
     showShortcutsHint() {
-        // Показываем подсказку на 5 секунд при загрузке
         setTimeout(() => {
             this.shortcutsHint.style.opacity = '0.5';
             setTimeout(() => {
@@ -378,6 +414,94 @@ class ReaverPlayer {
     hideShortcutsModal() {
         this.shortcutsModal.style.display = 'none';
         this.modalOverlay.style.display = 'none';
+    }
+    
+    showControls() {
+        this.root.classList.add('controls-visible');
+        this.controlsVisible = true;
+        
+        clearTimeout(this.controlsTimeout);
+        this.controlsTimeout = setTimeout(() => {
+            this.hideControls();
+        }, 3000);
+    }
+    
+    hideControls() {
+        if (!this.video.paused) {
+            this.root.classList.remove('controls-visible');
+            this.controlsVisible = false;
+        }
+    }
+    
+    toggleControls() {
+        if (this.controlsVisible) {
+            this.hideControls();
+        } else {
+            this.showControls();
+        }
+    }
+    
+    showCenterPlayButton() {
+        if (this.video.paused) {
+            this.centerPlayBtn.classList.add('visible');
+            setTimeout(() => {
+                this.centerPlayBtn.classList.remove('visible');
+            }, 1000);
+        }
+    }
+    
+    seek(e) {
+        const rect = this.progressContainer.getBoundingClientRect();
+        const pct = (e.clientX - rect.left) / rect.width;
+        this.video.currentTime = pct * this.video.duration;
+        this.createRippleEffect(this.progressContainer, e);
+    }
+    
+    previewSeek(e) {
+        const rect = this.progressContainer.getBoundingClientRect();
+        const pct = (e.clientX - rect.left) / rect.width;
+        const time = pct * this.video.duration;
+        
+        this.scrubPreview.textContent = this.formatTime(time);
+        this.scrubPreview.style.left = `${e.clientX - rect.left}px`;
+        this.scrubPreview.classList.add('visible');
+    }
+    
+    hideSeekPreview() {
+        this.scrubPreview.classList.remove('visible');
+    }
+    
+    formatTime(time) {
+        const m = Math.floor(time / 60);
+        const s = Math.floor(time % 60).toString().padStart(2, '0');
+        return `${m}:${s}`;
+    }
+    
+    createRippleEffect(element, event) {
+        const ripple = document.createElement('div');
+        ripple.className = 'ripple-effect';
+        
+        const rect = element.getBoundingClientRect();
+        const size = Math.max(rect.width, rect.height);
+        const x = event.clientX - rect.left - size / 2;
+        const y = event.clientY - rect.top - size / 2;
+        
+        ripple.style.width = ripple.style.height = `${size}px`;
+        ripple.style.left = `${x}px`;
+        ripple.style.top = `${y}px`;
+        
+        element.appendChild(ripple);
+        
+        setTimeout(() => {
+            ripple.remove();
+        }, 600);
+    }
+    
+    handleResize() {
+        // Обновление позиций элементов при изменении размера окна
+        if (this.scrubPreview.classList.contains('visible')) {
+            this.scrubPreview.classList.remove('visible');
+        }
     }
 
     toggle(){
@@ -397,8 +521,8 @@ class ReaverPlayer {
     }
 
     updateProgress(){
-        const pct = (this.video.currentTime / this.video.duration)*100;
-        this.progress.style.width = pct+'%';
+        const pct = (this.video.currentTime / this.video.duration) * 100;
+        this.progress.style.width = pct + '%';
         this.updateTime();
     }
 
@@ -413,12 +537,7 @@ class ReaverPlayer {
     }
 
     updateTime(){
-        const format = t=>{
-            const m = Math.floor(t/60);
-            const s = Math.floor(t%60).toString().padStart(2,'0');
-            return `${m}:${s}`;
-        };
-        this.time.textContent = `${format(this.video.currentTime)} / ${format(this.video.duration)}`;
+        this.time.textContent = `${this.formatTime(this.video.currentTime)} / ${this.formatTime(this.video.duration)}`;
     }
 
     updateVolumeIcon() {
@@ -435,7 +554,7 @@ class ReaverPlayer {
     toggleFullscreen() {
         if (!document.fullscreenElement) {
             this.root.requestFullscreen().catch(err => {
-                alert(`Ошибка при переходе в полноэкранный режим: ${err.message}`);
+                console.error(`Ошибка при переходе в полноэкранный режим: ${err.message}`);
             });
         } else {
             document.exitFullscreen();
@@ -450,7 +569,7 @@ class ReaverPlayer {
                 await document.exitPictureInPicture();
             }
         } catch (error) {
-            alert('Ваш браузер не поддерживает Picture-in-Picture!');
+            console.error('Ваш браузер не поддерживает Picture-in-Picture!');
         }
     }
 
