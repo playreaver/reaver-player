@@ -9,6 +9,7 @@
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
     transition: all 0.3s ease;
     line-height: 1;
+    aspect-ratio: 16/9;
 }
 
 .reaver-player:hover {
@@ -17,15 +18,16 @@
 
 .reaver-player video {
     width: 100%;
-    height: auto;
+    height: 100%;
     display: block;
     cursor: pointer;
-    aspect-ratio: 16/9;
     object-fit: cover;
 }
 
 .reaver-player .video-container {
     position: relative;
+    width: 100%;
+    height: 100%;
 }
 
 .reaver-player .controls {
@@ -149,10 +151,11 @@
     font-size: 13px;
     margin: 0 10px;
     font-weight: 500;
-    min-width: 90px;
+    min-width: 110px;
     text-align: center;
     font-variant-numeric: tabular-nums;
     letter-spacing: 0.5px;
+    white-space: nowrap;
 }
 
 .reaver-player .volume-container {
@@ -183,6 +186,43 @@
     accent-color: #fff;
     cursor: pointer;
     outline: none;
+    -webkit-appearance: none;
+    background: transparent;
+}
+
+.reaver-player .volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #fff;
+    cursor: pointer;
+}
+
+.reaver-player .volume-slider::-moz-range-thumb {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #fff;
+    cursor: pointer;
+    border: none;
+}
+
+.reaver-player .volume-slider::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 4px;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 2px;
+}
+
+.reaver-player .volume-slider::-moz-range-track {
+    width: 100%;
+    height: 4px;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 2px;
+    border: none;
 }
 
 .reaver-player .menu {
@@ -321,7 +361,7 @@
     font-size: 11px;
     cursor: pointer;
     transition: all 0.3s;
-    z-index: 5;
+    z-index: 10;
 }
 
 .reaver-player .shortcuts-hint:hover {
@@ -442,34 +482,20 @@
 /* Адаптивность для мобильных устройств */
 @media (max-width: 768px) {
     .reaver-player .volume-slider-container {
-        position: absolute;
-        bottom: 45px;
-        left: 50%;
-        transform: translateX(-50%) rotate(270deg);
-        width: 80px !important;
-        height: 6px;
-        opacity: 1;
-        margin-left: 0;
         display: none;
-        background: rgba(0, 0, 0, 0.6);
-        padding: 8px 12px;
-        border-radius: 20px;
-    }
-    
-    .reaver-player .volume-container:hover .volume-slider-container,
-    .reaver-player .volume-slider-container.visible {
-        display: block;
     }
     
     .reaver-player .time {
-        min-width: 80px;
+        min-width: 95px;
         font-size: 12px;
+        margin: 0 8px;
     }
     
     .reaver-player .btn {
         width: 32px;
         height: 32px;
         margin-right: 8px;
+        font-size: 14px;
     }
     
     .reaver-player .menu-btn {
@@ -483,6 +509,18 @@
     
     .reaver-player .controls {
         padding: 10px 12px;
+    }
+    
+    .reaver-player .volume-container:hover .volume-slider-container {
+        position: absolute;
+        bottom: 100%;
+        left: 0;
+        width: 30px;
+        height: 100px;
+        margin-left: 0;
+        margin-bottom: 10px;
+        transform: rotate(-90deg);
+        transform-origin: left bottom;
     }
 }
 
@@ -506,47 +544,27 @@
     pointer-events: none;
 }
 
-/* Новые стили для улучшенного UX */
-.reaver-player .volume-level {
-    position: absolute;
-    bottom: 40px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(0, 0, 0, 0.7);
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 12px;
-    opacity: 0;
-    transition: opacity 0.3s;
-    pointer-events: none;
-    z-index: 15;
-}
-
-.reaver-player .volume-level.visible {
-    opacity: 1;
-}
-
-.reaver-player .touch-actions {
-    position: absolute;
-    top: 0;
-    left: 0;
+/* Стили для полноэкранного режима */
+.reaver-player:-webkit-full-screen {
     width: 100%;
     height: 100%;
-    display: flex;
-    z-index: 2;
+    border-radius: 0;
 }
 
-.reaver-player .touch-left {
-    width: 30%;
+.reaver-player:-moz-full-screen {
+    width: 100%;
     height: 100%;
+    border-radius: 0;
 }
 
-.reaver-player .touch-center {
-    width: 40%;
+.reaver-player:-ms-fullscreen {
+    width: 100%;
     height: 100%;
+    border-radius: 0;
 }
 
-.reaver-player .touch-right {
-    width: 30%;
+.reaver-player:fullscreen {
+    width: 100%;
     height: 100%;
+    border-radius: 0;
 }
