@@ -217,3 +217,115 @@
 .reaver-player .pip-btn:hover {
     background: linear-gradient(45deg, #16a085, #1abc9c);
 }
+
+/* Новые стили для загрузки и горячих клавиш */
+.reaver-player .loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s, visibility 0.3s;
+}
+
+.reaver-player .loading-overlay.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+.reaver-player .loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: #3498db;
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.reaver-player .loading-text {
+    color: white;
+    margin-top: 15px;
+    font-size: 14px;
+}
+
+.reaver-player .shortcuts-hint {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    color: rgba(255,255,255,0.7);
+    background: rgba(0,0,0,0.4);
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.reaver-player .shortcuts-hint:hover {
+    background: rgba(0,0,0,0.6);
+}
+
+.reaver-player .shortcuts-modal {
+    display: none;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(30, 30, 40, 0.95);
+    padding: 20px;
+    border-radius: 12px;
+    z-index: 1001;
+    width: 300px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+    backdrop-filter: blur(15px);
+}
+
+.reaver-player .shortcuts-modal h3 {
+    color: #3498db;
+    margin-top: 0;
+    text-align: center;
+    border-bottom: 2px solid #3498db;
+    padding-bottom: 10px;
+}
+
+.reaver-player .shortcuts-modal ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.reaver-player .shortcuts-modal li {
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    display: flex;
+    justify-content: space-between;
+}
+
+.reaver-player .shortcuts-modal .key {
+    background: rgba(0,0,0,0.4);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-family: monospace;
+}
+
+.reaver-player .modal-overlay {
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.7);
+    z-index: 1000;
+}
