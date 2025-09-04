@@ -8,7 +8,7 @@ class ReaverPlayer {
     this.video.preload = 'metadata';
     this.video.style.display = 'block';
     root.appendChild(this.video);
-    
+
     this.createControls();
 
     root.player = this;
@@ -36,12 +36,40 @@ class ReaverPlayer {
     this.progress.appendChild(this.filled);
     controls.appendChild(this.progress);
 
+    this.speedSelect = document.createElement('select');
+    this.speedSelect.className = 'speed-select';
+    ['0.5x','1x','1.5x','2x'].forEach(s=>{
+      const opt = document.createElement('option');
+      opt.value = parseFloat(s);
+      opt.textContent = s;
+      this.speedSelect.appendChild(opt);
+    });
+    controls.appendChild(this.speedSelect);
+
+    this.downloadBtn = document.createElement('button');
+    this.downloadBtn.className = 'download-btn';
+    this.downloadBtn.textContent = 'Скачать';
+    controls.appendChild(this.downloadBtn);
+
+    // Качество видео (если есть разные src)
+    if(this.root.dataset.sources){
+      this.qualitySelect = document.createElement('select');
+      this.qualitySelect.className = 'quality-select';
+      const sources = JSON.parse(this.root.dataset.sources);
+      sources.forEach(s=>{
+        const opt = document.createElement('option');
+        opt.value = s.url;
+        opt.textContent = s.label;
+        this.qualitySelect.appendChild(opt);
+      });
+      controls.appendChild(this.qualitySelect);
+    }
+
     this.root.appendChild(controls);
   }
 
   bindEvents() {
     this.playBtn.addEventListener('click', () => this.toggle());
-
     this.video.addEventListener('timeupdate', () => this.updateProgress());
     this.video.addEventListener('loadedmetadata', () => this.updateTime());
 
@@ -50,10 +78,30 @@ class ReaverPlayer {
       const pct = (e.clientX - rect.left) / rect.width;
       this.video.currentTime = pct * this.video.duration;
     });
+
+    this.speedSelect.addEventListener('change', ()=>{
+      this.video.playbackRate = parseFloat(this.speedSelect.value);
+    });
+
+    this.downloadBtn.addEventListener('click', ()=>{
+      const a = document.createElement('a');
+      a.href = this.video.currentSrc;
+      a.download = 'video.mp4';
+      a.click();
+    });
+
+    if(this.qualitySelect){
+      this.qualitySelect.addEventListener('change', ()=>{
+        const t = this.video.currentTime;
+        this.video.src = this.qualitySelect.value;
+        this.video.currentTime = t;
+        this.video.play();
+      });
+    }
   }
 
   toggle() {
-    if (this.video.paused) {
+    if(this.video.paused){
       this.video.play();
       this.playBtn.innerHTML = '⏸';
     } else {
@@ -63,7 +111,7 @@ class ReaverPlayer {
   }
 
   updateProgress() {
-    const pct = (this.video.currentTime / this.video.duration) * 100;
+    const pct = (this.video.currentTime / this.video.duration)*100;
     this.filled.style.width = pct + '%';
     this.updateTime();
   }
@@ -77,9 +125,9 @@ class ReaverPlayer {
     this.time.textContent = `${format(this.video.currentTime)} / ${format(this.video.duration)}`;
   }
 
-  play() { this.video.play(); this.playBtn.innerHTML = '⏸'; }
-  pause() { this.video.pause(); this.playBtn.innerHTML = '▶'; }
-  setSource(url){ this.video.src = url; this.video.play(); this.playBtn.innerHTML = '⏸'; }
+  play(){ this.video.play(); this.playBtn.innerHTML = '⏸'; }
+  pause(){ this.video.pause(); this.playBtn.innerHTML = '▶'; }
+  setSource(url){ this.video.src=url; this.video.play(); this.playBtn.innerHTML='⏸'; }
 }
 
 (function(){
@@ -93,3 +141,4 @@ class ReaverPlayer {
   } else boot();
   window.ReaverPlayer = ReaverPlayer;
 })();
+
