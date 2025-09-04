@@ -2,15 +2,84 @@ class ReaverPlayer {
   constructor(root) {
     this.root = root;
     const src = root.dataset.src;
+
     this.video = document.createElement('video');
     this.video.src = src;
-    this.video.controls = true; 
+    this.video.preload = 'metadata';
+    this.video.style.display = 'block';
     root.appendChild(this.video);
-    root.player = this; 
+    
+    this.createControls();
+
+    root.player = this;
+    this.bindEvents();
   }
-  play(){ this.video.play(); }
-  pause(){ this.video.pause(); }
-  setSource(url){ this.video.src = url; this.video.play(); }
+
+  createControls() {
+    const controls = document.createElement('div');
+    controls.className = 'controls';
+
+    this.playBtn = document.createElement('button');
+    this.playBtn.className = 'btn';
+    this.playBtn.innerHTML = '▶';
+    controls.appendChild(this.playBtn);
+
+    this.time = document.createElement('span');
+    this.time.className = 'time';
+    this.time.textContent = '0:00 / 0:00';
+    controls.appendChild(this.time);
+
+    this.progress = document.createElement('div');
+    this.progress.className = 'progress';
+    this.filled = document.createElement('div');
+    this.filled.className = 'filled';
+    this.progress.appendChild(this.filled);
+    controls.appendChild(this.progress);
+
+    this.root.appendChild(controls);
+  }
+
+  bindEvents() {
+    this.playBtn.addEventListener('click', () => this.toggle());
+
+    this.video.addEventListener('timeupdate', () => this.updateProgress());
+    this.video.addEventListener('loadedmetadata', () => this.updateTime());
+
+    this.progress.addEventListener('click', e => {
+      const rect = this.progress.getBoundingClientRect();
+      const pct = (e.clientX - rect.left) / rect.width;
+      this.video.currentTime = pct * this.video.duration;
+    });
+  }
+
+  toggle() {
+    if (this.video.paused) {
+      this.video.play();
+      this.playBtn.innerHTML = '⏸';
+    } else {
+      this.video.pause();
+      this.playBtn.innerHTML = '▶';
+    }
+  }
+
+  updateProgress() {
+    const pct = (this.video.currentTime / this.video.duration) * 100;
+    this.filled.style.width = pct + '%';
+    this.updateTime();
+  }
+
+  updateTime() {
+    const format = t => {
+      const m = Math.floor(t/60);
+      const s = Math.floor(t%60).toString().padStart(2,'0');
+      return `${m}:${s}`;
+    };
+    this.time.textContent = `${format(this.video.currentTime)} / ${format(this.video.duration)}`;
+  }
+
+  play() { this.video.play(); this.playBtn.innerHTML = '⏸'; }
+  pause() { this.video.pause(); this.playBtn.innerHTML = '▶'; }
+  setSource(url){ this.video.src = url; this.video.play(); this.playBtn.innerHTML = '⏸'; }
 }
 
 (function(){
