@@ -1,12 +1,68 @@
 .reaver-player {
-  background:#000;
-  max-width:800px;
-  margin:20px auto;
-  border-radius:12px;
-  overflow:hidden;
+  position: relative;
+  background: #000;
+  max-width: 800px;
+  margin: 20px auto;
+  border-radius: 12px;
+  overflow: hidden;
+  font-family: sans-serif;
 }
+
 .reaver-player video {
-  width:100%;
-  height:auto;
-  display:block;
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.reaver-player .controls {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  padding: 5px 10px;
+  box-sizing: border-box;
+  transition: opacity 0.3s;
+  opacity: 1;
+}
+
+.reaver-player:hover .controls {
+  opacity: 1;
+}
+
+.reaver-player .btn {
+  color: #fff;
+  background: transparent;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  margin-right: 10px;
+  outline: none;
+}
+
+.reaver-player .btn:hover {
+  color: #1abc9c;
+}
+
+.reaver-player .progress {
+  flex: 1;
+  height: 5px;
+  background: #555;
+  border-radius: 2px;
+  margin: 0 10px;
+  cursor: pointer;
+  position: relative;
+}
+
+.reaver-player .progress .filled {
+  width: 0%;
+  height: 100%;
+  background: #1abc9c;
+  border-radius: 2px;
+}
+
+.reaver-player .time {
+  color: #fff;
+  font-size: 12px;
 }
