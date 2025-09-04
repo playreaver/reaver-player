@@ -32,40 +32,7 @@ class ReaverPlayer {
         // Создаем превью для перемотки
         this.scrubPreview = document.createElement('div');
         this.scrubPreview.className = 'scrub-preview';
-        this.scrubPreview.innerHTML = `
-            <div class="scrub-thumbnail"></div>
-            <div class="scrub-time">0:00</div>
-        `;
         this.videoContainer.appendChild(this.scrubPreview);
-
-        // Создаем элемент для отображения времени при наведении
-        this.hoverTime = document.createElement('div');
-        this.hoverTime.className = 'hover-time';
-        this.progressContainer.appendChild(this.hoverTime);
-
-        // Создаем оверлей для миниатюр
-        this.thumbnailOverlay = document.createElement('div');
-        this.thumbnailOverlay.className = 'thumbnail-overlay';
-        this.videoContainer.appendChild(this.thumbnailOverlay);
-
-        // Создаем панель настроек
-        this.settingsPanel = document.createElement('div');
-        this.settingsPanel.className = 'settings-panel';
-        this.settingsPanel.innerHTML = `
-            <div class="settings-item">
-                <label for="brightness">Яркость</label>
-                <input type="range" id="brightness" min="0" max="200" value="100">
-            </div>
-            <div class="settings-item">
-                <label for="contrast">Контрастность</label>
-                <input type="range" id="contrast" min="0" max="200" value="100">
-            </div>
-            <div class="settings-item">
-                <label for="saturation">Насыщенность</label>
-                <input type="range" id="saturation" min="0" max="200" value="100">
-            </div>
-        `;
-        this.videoContainer.appendChild(this.settingsPanel);
 
         // Модальное окно для горячих клавиш
         this.shortcutsModal = document.createElement('div');
@@ -83,8 +50,6 @@ class ReaverPlayer {
                 <li><span>Полный экран</span> <span class="key">F</span></li>
                 <li><span>Picture-in-Picture</span> <span class="key">P</span></li>
                 <li><span>Mute/Unmute</span> <span class="key">M</span></li>
-                <li><span>Яркость +</span> <span class="key">B + ↑</span></li>
-                <li><span>Яркость -</span> <span class="key">B + ↓</span></li>
             </ul>
         `;
         this.videoContainer.appendChild(this.shortcutsModal);
@@ -107,15 +72,6 @@ class ReaverPlayer {
         // Таймер для скрытия контролов
         this.controlsTimeout = null;
         this.controlsVisible = false;
-        
-        // Инициализация настроек видео
-        this.brightness = 100;
-        this.contrast = 100;
-        this.saturation = 100;
-        this.updateVideoFilters();
-        
-        // Кэш для миниатюр
-        this.thumbnailsCache = {};
     }
 
     createControls() {
@@ -145,11 +101,6 @@ class ReaverPlayer {
         this.progress = document.createElement('div');
         this.progress.className = 'progress';
         
-        // Маркеры глав
-        this.chapterMarkers = document.createElement('div');
-        this.chapterMarkers.className = 'chapter-markers';
-        this.progressContainer.appendChild(this.chapterMarkers);
-        
         this.progressContainer.appendChild(this.buffer);
         this.progressContainer.appendChild(this.progress);
         controls.appendChild(this.progressContainer);
@@ -178,13 +129,6 @@ class ReaverPlayer {
         this.volumeContainer.appendChild(this.volumeBtn);
         this.volumeContainer.appendChild(this.volumeSliderContainer);
         controls.appendChild(this.volumeContainer);
-
-        // Настройки
-        this.settingsBtn = document.createElement('button');
-        this.settingsBtn.className = 'btn settings-btn';
-        this.settingsBtn.innerHTML = '<i class="fas fa-sliders-h"></i>';
-        this.settingsBtn.title = 'Настройки';
-        controls.appendChild(this.settingsBtn);
 
         // Полноэкранный режим
         this.fullscreenBtn = document.createElement('button');
@@ -269,26 +213,6 @@ class ReaverPlayer {
         this.root.appendChild(this.shortcutsHint);
 
         this.root.appendChild(controls);
-        
-        // Добавляем маркеры глав, если они есть
-        this.addChapterMarkers();
-    }
-
-    addChapterMarkers() {
-        if (this.root.dataset.chapters) {
-            try {
-                const chapters = JSON.parse(this.root.dataset.chapters);
-                chapters.forEach(chapter => {
-                    const marker = document.createElement('div');
-                    marker.className = 'chapter-marker';
-                    marker.style.left = `${(chapter.time / this.video.duration) * 100}%`;
-                    marker.setAttribute('data-title', chapter.title);
-                    this.chapterMarkers.appendChild(marker);
-                });
-            } catch (e) {
-                console.error('Ошибка парсинга глав:', e);
-            }
-        }
     }
 
     bindEvents() {
@@ -306,10 +230,7 @@ class ReaverPlayer {
         
         this.video.addEventListener('timeupdate', ()=>this.updateProgress());
         this.video.addEventListener('progress', ()=>this.updateBuffer());
-        this.video.addEventListener('loadedmetadata', ()=> {
-            this.updateTime();
-            this.addChapterMarkers();
-        });
+        this.video.addEventListener('loadedmetadata', ()=>this.updateTime());
         this.video.addEventListener('volumechange', ()=>this.updateVolumeIcon());
         
         // События загрузки
@@ -338,32 +259,6 @@ class ReaverPlayer {
         this.volumeBtn.addEventListener('click', ()=>{
             this.video.muted = !this.video.muted;
             this.updateVolumeIcon();
-        });
-        
-        // Настройки
-        this.settingsBtn.addEventListener('click', (e) => {
-            this.settingsPanel.classList.toggle('visible');
-            e.stopPropagation();
-        });
-        
-        // Обработчики для настроек видео
-        const brightnessSlider = this.settingsPanel.querySelector('#brightness');
-        const contrastSlider = this.settingsPanel.querySelector('#contrast');
-        const saturationSlider = this.settingsPanel.querySelector('#saturation');
-        
-        brightnessSlider.addEventListener('input', () => {
-            this.brightness = brightnessSlider.value;
-            this.updateVideoFilters();
-        });
-        
-        contrastSlider.addEventListener('input', () => {
-            this.contrast = contrastSlider.value;
-            this.updateVideoFilters();
-        });
-        
-        saturationSlider.addEventListener('input', () => {
-            this.saturation = saturationSlider.value;
-            this.updateVideoFilters();
         });
 
         // Полноэкранный режим
@@ -418,10 +313,6 @@ class ReaverPlayer {
                 this.menuContent.style.display = 'none';
             }
             
-            if (!this.settingsPanel.contains(e.target) && e.target !== this.settingsBtn) {
-                this.settingsPanel.classList.remove('visible');
-            }
-            
             if (this.modalOverlay.style.display === 'block') {
                 this.hideShortcutsModal();
             }
@@ -436,10 +327,6 @@ class ReaverPlayer {
         window.addEventListener('resize', () => this.handleResize());
     }
     
-    updateVideoFilters() {
-        this.video.style.filter = `brightness(${this.brightness}%) contrast(${this.contrast}%) saturate(${this.saturation}%)`;
-    }
-    
     setupFontAwesome() {
         if (!document.querySelector('link[href*="font-awesome"]')) {
             const link = document.createElement('link');
@@ -450,33 +337,8 @@ class ReaverPlayer {
     }
     
     setupKeyboardShortcuts() {
-        let brightnessMode = false;
-        
         document.addEventListener('keydown', (e) => {
             if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) {
-                return;
-            }
-            
-            // Режим регулировки яркости
-            if (e.key.toLowerCase() === 'b') {
-                brightnessMode = true;
-                return;
-            }
-            
-            if (brightnessMode) {
-                e.preventDefault();
-                const brightnessSlider = this.settingsPanel.querySelector('#brightness');
-                
-                if (e.key === 'ArrowUp') {
-                    this.brightness = Math.min(parseInt(this.brightness) + 5, 200);
-                    brightnessSlider.value = this.brightness;
-                    this.updateVideoFilters();
-                } else if (e.key === 'ArrowDown') {
-                    this.brightness = Math.max(parseInt(this.brightness) - 5, 0);
-                    brightnessSlider.value = this.brightness;
-                    this.updateVideoFilters();
-                }
-                
                 return;
             }
             
@@ -523,12 +385,6 @@ class ReaverPlayer {
                     this.video.muted = !this.video.muted;
                     this.updateVolumeIcon();
                     break;
-            }
-        });
-        
-        document.addEventListener('keyup', (e) => {
-            if (e.key.toLowerCase() === 'b') {
-                brightnessMode = false;
             }
         });
     }
@@ -603,57 +459,22 @@ class ReaverPlayer {
     
     previewSeek(e) {
         const rect = this.progressContainer.getBoundingClientRect();
-        const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+        const pct = (e.clientX - rect.left) / rect.width;
         const time = pct * this.video.duration;
         
-        // Обновляем время при наведении
-        this.hoverTime.textContent = this.formatTime(time);
-        this.hoverTime.style.left = `${e.clientX - rect.left}px`;
-        
-        // Обновляем превью
-        this.scrubPreview.querySelector('.scrub-time').textContent = this.formatTime(time);
+        this.scrubPreview.textContent = this.formatTime(time);
         this.scrubPreview.style.left = `${e.clientX - rect.left}px`;
         this.scrubPreview.classList.add('visible');
-        
-        // Показываем миниатюру, если доступна
-        this.showThumbnailAtTime(time);
-    }
-    
-    showThumbnailAtTime(time) {
-        // Если есть шаблон для миниатюр
-        if (this.root.dataset.thumbnails) {
-            const thumbTime = Math.floor(time);
-            const thumbUrl = this.root.dataset.thumbnails.replace('{time}', thumbTime);
-            
-            // Используем кэш для миниатюр
-            if (!this.thumbnailsCache[thumbTime]) {
-                this.thumbnailsCache[thumbTime] = thumbUrl;
-            }
-            
-            const thumbnail = this.scrubPreview.querySelector('.scrub-thumbnail');
-            thumbnail.style.backgroundImage = `url(${this.thumbnailsCache[thumbTime]})`;
-            
-            // Также показываем миниатюру как оверлей
-            this.thumbnailOverlay.style.backgroundImage = `url(${this.thumbnailsCache[thumbTime]})`;
-            this.thumbnailOverlay.classList.add('visible');
-        }
     }
     
     hideSeekPreview() {
         this.scrubPreview.classList.remove('visible');
-        this.thumbnailOverlay.classList.remove('visible');
     }
     
     formatTime(time) {
-        const h = Math.floor(time / 3600);
-        const m = Math.floor((time % 3600) / 60);
+        const m = Math.floor(time / 60);
         const s = Math.floor(time % 60).toString().padStart(2, '0');
-        
-        if (h > 0) {
-            return `${h}:${m.toString().padStart(2, '0')}:${s}`;
-        } else {
-            return `${m}:${s}`;
-        }
+        return `${m}:${s}`;
     }
     
     createRippleEffect(element, event) {
