@@ -1,3 +1,4 @@
+/* CSS */
 .reaver-player {
     position: relative;
     background: #0a0a0a;
@@ -28,6 +29,8 @@
 
 .reaver-player .video-container {
     position: relative;
+    width: 100%;
+    height: 100%;
 }
 
 .reaver-player .controls {
@@ -37,7 +40,7 @@
     background: linear-gradient(to top, rgba(0, 0, 0, 0.85), transparent);
     display: flex;
     align-items: center;
-    padding: 12px 16px;
+    padding: 15px 20px;
     box-sizing: border-box;
     transition: opacity 0.3s, transform 0.3s;
     opacity: 0;
@@ -58,13 +61,13 @@
     border: none;
     font-size: 16px;
     cursor: pointer;
-    margin-right: 10px;
+    margin-right: 12px;
     padding: 0;
     border-radius: 50%;
     outline: none;
     transition: all 0.2s ease;
-    width: 36px;
-    height: 36px;
+    width: 44px;
+    height: 44px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -95,9 +98,9 @@
 
 .reaver-player .progress-container {
     flex: 1;
-    height: 4px;
+    height: 6px;
     background: rgba(255, 255, 255, 0.2);
-    border-radius: 2px;
+    border-radius: 3px;
     margin: 0 15px;
     cursor: pointer;
     position: relative;
@@ -106,13 +109,13 @@
 }
 
 .reaver-player .progress-container:hover {
-    height: 6px;
+    height: 8px;
 }
 
 .reaver-player .progress {
     height: 100%;
     background: #fff;
-    border-radius: 2px;
+    border-radius: 3px;
     transition: width 0.1s linear;
     position: relative;
     z-index: 2;
@@ -124,7 +127,7 @@
     top: 0;
     right: 0;
     height: 100%;
-    width: 8px;
+    width: 10px;
     background: rgba(255, 255, 255, 0.8);
     border-radius: 50%;
     transform: scale(0);
@@ -139,7 +142,7 @@
     position: absolute;
     height: 100%;
     background: rgba(255, 255, 255, 0.15);
-    border-radius: 2px;
+    border-radius: 3px;
     transition: width 0.3s ease;
     top: 0;
     left: 0;
@@ -148,10 +151,10 @@
 
 .reaver-player .time {
     color: rgba(255, 255, 255, 0.85);
-    font-size: 13px;
-    margin: 0 10px;
+    font-size: 14px;
+    margin: 0 12px;
     font-weight: 500;
-    min-width: 90px;
+    min-width: 100px;
     text-align: center;
     font-variant-numeric: tabular-nums;
     letter-spacing: 0.5px;
@@ -174,8 +177,8 @@
 }
 
 .reaver-player .volume-container:hover .volume-slider-container {
-    width: 80px;
-    margin-left: 10px;
+    width: 90px;
+    margin-left: 12px;
     opacity: 1;
 }
 
@@ -200,8 +203,8 @@
     cursor: pointer;
     margin-left: 10px;
     transition: all 0.3s;
-    width: 36px;
-    height: 36px;
+    width: 44px;
+    height: 44px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -210,13 +213,13 @@
 .reaver-player .menu-content {
     display: none;
     position: absolute;
-    bottom: 45px;
+    bottom: 50px;
     right: 0;
     background: rgba(25, 25, 25, 0.95);
     border-radius: 8px;
     padding: 12px;
     z-index: 100;
-    min-width: 160px;
+    min-width: 180px;
     box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
     backdrop-filter: blur(10px);
     animation: slideUp 0.2s ease-out;
@@ -239,8 +242,8 @@
     margin-bottom: 8px;
     border-radius: 6px;
     border: none;
-    padding: 8px 10px;
-    font-size: 13px;
+    padding: 10px 12px;
+    font-size: 14px;
     cursor: pointer;
     transition: all 0.2s;
     background: rgba(255, 255, 255, 0.08);
@@ -399,8 +402,8 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%) scale(0.8);
-    width: 70px;
-    height: 70px;
+    width: 80px;
+    height: 80px;
     border-radius: 50%;
     background: rgba(0, 0, 0, 0.6);
     display: flex;
@@ -420,18 +423,18 @@
 
 .reaver-player .center-play-btn i {
     color: #fff;
-    font-size: 28px;
+    font-size: 32px;
     margin-left: 4px;
 }
 
 .reaver-player .scrub-preview {
     position: absolute;
-    bottom: 70px;
+    bottom: 80px;
     transform: translateX(-50%);
     background: rgba(0, 0, 0, 0.8);
     padding: 8px 12px;
     border-radius: 4px;
-    font-size: 13px;
+    font-size: 14px;
     opacity: 0;
     transition: opacity 0.2s;
     pointer-events: none;
@@ -466,12 +469,12 @@
 /* Toast уведомления */
 .reaver-player .toast {
     position: absolute;
-    bottom: 80px;
+    bottom: 100px;
     left: 50%;
     transform: translateX(-50%);
     background: rgba(0, 0, 0, 0.8);
     color: white;
-    padding: 10px 16px;
+    padding: 12px 18px;
     border-radius: 6px;
     font-size: 14px;
     z-index: 1002;
@@ -488,10 +491,10 @@
 .reaver-player .volume-slider-mobile {
     position: absolute;
     left: 50%;
-    bottom: 60px;
+    bottom: 70px;
     transform: translateX(-50%) rotate(270deg);
-    width: 100px;
-    height: 6px;
+    width: 120px;
+    height: 8px;
     accent-color: #fff;
     z-index: 20;
     display: none;
@@ -499,58 +502,121 @@
 
 /* Адаптивность для мобильных устройств */
 @media (max-width: 768px) {
+    .reaver-player {
+        border-radius: 0;
+        max-width: 100%;
+        height: 100%;
+    }
+    
+    .reaver-player .video-container,
+    .reaver-player video {
+        height: 100%;
+        object-fit: contain;
+    }
+    
     .reaver-player .volume-slider-container {
         display: none;
     }
     
     .reaver-player .time {
-        min-width: 80px;
-        font-size: 12px;
+        min-width: 90px;
+        font-size: 14px;
     }
     
     .reaver-player .btn {
-        width: 40px;
-        height: 40px;
-        margin-right: 8px;
+        width: 48px;
+        height: 48px;
+        margin-right: 10px;
+        font-size: 18px;
     }
     
     .reaver-player .menu-btn {
-        width: 40px;
-        height: 40px;
+        width: 48px;
+        height: 48px;
+        font-size: 18px;
     }
     
     .reaver-player .progress-container {
-        margin: 0 10px;
-        height: 6px;
+        margin: 0 12px;
+        height: 8px;
     }
     
     .reaver-player .controls {
-        padding: 15px 10px;
+        padding: 20px 15px;
     }
     
     .reaver-player .center-play-btn {
-        width: 80px;
-        height: 80px;
+        width: 90px;
+        height: 90px;
     }
     
     .reaver-player .center-play-btn i {
-        font-size: 32px;
+        font-size: 36px;
     }
     
     .reaver-player .menu-content {
-        bottom: 50px;
+        bottom: 60px;
         right: 0;
-        min-width: 140px;
+        min-width: 160px;
+    }
+    
+    .reaver-player .scrub-preview {
+        bottom: 90px;
+        font-size: 16px;
+        padding: 10px 14px;
+    }
+    
+    .reaver-player .toast {
+        bottom: 110px;
+        font-size: 16px;
+        padding: 14px 20px;
     }
     
     /* Увеличиваем область клика для мобильных */
     .reaver-player .btn::before {
         content: '';
         position: absolute;
-        top: -10px;
-        left: -10px;
-        right: -10px;
-        bottom: -10px;
+        top: -15px;
+        left: -15px;
+        right: -15px;
+        bottom: -15px;
+    }
+    
+    /* Центрирование видео в полноэкранном режиме */
+    .reaver-player:fullscreen .video-container,
+    .reaver-player:fullscreen video {
+        object-fit: contain;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: #000;
+    }
+    
+    .reaver-player:-webkit-full-screen .video-container,
+    .reaver-player:-webkit-full-screen video {
+        object-fit: contain;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: #000;
+    }
+    
+    .reaver-player:-moz-full-screen .video-container,
+    .reaver-player:-moz-full-screen video {
+        object-fit: contain;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: #000;
+    }
+    
+    .reaver-player:-ms-fullscreen .video-container,
+    .reaver-player:-ms-fullscreen video {
+        object-fit: contain;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: #000;
     }
 }
 
@@ -561,14 +627,14 @@
     }
     
     .reaver-player .btn {
-        width: 36px;
-        height: 36px;
-        margin-right: 6px;
+        width: 44px;
+        height: 44px;
+        margin-right: 8px;
     }
     
     .reaver-player .menu-btn {
-        width: 36px;
-        height: 36px;
+        width: 44px;
+        height: 44px;
     }
     
     .reaver-player .player-title {
@@ -582,6 +648,11 @@
         right: 10px;
         padding: 4px 6px;
     }
+    
+    .reaver-player .center-play-btn {
+        width: 80px;
+        height: 80px;
+    }
 }
 
 /* Темная тема для ползунков */
@@ -592,20 +663,20 @@
 
 .reaver-player input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;
-    height: 16px;
-    width: 16px;
+    height: 18px;
+    width: 18px;
     border-radius: 50%;
     background: #fff;
     cursor: pointer;
-    margin-top: -5px;
+    margin-top: -6px;
 }
 
 .reaver-player input[type="range"]::-webkit-slider-runnable-track {
     width: 100%;
-    height: 6px;
+    height: 8px;
     cursor: pointer;
     background: rgba(255, 255, 255, 0.2);
-    border-radius: 3px;
+    border-radius: 4px;
 }
 
 .reaver-player input[type="range"]:focus {
@@ -613,8 +684,8 @@
 }
 
 .reaver-player input[type="range"]::-moz-range-thumb {
-    height: 16px;
-    width: 16px;
+    height: 18px;
+    width: 18px;
     border-radius: 50%;
     background: #fff;
     cursor: pointer;
@@ -623,9 +694,50 @@
 
 .reaver-player input[type="range"]::-moz-range-track {
     width: 100%;
-    height: 6px;
+    height: 8px;
     cursor: pointer;
     background: rgba(255, 255, 255, 0.2);
-    border-radius: 3px;
+    border-radius: 4px;
     border: none;
+}
+
+/* Полноэкранные стили */
+.reaver-player:fullscreen {
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #000;
+}
+
+.reaver-player:-webkit-full-screen {
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #000;
+}
+
+.reaver-player:-moz-full-screen {
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #000;
+}
+
+.reaver-player:-ms-fullscreen {
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #000;
 }
