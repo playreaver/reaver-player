@@ -1,3 +1,4 @@
+// Обновленный JavaScript для Reaver Player
 class ReaverPlayer {
     constructor(root) {
         this.root = root;
@@ -13,6 +14,7 @@ class ReaverPlayer {
         this.video.preload = 'metadata';
         this.video.style.display = 'block';
         this.video.style.width = '100%';
+        this.video.style.height = '100%';
         this.videoContainer.appendChild(this.video);
 
         // Создаем оверлей загрузки
@@ -33,21 +35,6 @@ class ReaverPlayer {
         this.scrubPreview = document.createElement('div');
         this.scrubPreview.className = 'scrub-preview';
         this.videoContainer.appendChild(this.scrubPreview);
-
-        // Индикатор уровня громкости
-        this.volumeLevel = document.createElement('div');
-        this.volumeLevel.className = 'volume-level';
-        this.videoContainer.appendChild(this.volumeLevel);
-
-        // Области для сенсорного управления
-        this.touchActions = document.createElement('div');
-        this.touchActions.className = 'touch-actions';
-        this.touchActions.innerHTML = `
-            <div class="touch-left"></div>
-            <div class="touch-center"></div>
-            <div class="touch-right"></div>
-        `;
-        this.videoContainer.appendChild(this.touchActions);
 
         // Модальное окно для горячих клавиш
         this.shortcutsModal = document.createElement('div');
@@ -88,12 +75,8 @@ class ReaverPlayer {
         this.controlsTimeout = null;
         this.controlsVisible = false;
         
-        // Переменные для обработки касаний
-        this.touchStartX = 0;
-        this.touchStartY = 0;
-        this.touchStartTime = 0;
-        this.touchStartVolume = 1;
-        this.seeking = false;
+        // Флаг для перетаскивания прогресс-бара
+        this.isSeeking = false;
     }
 
     createControls() {
@@ -193,9 +176,6 @@ class ReaverPlayer {
             if (s === '1x') opt.selected = true;
             this.speedSelect.appendChild(opt);
         });
-        this.speedSelect.querySelectorAll('option').forEach(opt => {
-            if (opt.value === 1) opt.selected = true;
-        });
         this.menuContent.appendChild(this.speedSelect);
 
         // Скачать
@@ -211,7 +191,6 @@ class ReaverPlayer {
                 const opt = document.createElement('option');
                 opt.value = s.url;
                 opt.textContent = s.label;
-                if (s.default) opt.selected = true;
                 this.qualitySelect.appendChild(opt);
             });
             this.menuContent.appendChild(this.qualitySelect);
@@ -246,7 +225,8 @@ class ReaverPlayer {
         
         // Клик по видео для паузы/воспроизведения
         this.video.addEventListener('click', (e) => {
-            if (e.target.closest('.controls') || e.target.closest('.btn') || this.seeking) return;
+            // Предотвращаем срабатывание, если клик был на элементах управления
+            if (e.target.closest('.controls') || e.target.closest('.btn')) return;
             this.toggle();
             this.showCenterPlayButton();
         });
@@ -255,12 +235,8 @@ class ReaverPlayer {
         
         this.video.addEventListener('timeupdate', ()=>this.updateProgress());
         this.video.addEventListener('progress', ()=>this.updateBuffer());
-        this.video.addEventListener('loadedmetadata', ()=> {
-            this.updateTime();
-            this.updateBuffer();
-        });
+        this.video.addEventListener('loadedmetadata', ()=>this.updateTime());
         this.video.addEventListener('volumechange', ()=>this.updateVolumeIcon());
-        this.video.addEventListener('seeked', ()=>this.hideLoading());
         
         // События загрузки
         this.video.addEventListener('loadstart', ()=>this.showLoading());
@@ -279,31 +255,20 @@ class ReaverPlayer {
         this.progressContainer.addEventListener('mousemove', e=>this.previewSeek(e));
         this.progressContainer.addEventListener('mouseleave', ()=>this.hideSeekPreview());
         
+        // Добавляем обработчики для перетаскивания прогресс-бара
+        this.progressContainer.addEventListener('mousedown', e => this.startSeeking(e));
+        document.addEventListener('mousemove', e => this.whileSeeking(e));
+        document.addEventListener('mouseup', () => this.stopSeeking());
+        
         // Громкость
         this.volumeSlider.addEventListener('input', ()=>{
             this.video.volume = this.volumeSlider.value;
             this.updateVolumeIcon();
-            this.showVolumeLevel();
         });
 
         this.volumeBtn.addEventListener('click', ()=>{
             this.video.muted = !this.video.muted;
             this.updateVolumeIcon();
-            this.showVolumeLevel();
-        });
-
-        this.volumeBtn.addEventListener('mouseenter', () => {
-            if (window.innerWidth <= 768) {
-                this.volumeSliderContainer.classList.add('visible');
-            }
-        });
-
-        this.volumeBtn.addEventListener('mouseleave', () => {
-            if (window.innerWidth <= 768) {
-                setTimeout(() => {
-                    this.volumeSliderContainer.classList.remove('visible');
-                }, 2000);
-            }
         });
 
         // Полноэкранный режим
@@ -326,7 +291,7 @@ class ReaverPlayer {
         // Скачать
         this.downloadBtn.addEventListener('click', ()=>{
             const a = document.createElement('a');
-            a.href = this.video.currentSrc || this.video.src;
+            a.href = this.video.currentSrc;
             a.download = 'video.mp4';
             a.click();
         });
@@ -335,10 +300,9 @@ class ReaverPlayer {
         if(this.qualitySelect){
             this.qualitySelect.addEventListener('change', ()=>{
                 const t = this.video.currentTime;
-                const wasPlaying = !this.video.paused;
                 this.video.src = this.qualitySelect.value;
                 this.video.currentTime = t;
-                if (wasPlaying) this.video.play();
+                this.video.play();
             });
         }
 
@@ -372,8 +336,11 @@ class ReaverPlayer {
         // Обработка изменения размера окна
         window.addEventListener('resize', () => this.handleResize());
         
-        // Обработка сенсорных событий для управления громкостью и перемоткой
-        this.setupTouchControls();
+        // Обработка полноэкранного режима
+        document.addEventListener('fullscreenchange', () => this.handleFullscreenChange());
+        document.addEventListener('webkitfullscreenchange', () => this.handleFullscreenChange());
+        document.addEventListener('mozfullscreenchange', () => this.handleFullscreenChange());
+        document.addEventListener('MSFullscreenChange', () => this.handleFullscreenChange());
     }
     
     setupFontAwesome() {
@@ -418,13 +385,11 @@ class ReaverPlayer {
                     this.video.volume = Math.min(this.video.volume + 0.1, 1);
                     this.volumeSlider.value = this.video.volume;
                     this.updateVolumeIcon();
-                    this.showVolumeLevel();
                     break;
                 case 'arrowdown':
                     this.video.volume = Math.max(this.video.volume - 0.1, 0);
                     this.volumeSlider.value = this.video.volume;
                     this.updateVolumeIcon();
-                    this.showVolumeLevel();
                     break;
                 case 'f':
                     this.toggleFullscreen();
@@ -435,69 +400,7 @@ class ReaverPlayer {
                 case 'm':
                     this.video.muted = !this.video.muted;
                     this.updateVolumeIcon();
-                    this.showVolumeLevel();
                     break;
-            }
-        });
-    }
-    
-    setupTouchControls() {
-        const leftZone = this.touchActions.querySelector('.touch-left');
-        const rightZone = this.touchActions.querySelector('.touch-right');
-        const centerZone = this.touchActions.querySelector('.touch-center');
-        
-        // Левая зона - перемотка
-        leftZone.addEventListener('touchstart', (e) => {
-            this.touchStartX = e.touches[0].clientX;
-            this.touchStartY = e.touches[0].clientY;
-            this.touchStartTime = this.video.currentTime;
-            this.seeking = true;
-        });
-        
-        leftZone.addEventListener('touchmove', (e) => {
-            if (!this.seeking) return;
-            
-            const deltaX = e.touches[0].clientX - this.touchStartX;
-            const deltaTime = (deltaX / window.innerWidth) * this.video.duration;
-            
-            let newTime = this.touchStartTime + deltaTime;
-            newTime = Math.max(0, Math.min(newTime, this.video.duration));
-            
-            this.video.currentTime = newTime;
-            
-            // Показываем preview времени
-            this.scrubPreview.textContent = `${this.formatTime(newTime)} / ${this.formatTime(this.video.duration)}`;
-            this.scrubPreview.style.left = `${this.touchStartX + deltaX}px`;
-            this.scrubPreview.classList.add('visible');
-        });
-        
-        leftZone.addEventListener('touchend', () => {
-            this.seeking = false;
-            this.scrubPreview.classList.remove('visible');
-        });
-        
-        // Правая зона - громкость
-        rightZone.addEventListener('touchstart', (e) => {
-            this.touchStartY = e.touches[0].clientY;
-            this.touchStartVolume = this.video.volume;
-        });
-        
-        rightZone.addEventListener('touchmove', (e) => {
-            const deltaY = this.touchStartY - e.touches[0].clientY;
-            const newVolume = Math.max(0, Math.min(this.touchStartVolume + (deltaY / 200), 1));
-            
-            this.video.volume = newVolume;
-            this.volumeSlider.value = newVolume;
-            this.updateVolumeIcon();
-            this.showVolumeLevel();
-        });
-        
-        // Центральная зона - показать/скрыть controls
-        centerZone.addEventListener('touchstart', (e) => {
-            if (e.touches.length === 1) {
-                this.toggleControls();
-            } else if (e.touches.length === 2) {
-                this.toggle();
             }
         });
     }
@@ -563,15 +466,28 @@ class ReaverPlayer {
         }
     }
     
-    showVolumeLevel() {
-        const volumeText = this.video.muted ? 'Muted' : `${Math.round(this.video.volume * 100)}%`;
-        this.volumeLevel.textContent = volumeText;
-        this.volumeLevel.classList.add('visible');
-        
-        clearTimeout(this.volumeLevelTimeout);
-        this.volumeLevelTimeout = setTimeout(() => {
-            this.volumeLevel.classList.remove('visible');
-        }, 1000);
+    startSeeking(e) {
+        this.isSeeking = true;
+        this.seek(e);
+        document.addEventListener('mousemove', this.whileSeekingBound = (e) => this.whileSeeking(e));
+        document.addEventListener('mouseup', this.stopSeekingBound = () => this.stopSeeking());
+    }
+    
+    whileSeeking(e) {
+        if (!this.isSeeking) return;
+        this.seek(e);
+    }
+    
+    stopSeeking() {
+        this.isSeeking = false;
+        if (this.whileSeekingBound) {
+            document.removeEventListener('mousemove', this.whileSeekingBound);
+            this.whileSeekingBound = null;
+        }
+        if (this.stopSeekingBound) {
+            document.removeEventListener('mouseup', this.stopSeekingBound);
+            this.stopSeekingBound = null;
+        }
     }
     
     seek(e) {
@@ -582,27 +498,24 @@ class ReaverPlayer {
     }
     
     previewSeek(e) {
+        if (this.isSeeking) return;
+        
         const rect = this.progressContainer.getBoundingClientRect();
         const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
         const time = pct * this.video.duration;
         
-        this.scrubPreview.textContent = `${this.formatTime(time)} / ${this.formatTime(this.video.duration)}`;
-        
-        // Ограничиваем позицию preview в пределах видео
-        const previewWidth = this.scrubPreview.offsetWidth;
-        const maxLeft = rect.width - previewWidth / 2;
-        const left = Math.max(previewWidth / 2, Math.min(e.clientX - rect.left, maxLeft));
-        
-        this.scrubPreview.style.left = `${left}px`;
+        this.scrubPreview.textContent = this.formatTime(time);
+        this.scrubPreview.style.left = `${e.clientX - rect.left}px`;
         this.scrubPreview.classList.add('visible');
     }
     
     hideSeekPreview() {
+        if (this.isSeeking) return;
         this.scrubPreview.classList.remove('visible');
     }
     
     formatTime(time) {
-        if (isNaN(time)) return '0:00';
+        if (isNaN(time) || !isFinite(time)) return '0:00';
         
         const hours = Math.floor(time / 3600);
         const minutes = Math.floor((time % 3600) / 60);
@@ -641,10 +554,20 @@ class ReaverPlayer {
             this.scrubPreview.classList.remove('visible');
         }
     }
+    
+    handleFullscreenChange() {
+        // Обновление иконки полноэкранного режима
+        if (document.fullscreenElement || document.webkitFullscreenElement || 
+            document.mozFullScreenElement || document.msFullscreenElement) {
+            this.fullscreenBtn.innerHTML = '<i class="fas fa-compress"></i>';
+        } else {
+            this.fullscreenBtn.innerHTML = '<i class="fas fa-expand"></i>';
+        }
+    }
 
     toggle(){
         if(this.video.paused){
-            this.video.play().catch(e => console.error("Ошибка воспроизведения:", e));
+            this.video.play().catch(e => console.error('Ошибка воспроизведения:', e));
             this.playBtn.innerHTML='<i class="fas fa-pause"></i>';
         } else{
             this.video.pause();
@@ -659,17 +582,20 @@ class ReaverPlayer {
     }
 
     updateProgress(){
-        if (this.video.duration) {
-            const pct = (this.video.currentTime / this.video.duration) * 100;
-            this.progress.style.width = pct + '%';
-            this.updateTime();
-        }
+        if (this.isSeeking) return;
+        
+        const pct = (this.video.currentTime / this.video.duration) * 100;
+        this.progress.style.width = pct + '%';
+        this.updateTime();
     }
 
     updateBuffer() {
-        if (this.video.buffered.length > 0 && this.video.duration) {
+        if (this.video.buffered.length > 0) {
             const bufferedEnd = this.video.buffered.end(this.video.buffered.length - 1);
-            this.buffer.style.width = (bufferedEnd / this.video.duration) * 100 + '%';
+            const duration = this.video.duration;
+            if (duration > 0) {
+                this.buffer.style.width = (bufferedEnd / duration) * 100 + '%';
+            }
         }
     }
 
@@ -683,21 +609,36 @@ class ReaverPlayer {
             this.volumeSlider.value = 0;
         } else if (this.video.volume < 0.5) {
             this.volumeBtn.innerHTML = '<i class="fas fa-volume-down"></i>';
+            this.volumeSlider.value = this.video.volume;
         } else {
             this.volumeBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
+            this.volumeSlider.value = this.video.volume;
         }
     }
 
     toggleFullscreen() {
-        if (!document.fullscreenElement) {
+        if (!document.fullscreenElement && !document.webkitFullscreenElement && 
+            !document.mozFullScreenElement && !document.msFullscreenElement) {
             if (this.root.requestFullscreen) {
                 this.root.requestFullscreen().catch(err => {
-                    console.error("Ошибка полноэкранного режима:", err);
+                    console.error(`Ошибка при переходе в полноэкранный режим: ${err.message}`);
                 });
+            } else if (this.root.webkitRequestFullscreen) {
+                this.root.webkitRequestFullscreen();
+            } else if (this.root.mozRequestFullScreen) {
+                this.root.mozRequestFullScreen();
+            } else if (this.root.msRequestFullscreen) {
+                this.root.msRequestFullscreen();
             }
         } else {
             if (document.exitFullscreen) {
                 document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            } else if (document.mozCancelFullScreen) {
+                document.mozCancelFullScreen();
+            } else if (document.msExitFullscreen) {
+                document.msExitFullscreen();
             }
         }
     }
@@ -710,12 +651,12 @@ class ReaverPlayer {
                 await document.exitPictureInPicture();
             }
         } catch (error) {
-            console.error('Picture-in-Picture не поддерживается:', error);
+            console.error('Ваш браузер не поддерживает Picture-in-Picture!');
         }
     }
 
     play(){ 
-        this.video.play().catch(e => console.error("Ошибка воспроизведения:", e)); 
+        this.video.play().catch(e => console.error('Ошибка воспроизведения:', e)); 
         this.playBtn.innerHTML='<i class="fas fa-pause"></i>'; 
     }
     
@@ -725,8 +666,8 @@ class ReaverPlayer {
     }
     
     setSource(url){ 
-        this.video.src = url; 
-        this.video.play().catch(e => console.error("Ошибка воспроизведения:", e)); 
+        this.video.src=url; 
+        this.video.play().catch(e => console.error('Ошибка воспроизведения:', e)); 
         this.playBtn.innerHTML='<i class="fas fa-pause"></i>'; 
     }
 }
