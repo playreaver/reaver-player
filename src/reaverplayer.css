@@ -9,7 +9,9 @@
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
     transition: all 0.3s ease;
     line-height: 1;
-    aspect-ratio: 16/9;
+    --primary-color: #ff2c55;
+    --progress-height: 4px;
+    --progress-hover-height: 6px;
 }
 
 .reaver-player:hover {
@@ -18,16 +20,15 @@
 
 .reaver-player video {
     width: 100%;
-    height: 100%;
+    height: auto;
     display: block;
     cursor: pointer;
+    aspect-ratio: 16/9;
     object-fit: cover;
 }
 
 .reaver-player .video-container {
     position: relative;
-    width: 100%;
-    height: 100%;
 }
 
 .reaver-player .controls {
@@ -43,7 +44,7 @@
     opacity: 0;
     backdrop-filter: blur(8px);
     transform: translateY(10px);
-    z-index: 10;
+    z-index: 20;
 }
 
 .reaver-player:hover .controls,
@@ -95,23 +96,23 @@
 
 .reaver-player .progress-container {
     flex: 1;
-    height: 4px;
+    height: var(--progress-height);
     background: rgba(255, 255, 255, 0.2);
     border-radius: 2px;
     margin: 0 15px;
     cursor: pointer;
     position: relative;
-    overflow: hidden;
+    overflow: visible;
     transition: height 0.2s;
 }
 
 .reaver-player .progress-container:hover {
-    height: 6px;
+    height: var(--progress-hover-height);
 }
 
 .reaver-player .progress {
     height: 100%;
-    background: #fff;
+    background: var(--primary-color);
     border-radius: 2px;
     transition: width 0.1s linear;
     position: relative;
@@ -151,11 +152,10 @@
     font-size: 13px;
     margin: 0 10px;
     font-weight: 500;
-    min-width: 110px;
+    min-width: 90px;
     text-align: center;
     font-variant-numeric: tabular-nums;
     letter-spacing: 0.5px;
-    white-space: nowrap;
 }
 
 .reaver-player .volume-container {
@@ -186,43 +186,6 @@
     accent-color: #fff;
     cursor: pointer;
     outline: none;
-    -webkit-appearance: none;
-    background: transparent;
-}
-
-.reaver-player .volume-slider::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background: #fff;
-    cursor: pointer;
-}
-
-.reaver-player .volume-slider::-moz-range-thumb {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background: #fff;
-    cursor: pointer;
-    border: none;
-}
-
-.reaver-player .volume-slider::-webkit-slider-runnable-track {
-    width: 100%;
-    height: 4px;
-    cursor: pointer;
-    background: rgba(255, 255, 255, 0.3);
-    border-radius: 2px;
-}
-
-.reaver-player .volume-slider::-moz-range-track {
-    width: 100%;
-    height: 4px;
-    cursor: pointer;
-    background: rgba(255, 255, 255, 0.3);
-    border-radius: 2px;
-    border: none;
 }
 
 .reaver-player .menu {
@@ -302,7 +265,6 @@
     padding: 4px 8px;
     border-radius: 4px;
     letter-spacing: 0.5px;
-    z-index: 5;
 }
 
 @keyframes slideUp {
@@ -472,56 +434,148 @@
     transition: opacity 0.2s;
     pointer-events: none;
     z-index: 20;
-    white-space: nowrap;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .reaver-player .scrub-preview.visible {
     opacity: 1;
 }
 
-/* Адаптивность для мобильных устройств */
-@media (max-width: 768px) {
-    .reaver-player .volume-slider-container {
-        display: none;
-    }
-    
-    .reaver-player .time {
-        min-width: 95px;
-        font-size: 12px;
-        margin: 0 8px;
-    }
-    
-    .reaver-player .btn {
-        width: 32px;
-        height: 32px;
-        margin-right: 8px;
-        font-size: 14px;
-    }
-    
-    .reaver-player .menu-btn {
-        width: 32px;
-        height: 32px;
-    }
-    
-    .reaver-player .progress-container {
-        margin: 0 10px;
-    }
-    
-    .reaver-player .controls {
-        padding: 10px 12px;
-    }
-    
-    .reaver-player .volume-container:hover .volume-slider-container {
-        position: absolute;
-        bottom: 100%;
-        left: 0;
-        width: 30px;
-        height: 100px;
-        margin-left: 0;
-        margin-bottom: 10px;
-        transform: rotate(-90deg);
-        transform-origin: left bottom;
-    }
+.reaver-player .scrub-thumbnail {
+    width: 160px;
+    height: 90px;
+    background-size: cover;
+    background-position: center;
+    border-radius: 3px;
+    margin-bottom: 5px;
+    background-color: #222;
+}
+
+.reaver-player .scrub-time {
+    font-weight: 500;
+    color: #fff;
+}
+
+.reaver-player .hover-time {
+    position: absolute;
+    top: -30px;
+    left: 0;
+    background: rgba(0, 0, 0, 0.8);
+    color: #fff;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s;
+    z-index: 15;
+}
+
+.reaver-player .progress-container:hover .hover-time {
+    opacity: 1;
+}
+
+.reaver-player .chapter-markers {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+    pointer-events: none;
+    z-index: 3;
+}
+
+.reaver-player .chapter-marker {
+    position: absolute;
+    top: 0;
+    width: 2px;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.5);
+    transform: translateX(-50%);
+}
+
+.reaver-player .chapter-marker:hover::after {
+    content: attr(data-title);
+    position: absolute;
+    top: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: #fff;
+    padding: 3px 6px;
+    border-radius: 3px;
+    font-size: 11px;
+    white-space: nowrap;
+}
+
+.reaver-player .thumbnail-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+    z-index: 4;
+}
+
+.reaver-player .thumbnail-overlay.visible {
+    opacity: 0.3;
+}
+
+.reaver-player .settings-panel {
+    position: absolute;
+    bottom: 50px;
+    right: 10px;
+    background: rgba(25, 25, 25, 0.95);
+    border-radius: 8px;
+    padding: 15px;
+    z-index: 100;
+    min-width: 200px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    display: none;
+}
+
+.reaver-player .settings-panel.visible {
+    display: block;
+    animation: slideUp 0.2s ease-out;
+}
+
+.reaver-player .settings-item {
+    margin-bottom: 15px;
+}
+
+.reaver-player .settings-item:last-child {
+    margin-bottom: 0;
+}
+
+.reaver-player .settings-item label {
+    display: block;
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 5px;
+    font-size: 13px;
+}
+
+.reaver-player .settings-item input[type="range"] {
+    width: 100%;
+    accent-color: var(--primary-color);
+}
+
+.reaver-player .settings-item select {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.9);
+    border: none;
+    border-radius: 4px;
+    padding: 6px 8px;
+    outline: none;
 }
 
 /* Анимация щелчка */
@@ -544,27 +598,30 @@
     pointer-events: none;
 }
 
-/* Стили для полноэкранного режима */
-.reaver-player:-webkit-full-screen {
-    width: 100%;
-    height: 100%;
-    border-radius: 0;
-}
-
-.reaver-player:-moz-full-screen {
-    width: 100%;
-    height: 100%;
-    border-radius: 0;
-}
-
-.reaver-player:-ms-fullscreen {
-    width: 100%;
-    height: 100%;
-    border-radius: 0;
-}
-
-.reaver-player:fullscreen {
-    width: 100%;
-    height: 100%;
-    border-radius: 0;
+/* Адаптивность для мобильных устройств */
+@media (max-width: 768px) {
+    .reaver-player .volume-slider-container {
+        display: none;
+    }
+    
+    .reaver-player .time {
+        min-width: 80px;
+        font-size: 12px;
+    }
+    
+    .reaver-player .btn {
+        width: 32px;
+        height: 32px;
+        margin-right: 8px;
+    }
+    
+    .reaver-player .menu-btn {
+        width: 32px;
+        height: 32px;
+    }
+    
+    .reaver-player .scrub-thumbnail {
+        width: 120px;
+        height: 68px;
+    }
 }
