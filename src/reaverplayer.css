@@ -9,6 +9,8 @@
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
     transition: all 0.3s ease;
     line-height: 1;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
 }
 
 .reaver-player:hover {
@@ -41,6 +43,7 @@
     opacity: 0;
     backdrop-filter: blur(8px);
     transform: translateY(10px);
+    z-index: 10;
 }
 
 .reaver-player:hover .controls,
@@ -261,6 +264,7 @@
     padding: 4px 8px;
     border-radius: 4px;
     letter-spacing: 0.5px;
+    z-index: 5;
 }
 
 @keyframes slideUp {
@@ -337,6 +341,7 @@
     border-radius: 8px;
     z-index: 1001;
     width: 300px;
+    max-width: 90%;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -405,6 +410,7 @@
     transition: all 0.3s ease;
     pointer-events: none;
     z-index: 5;
+    cursor: pointer;
 }
 
 .reaver-player .center-play-btn.visible {
@@ -430,33 +436,11 @@
     transition: opacity 0.2s;
     pointer-events: none;
     z-index: 20;
+    white-space: nowrap;
 }
 
 .reaver-player .scrub-preview.visible {
     opacity: 1;
-}
-
-/* Адаптивность для мобильных устройств */
-@media (max-width: 768px) {
-    .reaver-player .volume-slider-container {
-        display: none;
-    }
-    
-    .reaver-player .time {
-        min-width: 80px;
-        font-size: 12px;
-    }
-    
-    .reaver-player .btn {
-        width: 32px;
-        height: 32px;
-        margin-right: 8px;
-    }
-    
-    .reaver-player .menu-btn {
-        width: 32px;
-        height: 32px;
-    }
 }
 
 /* Анимация щелчка */
@@ -477,4 +461,171 @@
     background: rgba(255, 255, 255, 0.4);
     animation: ripple 0.6s linear;
     pointer-events: none;
+}
+
+/* Toast уведомления */
+.reaver-player .toast {
+    position: absolute;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 10px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    z-index: 1002;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+}
+
+.reaver-player .toast.visible {
+    opacity: 1;
+}
+
+/* Кастомный ползунок громкости для мобильных */
+.reaver-player .volume-slider-mobile {
+    position: absolute;
+    left: 50%;
+    bottom: 60px;
+    transform: translateX(-50%) rotate(270deg);
+    width: 100px;
+    height: 6px;
+    accent-color: #fff;
+    z-index: 20;
+    display: none;
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 768px) {
+    .reaver-player .volume-slider-container {
+        display: none;
+    }
+    
+    .reaver-player .time {
+        min-width: 80px;
+        font-size: 12px;
+    }
+    
+    .reaver-player .btn {
+        width: 40px;
+        height: 40px;
+        margin-right: 8px;
+    }
+    
+    .reaver-player .menu-btn {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .reaver-player .progress-container {
+        margin: 0 10px;
+        height: 6px;
+    }
+    
+    .reaver-player .controls {
+        padding: 15px 10px;
+    }
+    
+    .reaver-player .center-play-btn {
+        width: 80px;
+        height: 80px;
+    }
+    
+    .reaver-player .center-play-btn i {
+        font-size: 32px;
+    }
+    
+    .reaver-player .menu-content {
+        bottom: 50px;
+        right: 0;
+        min-width: 140px;
+    }
+    
+    /* Увеличиваем область клика для мобильных */
+    .reaver-player .btn::before {
+        content: '';
+        position: absolute;
+        top: -10px;
+        left: -10px;
+        right: -10px;
+        bottom: -10px;
+    }
+}
+
+/* Для очень маленьких экранов */
+@media (max-width: 480px) {
+    .reaver-player .time {
+        display: none;
+    }
+    
+    .reaver-player .btn {
+        width: 36px;
+        height: 36px;
+        margin-right: 6px;
+    }
+    
+    .reaver-player .menu-btn {
+        width: 36px;
+        height: 36px;
+    }
+    
+    .reaver-player .player-title {
+        font-size: 10px;
+        top: 10px;
+        left: 10px;
+    }
+    
+    .reaver-player .shortcuts-hint {
+        top: 10px;
+        right: 10px;
+        padding: 4px 6px;
+    }
+}
+
+/* Темная тема для ползунков */
+.reaver-player input[type="range"] {
+    -webkit-appearance: none;
+    background: transparent;
+}
+
+.reaver-player input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    height: 16px;
+    width: 16px;
+    border-radius: 50%;
+    background: #fff;
+    cursor: pointer;
+    margin-top: -5px;
+}
+
+.reaver-player input[type="range"]::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 6px;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+}
+
+.reaver-player input[type="range"]:focus {
+    outline: none;
+}
+
+.reaver-player input[type="range"]::-moz-range-thumb {
+    height: 16px;
+    width: 16px;
+    border-radius: 50%;
+    background: #fff;
+    cursor: pointer;
+    border: none;
+}
+
+.reaver-player input[type="range"]::-moz-range-track {
+    width: 100%;
+    height: 6px;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+    border: none;
 }
