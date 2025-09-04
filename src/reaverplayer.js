@@ -1,3 +1,4 @@
+// JavaScript
 class ReaverPlayer {
     constructor(root) {
         this.root = root;
@@ -374,6 +375,7 @@ class ReaverPlayer {
         document.addEventListener('fullscreenchange', () => {
             this.isFullscreen = !!document.fullscreenElement;
             this.updateFullscreenIcon();
+            this.handleFullscreenChange();
         });
 
         // Picture-in-Picture
@@ -457,6 +459,7 @@ class ReaverPlayer {
         let touchStartTime = 0;
         let seeking = false;
         let volumeGesture = false;
+        let tapTimer = null;
         
         this.videoContainer.addEventListener('touchstart', (e) => {
             touchStartX = e.touches[0].clientX;
@@ -464,7 +467,14 @@ class ReaverPlayer {
             touchStartTime = Date.now();
             seeking = false;
             volumeGesture = false;
-        });
+            
+            // Таймер для определения тапа (без движения)
+            tapTimer = setTimeout(() => {
+                if (!seeking && !volumeGesture) {
+                    this.toggleControls();
+                }
+            }, 300);
+        }, { passive: true });
         
         this.videoContainer.addEventListener('touchmove', (e) => {
             if (!this.video.duration) return;
@@ -474,20 +484,23 @@ class ReaverPlayer {
             const deltaX = touchX - touchStartX;
             const deltaY = touchStartY - touchY; // inverted for more intuitive volume control
             
-            // Determine if this is a horizontal (seek) or vertical (volume) gesture
+            // Определяем тип жеста после определенного порога движения
             if (!seeking && !volumeGesture) {
-                if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 10) {
+                if (Math.abs(deltaX) > 20) {
                     seeking = true;
+                    clearTimeout(tapTimer);
                     this.showToast('Перемотка');
-                } else if (Math.abs(deltaY) > Math.abs(deltaX) && Math.abs(deltaY) > 10) {
+                } else if (Math.abs(deltaY) > 20) {
                     volumeGesture = true;
+                    clearTimeout(tapTimer);
                     this.showToast('Громкость');
                 }
             }
             
             if (seeking) {
+                e.preventDefault();
                 const percent = deltaX / this.videoContainer.offsetWidth;
-                const seekTime = this.video.currentTime + percent * this.video.duration;
+                const seekTime = this.video.currentTime + percent * this.video.duration * 2; // 2x sensitivity
                 this.video.currentTime = Math.max(0, Math.min(seekTime, this.video.duration));
                 touchStartX = touchX;
                 
@@ -498,7 +511,8 @@ class ReaverPlayer {
             }
             
             if (volumeGesture) {
-                const volumeChange = deltaY / 200; // Adjust sensitivity
+                e.preventDefault();
+                const volumeChange = deltaY / 100; // Adjust sensitivity
                 let newVolume = this.video.volume + volumeChange;
                 newVolume = Math.max(0, Math.min(newVolume, 1));
                 this.video.volume = newVolume;
@@ -509,15 +523,20 @@ class ReaverPlayer {
                 
                 // Show volume slider on mobile
                 this.volumeSliderMobile.style.display = 'block';
+                this.volumeSliderMobile.style.opacity = '1';
                 setTimeout(() => {
                     if (this.volumeSliderMobile.style.display === 'block') {
-                        this.volumeSliderMobile.style.display = 'none';
+                        this.volumeSliderMobile.style.opacity = '0';
+                        setTimeout(() => {
+                            this.volumeSliderMobile.style.display = 'none';
+                        }, 300);
                     }
                 }, 2000);
             }
-        });
+        }, { passive: false });
         
         this.videoContainer.addEventListener('touchend', () => {
+            clearTimeout(tapTimer);
             this.scrubPreview.classList.remove('visible');
             
             // Handle tap (play/pause)
@@ -526,9 +545,31 @@ class ReaverPlayer {
                 this.showCenterPlayButton();
             }
             
+            // Скрываем ползунок громкости через 2 секунды
+            if (volumeGesture && this.volumeSliderMobile.style.display === 'block') {
+                setTimeout(() => {
+                    this.volumeSliderMobile.style.opacity = '0';
+                    setTimeout(() => {
+                        this.volumeSliderMobile.style.display = 'none';
+                    }, 300);
+                }, 2000);
+            }
+            
             seeking = false;
             volumeGesture = false;
-        });
+        }, { passive: true });
+        
+        // Двойное касание для полноэкранного режима
+        let lastTap = 0;
+        this.videoContainer.addEventListener('touchend', (e) => {
+            const currentTime = new Date().getTime();
+            const tapLength = currentTime - lastTap;
+            if (tapLength < 300 && tapLength > 0) {
+                // Double tap detected
+                this.toggleFullscreen();
+            }
+            lastTap = currentTime;
+        }, { passive: true });
     }
     
     setupFontAwesome() {
@@ -547,9 +588,6 @@ class ReaverPlayer {
                 this.modalOverlay.style.display === 'block') {
                 return;
             }
-            
-            // Ignore if not focused on player (optional)
-            // if (!this.root.contains(document.activeElement) && document.activeElement !== document.body) return;
             
             switch(e.key.toLowerCase()) {
                 case ' ':
@@ -768,6 +806,24 @@ class ReaverPlayer {
         // Обновление позиций элементов при изменении размера окна
         if (this.scrubPreview.classList.contains('visible')) {
             this.scrubPreview.classList.remove('visible');
+        }
+    }
+    
+    handleFullscreenChange() {
+        if (this.isFullscreen) {
+            // В полноэкранном режиме добавляем класс для центрирования
+            this.video.style.objectFit = 'contain';
+            this.videoContainer.style.display = 'flex';
+            this.videoContainer.style.justifyContent = 'center';
+            this.videoContainer.style.alignItems = 'center';
+            this.videoContainer.style.backgroundColor = '#000';
+        } else {
+            // Возвращаем исходные стили
+            this.video.style.objectFit = 'cover';
+            this.videoContainer.style.display = 'block';
+            this.videoContainer.style.justifyContent = 'initial';
+            this.videoContainer.style.alignItems = 'initial';
+            this.videoContainer.style.backgroundColor = 'transparent';
         }
     }
     
