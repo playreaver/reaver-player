@@ -1238,18 +1238,6 @@ class ReaverPlayer {
             }
         };
         
-        const onMouseMove = (e) => {
-            if (!isDragging) return;
-            
-            const dx = e.clientX - startX;
-            const dy = e.clientY - startY;
-            
-            this.root.style.left = (initialLeft + dx) + 'px';
-            this.root.style.top = (initialTop + dy) + 'px';
-            this.root.style.right = 'auto';
-            this.root.style.bottom = 'auto';
-        };
-        
         const getRect = () => this.root.getBoundingClientRect();
         
         const onMouseMove = (e) => {
@@ -1258,7 +1246,6 @@ class ReaverPlayer {
             const dx = e.clientX - startX;
             const dy = e.clientY - startY;
             
-            // Ограничиваем перемещение границами экрана
             const newLeft = Math.max(0, Math.min(window.innerWidth - getRect().width, initialLeft + dx));
             const newTop = Math.max(0, Math.min(window.innerHeight - getRect().height, initialTop + dy));
             
