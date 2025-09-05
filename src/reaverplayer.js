@@ -425,6 +425,32 @@ class ReaverPlayer {
             e.stopPropagation();
         });
 
+        // Обработчик завершения видео
+        this.video.addEventListener('ended', () => this.handleVideoEnd());
+        
+        // Обработчик кнопки "Пересмотреть"
+        this.endOverlay.querySelector('.replay-btn').addEventListener('click', () => {
+            this.video.currentTime = 0;
+            this.play();
+            this.endOverlay.classList.remove('visible');
+        });
+        
+        // Обработчик кнопки закрытия мини-плеера
+        this.closeMiniBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.toggleMiniPlayer(false);
+        });
+        
+        // Обработчик клика по мини-плееру для воспроизведения
+        this.root.addEventListener('click', (e) => {
+            if (this.miniPlayerEnabled && !e.target.closest('.close-mini-btn')) {
+                this.toggle();
+            }
+        });
+        
+        // Инициализация обработчика скролла
+        this.setupScrollHandler();
+
         // Закрытие меню при клике вне его
         document.addEventListener('click', (e) => {
             if (!this.menu.contains(e.target)) {
@@ -921,6 +947,10 @@ class ReaverPlayer {
     }
 
     toggleFullscreen() {
+        if (this.miniPlayerEnabled) {
+            this.toggleMiniPlayer(false);
+        }
+
         if (!document.fullscreenElement) {
             if (this.root.requestFullscreen) {
                 this.root.requestFullscreen().catch(err => {
@@ -1059,6 +1089,74 @@ class ReaverPlayer {
         } catch (e) {
             console.error('Error loading settings:', e);
         }
+    }
+
+    handleVideoEnd() {
+        this.playBtn.innerHTML = '<i class="fas fa-play"></i>';
+        this.showCenterPlayButton();
+        this.endOverlay.classList.add('visible');
+    }
+    
+    // Метод для активации/деактивации мини-плеера
+    toggleMiniPlayer(enable) {
+        if (enable && !this.miniPlayerEnabled) {
+            // Сохраняем оригинальное положение
+            this.originalPosition.parent = this.root.parentNode;
+            this.originalPosition.nextSibling = this.root.nextSibling;
+            this.originalPosition.style = {
+                width: this.root.style.width,
+                height: this.root.style.height,
+                position: this.root.style.position,
+                top: this.root.style.top,
+                left: this.root.style.left
+            };
+            
+            // Активируем мини-плеер
+            this.root.classList.add('mini');
+            this.closeMiniBtn.style.display = 'flex';
+            document.body.appendChild(this.root);
+            this.miniPlayerEnabled = true;
+            
+            // Пауза видео при активации мини-плеера
+            this.pause();
+        } else if (!enable && this.miniPlayerEnabled) {
+            // Деактивируем мини-плеер
+            this.root.classList.remove('mini');
+            this.closeMiniBtn.style.display = 'none';
+            
+            // Возвращаем на оригинальное место
+            if (this.originalPosition.parent) {
+                if (this.originalPosition.nextSibling) {
+                    this.originalPosition.parent.insertBefore(this.root, this.originalPosition.nextSibling);
+                } else {
+                    this.originalPosition.parent.appendChild(this.root);
+                }
+            }
+            
+            // Восстанавливаем стили
+            Object.assign(this.root.style, this.originalPosition.style);
+            this.miniPlayerEnabled = false;
+        }
+    }
+    
+    // Метод для обработки скролла
+    setupScrollHandler() {
+        let lastScrollTop = 0;
+        const scrollThreshold = 100;
+        
+        window.addEventListener('scroll', () => {
+            if (this.isFullscreen) return;
+            
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            const scrolledDown = scrollTop > lastScrollTop;
+            const scrollDiff = Math.abs(scrollTop - lastScrollTop);
+            
+            if (scrolledDown && scrollDiff > scrollThreshold && !this.miniPlayerEnabled) {
+                this.toggleMiniPlayer(true);
+            }
+            
+            lastScrollTop = scrollTop;
+        }, { passive: true });
     }
 
     play(){ 
