@@ -14,21 +14,27 @@ class ReaverPlayer {
         this.initPlayer();
         this.setupFontAwesome();
         this.setupKeyboardShortcuts();
-
+        
+        // Показываем подсказку о горячих клавишах
         this.showShortcutsHint();
         
+        // Таймер для скрытия контролов
         this.controlsTimeout = null;
         this.controlsVisible = false;
         
+        // Инициализация жестов
         this.setupGestures();
-
+        
+        // Сохранение настроек
         this.loadSettings();
     }
 
     initPlayer() {
+        // Очищаем контейнер
         this.root.innerHTML = '';
         this.root.classList.add('reaver-player');
 
+        // Создаем контейнер для видео
         this.videoContainer = document.createElement('div');
         this.videoContainer.className = 'video-container';
         this.root.appendChild(this.videoContainer);
@@ -41,6 +47,7 @@ class ReaverPlayer {
         this.video.setAttribute('playsinline', '');
         this.videoContainer.appendChild(this.video);
 
+        // Создаем оверлей загрузки
         this.loadingOverlay = document.createElement('div');
         this.loadingOverlay.className = 'loading-overlay';
         this.loadingOverlay.innerHTML = `
@@ -48,15 +55,18 @@ class ReaverPlayer {
         `;
         this.videoContainer.appendChild(this.loadingOverlay);
 
+        // Создаем кнопку воспроизведения по центру
         this.centerPlayBtn = document.createElement('div');
         this.centerPlayBtn.className = 'center-play-btn';
         this.centerPlayBtn.innerHTML = '<i class="fas fa-play"></i>';
         this.videoContainer.appendChild(this.centerPlayBtn);
 
+        // Создаем превью для перемотки
         this.scrubPreview = document.createElement('div');
         this.scrubPreview.className = 'scrub-preview';
         this.videoContainer.appendChild(this.scrubPreview);
 
+        // Модальное окно для горячих клавиш
         this.shortcutsModal = document.createElement('div');
         this.shortcutsModal.className = 'shortcuts-modal';
         this.shortcutsModal.innerHTML = `
@@ -76,14 +86,17 @@ class ReaverPlayer {
         `;
         this.videoContainer.appendChild(this.shortcutsModal);
 
+        // Оверлей для модальных окон
         this.modalOverlay = document.createElement('div');
         this.modalOverlay.className = 'modal-overlay';
         this.videoContainer.appendChild(this.modalOverlay);
 
+        // Toast уведомления
         this.toast = document.createElement('div');
         this.toast.className = 'toast';
         this.videoContainer.appendChild(this.toast);
 
+        // Мобильный ползунок громкости
         this.volumeSliderMobile = document.createElement('input');
         this.volumeSliderMobile.type = 'range';
         this.volumeSliderMobile.className = 'volume-slider-mobile';
@@ -101,6 +114,7 @@ class ReaverPlayer {
         const controls = document.createElement('div');
         controls.className = 'controls';
 
+        // Play/Pause
         this.playBtn = document.createElement('button');
         this.playBtn.className = 'btn';
         this.playBtn.innerHTML = '<i class="fas fa-play"></i>';
@@ -108,11 +122,13 @@ class ReaverPlayer {
         this.playBtn.setAttribute('aria-label', 'Play/Pause');
         controls.appendChild(this.playBtn);
 
+        // Время
         this.time = document.createElement('span');
         this.time.className = 'time';
         this.time.textContent = '0:00 / 0:00';
         controls.appendChild(this.time);
 
+        // Прогресс-бар
         this.progressContainer = document.createElement('div');
         this.progressContainer.className = 'progress-container';
         this.progressContainer.setAttribute('aria-label', 'Progress bar');
@@ -127,32 +143,7 @@ class ReaverPlayer {
         this.progressContainer.appendChild(this.progress);
         controls.appendChild(this.progressContainer);
 
-        this.volumeContainer = document.createElement('div');
-        this.volumeContainer.className = 'volume-container';
-        
-        this.volumeBtn = document.createElement('button');
-        this.volumeBtn.className = 'btn';
-        this.volumeBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
-        this.volumeBtn.title = 'Volume (M)';
-        this.volumeBtn.setAttribute('aria-label', 'Volume control');
-        
-        this.volumeSliderContainer = document.createElement('div');
-        this.volumeSliderContainer.className = 'volume-slider-container';
-        
-        this.volumeSlider = document.createElement('input');
-        this.volumeSlider.type = 'range';
-        this.volumeSlider.className = 'volume-slider';
-        this.volumeSlider.min = 0;
-        this.volumeSlider.max = 1;
-        this.volumeSlider.step = 0.05;
-        this.volumeSlider.value = 1;
-        this.volumeSlider.setAttribute('aria-label', 'Volume slider');
-        
-        this.volumeSliderContainer.appendChild(this.volumeSlider);
-        this.volumeContainer.appendChild(this.volumeBtn);
-        this.volumeContainer.appendChild(this.volumeSliderContainer);
-        controls.appendChild(this.volumeContainer);
-
+        // Полноэкранный режим (теперь первая кнопка справа)
         this.fullscreenBtn = document.createElement('button');
         this.fullscreenBtn.className = 'btn fullscreen-btn';
         this.fullscreenBtn.innerHTML = '<i class="fas fa-expand"></i>';
@@ -160,6 +151,7 @@ class ReaverPlayer {
         this.fullscreenBtn.setAttribute('aria-label', 'Fullscreen');
         controls.appendChild(this.fullscreenBtn);
 
+        // Picture-in-Picture (теперь вторая кнопка справа)
         this.pipBtn = document.createElement('button');
         this.pipBtn.className = 'btn pip-btn';
         this.pipBtn.innerHTML = '<i class="fas fa-compress-arrows-alt"></i>';
@@ -167,6 +159,7 @@ class ReaverPlayer {
         this.pipBtn.setAttribute('aria-label', 'Picture in Picture');
         controls.appendChild(this.pipBtn);
 
+        // Меню (теперь последняя кнопка справа)
         this.menu = document.createElement('div');
         this.menu.className = 'menu';
 
@@ -180,10 +173,43 @@ class ReaverPlayer {
         this.menuContent = document.createElement('div');
         this.menuContent.className = 'menu-content';
 
+        // Заголовок плеера
         const playerTitle = document.createElement('h3');
         playerTitle.textContent = 'Reaver Player';
         this.menuContent.appendChild(playerTitle);
 
+        // Громкость (добавляем в меню)
+        const volumeLabel = document.createElement('span');
+        volumeLabel.textContent = 'Громкость:';
+        volumeLabel.style.color = 'rgba(255, 255, 255, 0.7)';
+        volumeLabel.style.fontSize = '12px';
+        volumeLabel.style.marginBottom = '5px';
+        volumeLabel.style.display = 'block';
+        this.menuContent.appendChild(volumeLabel);
+        
+        this.volumeSliderMenu = document.createElement('input');
+        this.volumeSliderMenu.type = 'range';
+        this.volumeSliderMenu.min = 0;
+        this.volumeSliderMenu.max = 1;
+        this.volumeSliderMenu.step = 0.05;
+        this.volumeSliderMenu.value = 1;
+        this.volumeSliderMenu.style.width = '100%';
+        this.volumeSliderMenu.style.marginBottom = '15px';
+        this.menuContent.appendChild(this.volumeSliderMenu);
+
+        // Кнопка mute/unmute в меню
+        this.menuMuteBtn = document.createElement('button');
+        this.menuMuteBtn.innerHTML = '<i class="fas fa-volume-up"></i> Mute/Unmute';
+        this.menuMuteBtn.style.marginBottom = '15px';
+        this.menuContent.appendChild(this.menuMuteBtn);
+
+        // Picture-in-Picture в меню
+        this.menuPipBtn = document.createElement('button');
+        this.menuPipBtn.innerHTML = '<i class="fas fa-compress-arrows-alt"></i> Picture in Picture';
+        this.menuPipBtn.style.marginBottom = '15px';
+        this.menuContent.appendChild(this.menuPipBtn);
+
+        // Скорость
         const speedLabel = document.createElement('span');
         speedLabel.textContent = 'Скорость:';
         speedLabel.style.color = 'rgba(255, 255, 255, 0.7)';
@@ -202,10 +228,12 @@ class ReaverPlayer {
         });
         this.menuContent.appendChild(this.speedSelect);
 
+        // Скачать
         this.downloadBtn = document.createElement('button');
         this.downloadBtn.innerHTML = '<i class="fas fa-download"></i> Скачать видео';
         this.menuContent.appendChild(this.downloadBtn);
 
+        // Качество видео
         if(this.root.dataset.sources){
             const qualityLabel = document.createElement('span');
             qualityLabel.textContent = 'Качество:';
@@ -228,6 +256,7 @@ class ReaverPlayer {
             this.menuContent.appendChild(this.qualitySelect);
         }
 
+        // Субтитры
         if(this.root.dataset.subtitles){
             const subLabel = document.createElement('span');
             subLabel.textContent = 'Субтитры:';
@@ -252,11 +281,13 @@ class ReaverPlayer {
         this.menu.appendChild(this.menuContent);
         controls.appendChild(this.menu);
 
+        // Название плеера
         const titleElement = document.createElement('div');
         titleElement.className = 'player-title';
         titleElement.textContent = 'Reaver Player v2.0';
         this.root.appendChild(titleElement);
 
+        // Подсказка горячих клавиш
         this.shortcutsHint = document.createElement('div');
         this.shortcutsHint.className = 'shortcuts-hint';
         this.shortcutsHint.innerHTML = '<i class="fas fa-keyboard"></i>';
@@ -269,7 +300,9 @@ class ReaverPlayer {
     bindEvents() {
         this.playBtn.addEventListener('click', () => this.toggle());
         
+        // Клик по видео для паузы/воспроизведения
         this.video.addEventListener('click', (e) => {
+            // Предотвращаем срабатывание, если клик был на элементах управления
             if (e.target.closest('.controls') || e.target.closest('.btn')) return;
             this.toggle();
             this.showCenterPlayButton();
@@ -287,7 +320,8 @@ class ReaverPlayer {
         });
         this.video.addEventListener('volumechange', () => this.updateVolumeIcon());
         this.video.addEventListener('ratechange', () => this.updatePlaybackRate());
-
+        
+        // События загрузки
         this.video.addEventListener('loadstart', () => this.showLoading());
         this.video.addEventListener('canplay', () => this.hideLoading());
         this.video.addEventListener('waiting', () => this.showLoading());
@@ -298,30 +332,26 @@ class ReaverPlayer {
             this.showToast('Ошибка загрузки видео');
             console.error('Video error:', e);
         });
-
+        
+        // Управление видимостью контролов
         this.videoContainer.addEventListener('mousemove', () => this.showControls());
         this.videoContainer.addEventListener('mouseleave', () => this.hideControls());
         this.videoContainer.addEventListener('touchstart', () => this.toggleControls());
         
+        // Перемотка
         this.progressContainer.addEventListener('click', e => this.seek(e));
         this.progressContainer.addEventListener('mousemove', e => this.previewSeek(e));
         this.progressContainer.addEventListener('mouseleave', () => this.hideSeekPreview());
-
-        this.volumeSlider.addEventListener('input', () => {
-            this.video.volume = this.volumeSlider.value;
+        
+        // Громкость через меню
+        this.volumeSliderMenu.addEventListener('input', () => {
+            this.video.volume = this.volumeSliderMenu.value;
             this.volumeSliderMobile.value = this.video.volume;
             this.updateVolumeIcon();
             this.saveSettings();
         });
 
-        this.volumeSliderMobile.addEventListener('input', () => {
-            this.video.volume = this.volumeSliderMobile.value;
-            this.volumeSlider.value = this.video.volume;
-            this.updateVolumeIcon();
-            this.saveSettings();
-        });
-
-        this.volumeBtn.addEventListener('click', () => {
+        this.menuMuteBtn.addEventListener('click', () => {
             if (this.video.muted) {
                 this.video.muted = false;
                 this.video.volume = this.volumeBeforeMute;
@@ -329,27 +359,37 @@ class ReaverPlayer {
                 this.volumeBeforeMute = this.video.volume;
                 this.video.muted = true;
             }
-            this.volumeSlider.value = this.video.volume;
-            this.volumeSliderMobile.value = this.video.volume;
             this.updateVolumeIcon();
             this.saveSettings();
         });
 
+        this.volumeSliderMobile.addEventListener('input', () => {
+            this.video.volume = this.volumeSliderMobile.value;
+            this.volumeSliderMenu.value = this.video.volume;
+            this.updateVolumeIcon();
+            this.saveSettings();
+        });
+
+        // Полноэкранный режим
         this.fullscreenBtn.addEventListener('click', () => this.toggleFullscreen());
 
+        // Обработка изменения полноэкранного режима
         document.addEventListener('fullscreenchange', () => {
             this.isFullscreen = !!document.fullscreenElement;
             this.updateFullscreenIcon();
             this.handleFullscreenChange();
         });
 
-        this.pipBtn.addEventListener('click', () => this.togglePip());
+        // Picture-in-Picture через меню
+        this.menuPipBtn.addEventListener('click', () => this.togglePip());
 
+        // Меню кнопка
         this.menuBtn.addEventListener('click', (e) => {
             this.menuContent.style.display = this.menuContent.style.display === 'block' ? 'none' : 'block';
             e.stopPropagation();
         });
 
+        // Скорость
         this.speedSelect.addEventListener('change', () => {
             this.video.playbackRate = parseFloat(this.speedSelect.value);
             this.currentPlaybackRate = this.video.playbackRate;
@@ -357,6 +397,7 @@ class ReaverPlayer {
             this.saveSettings();
         });
 
+        // Скачать
         this.downloadBtn.addEventListener('click', () => {
             const a = document.createElement('a');
             a.href = this.video.currentSrc || this.video.src;
@@ -364,23 +405,27 @@ class ReaverPlayer {
             a.click();
         });
 
+        // Качество
         if(this.qualitySelect){
             this.qualitySelect.addEventListener('change', () => {
                 this.changeQuality(parseInt(this.qualitySelect.value));
             });
         }
 
+        // Субтитры
         if(this.subSelect){
             this.subSelect.addEventListener('change', () => {
                 this.changeSubtitles(parseInt(this.subSelect.value));
             });
         }
 
+        // Подсказка горячих клавиш
         this.shortcutsHint.addEventListener('click', (e) => {
             this.showShortcutsModal();
             e.stopPropagation();
         });
 
+        // Закрытие меню при клике вне его
         document.addEventListener('click', (e) => {
             if (!this.menu.contains(e.target)) {
                 this.menuContent.style.display = 'none';
@@ -389,19 +434,52 @@ class ReaverPlayer {
             if (this.modalOverlay.style.display === 'block') {
                 this.hideShortcutsModal();
             }
-
+            
+            // Скрываем мобильный ползунок громкости
             if (this.isMobile && this.volumeSliderMobile.style.display === 'block') {
                 this.volumeSliderMobile.style.display = 'none';
             }
         });
-
+        
+        // Закрытие модального окна по клику на оверлей
         this.modalOverlay.addEventListener('click', () => {
             this.hideShortcutsModal();
         });
         
+        // Обработка изменения размера окна
         window.addEventListener('resize', () => this.handleResize());
-
+        
+        // Сохранение позиции воспроизведения при выгрузке страницы
         window.addEventListener('beforeunload', () => this.saveSettings());
+        
+        // Автоматическое скрытие панели управления
+        this.setupAutoHideControls();
+    }
+    
+    setupAutoHideControls() {
+        let inactivityTimer;
+        const hideDelay = 3000; // 3 секунды бездействия
+        
+        const resetTimer = () => {
+            clearTimeout(inactivityTimer);
+            inactivityTimer = setTimeout(() => {
+                if (!this.video.paused) {
+                    this.hideControls();
+                }
+            }, hideDelay);
+        };
+        
+        // События, которые сбрасывают таймер
+        const events = ['mousemove', 'mousedown', 'touchstart', 'touchmove', 'keypress'];
+        events.forEach(event => {
+            this.videoContainer.addEventListener(event, () => {
+                this.showControls();
+                resetTimer();
+            });
+        });
+        
+        // Начальный запуск таймера
+        resetTimer();
     }
     
     setupGestures() {
@@ -421,6 +499,7 @@ class ReaverPlayer {
             seeking = false;
             volumeGesture = false;
             
+            // Таймер для определения тапа (без движения)
             tapTimer = setTimeout(() => {
                 if (!seeking && !volumeGesture) {
                     this.toggleControls();
@@ -434,8 +513,9 @@ class ReaverPlayer {
             const touchX = e.touches[0].clientX;
             const touchY = e.touches[0].clientY;
             const deltaX = touchX - touchStartX;
-            const deltaY = touchStartY - touchY;
+            const deltaY = touchStartY - touchY; // inverted for more intuitive volume control
             
+            // Определяем тип жеста после определенного порога движения
             if (!seeking && !volumeGesture) {
                 if (Math.abs(deltaX) > 20) {
                     seeking = true;
@@ -451,7 +531,7 @@ class ReaverPlayer {
             if (seeking) {
                 e.preventDefault();
                 const percent = deltaX / this.videoContainer.offsetWidth;
-                const seekTime = this.video.currentTime + percent * this.video.duration * 2;
+                const seekTime = this.video.currentTime + percent * this.video.duration * 2; // 2x sensitivity
                 this.video.currentTime = Math.max(0, Math.min(seekTime, this.video.duration));
                 touchStartX = touchX;
                 
@@ -463,15 +543,16 @@ class ReaverPlayer {
             
             if (volumeGesture) {
                 e.preventDefault();
-                const volumeChange = deltaY / 100;
+                const volumeChange = deltaY / 100; // Adjust sensitivity
                 let newVolume = this.video.volume + volumeChange;
                 newVolume = Math.max(0, Math.min(newVolume, 1));
                 this.video.volume = newVolume;
-                this.volumeSlider.value = newVolume;
+                this.volumeSliderMenu.value = newVolume;
                 this.volumeSliderMobile.value = newVolume;
                 this.updateVolumeIcon();
                 touchStartY = e.touches[0].clientY;
-
+                
+                // Show volume slider on mobile
                 this.volumeSliderMobile.style.display = 'block';
                 this.volumeSliderMobile.style.opacity = '1';
                 setTimeout(() => {
@@ -488,12 +569,14 @@ class ReaverPlayer {
         this.videoContainer.addEventListener('touchend', () => {
             clearTimeout(tapTimer);
             this.scrubPreview.classList.remove('visible');
-
+            
+            // Handle tap (play/pause)
             if (!seeking && !volumeGesture && (Date.now() - touchStartTime < 300)) {
                 this.toggle();
                 this.showCenterPlayButton();
             }
-
+            
+            // Скрываем ползунок громкости через 2 секунды
             if (volumeGesture && this.volumeSliderMobile.style.display === 'block') {
                 setTimeout(() => {
                     this.volumeSliderMobile.style.opacity = '0';
@@ -507,11 +590,13 @@ class ReaverPlayer {
             volumeGesture = false;
         }, { passive: true });
         
+        // Двойное касание для полноэкранного режима
         let lastTap = 0;
         this.videoContainer.addEventListener('touchend', (e) => {
             const currentTime = new Date().getTime();
             const tapLength = currentTime - lastTap;
             if (tapLength < 300 && tapLength > 0) {
+                // Double tap detected
                 this.toggleFullscreen();
             }
             lastTap = currentTime;
@@ -529,6 +614,7 @@ class ReaverPlayer {
     
     setupKeyboardShortcuts() {
         document.addEventListener('keydown', (e) => {
+            // Ignore if typing in inputs or if modal is open
             if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName) || 
                 this.modalOverlay.style.display === 'block') {
                 return;
@@ -562,7 +648,7 @@ class ReaverPlayer {
                     break;
                 case 'arrowup':
                     this.video.volume = Math.min(this.video.volume + 0.1, 1);
-                    this.volumeSlider.value = this.video.volume;
+                    this.volumeSliderMenu.value = this.video.volume;
                     this.volumeSliderMobile.value = this.video.volume;
                     this.updateVolumeIcon();
                     this.showToast('Громкость: ' + Math.round(this.video.volume * 100) + '%');
@@ -570,7 +656,7 @@ class ReaverPlayer {
                     break;
                 case 'arrowdown':
                     this.video.volume = Math.max(this.video.volume - 0.1, 0);
-                    this.volumeSlider.value = this.video.volume;
+                    this.volumeSliderMenu.value = this.video.volume;
                     this.volumeSliderMobile.value = this.video.volume;
                     this.updateVolumeIcon();
                     this.showToast('Громкость: ' + Math.round(this.video.volume * 100) + '%');
@@ -592,8 +678,7 @@ class ReaverPlayer {
                         this.video.muted = true;
                         this.showToast('Звук выключен');
                     }
-                    this.volumeSlider.value = this.video.volume;
-                    this.volumeSliderMobile.value = this.video.volume;
+                    this.volumeSliderMenu.value = this.video.volume;
                     this.updateVolumeIcon();
                     this.saveSettings();
                     break;
@@ -641,19 +726,12 @@ class ReaverPlayer {
     }
     
     showControls() {
-        if (this.video.paused) return;
-        
         this.root.classList.add('controls-visible');
         this.controlsVisible = true;
-        
-        clearTimeout(this.controlsTimeout);
-        this.controlsTimeout = setTimeout(() => {
-            this.hideControls();
-        }, 3000);
     }
     
     hideControls() {
-        if (!this.video.paused && !this.isFullscreen) {
+        if (!this.video.paused) {
             this.root.classList.remove('controls-visible');
             this.controlsVisible = false;
         }
@@ -664,10 +742,6 @@ class ReaverPlayer {
             this.hideControls();
         } else {
             this.showControls();
-            clearTimeout(this.controlsTimeout);
-            this.controlsTimeout = setTimeout(() => {
-                this.hideControls();
-            }, 3000);
         }
     }
     
@@ -747,6 +821,7 @@ class ReaverPlayer {
     }
     
     handleResize() {
+        // Обновление позиций элементов при изменении размера окна
         if (this.scrubPreview.classList.contains('visible')) {
             this.scrubPreview.classList.remove('visible');
         }
@@ -754,12 +829,14 @@ class ReaverPlayer {
     
     handleFullscreenChange() {
         if (this.isFullscreen) {
+            // В полноэкранном режиме добавляем класс для центрирования
             this.video.style.objectFit = 'contain';
             this.videoContainer.style.display = 'flex';
             this.videoContainer.style.justifyContent = 'center';
             this.videoContainer.style.alignItems = 'center';
             this.videoContainer.style.backgroundColor = '#000';
         } else {
+            // Возвращаем исходные стили
             this.video.style.objectFit = 'cover';
             this.videoContainer.style.display = 'block';
             this.videoContainer.style.justifyContent = 'initial';
@@ -819,14 +896,11 @@ class ReaverPlayer {
 
     updateVolumeIcon() {
         if (this.video.muted || this.video.volume === 0) {
-            this.volumeBtn.innerHTML = '<i class="fas fa-volume-mute"></i>';
-            this.volumeBtn.title = 'Unmute (M)';
+            this.menuMuteBtn.innerHTML = '<i class="fas fa-volume-mute"></i> Unmute';
         } else if (this.video.volume < 0.5) {
-            this.volumeBtn.innerHTML = '<i class="fas fa-volume-down"></i>';
-            this.volumeBtn.title = 'Mute (M)';
+            this.menuMuteBtn.innerHTML = '<i class="fas fa-volume-down"></i> Mute';
         } else {
-            this.volumeBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
-            this.volumeBtn.title = 'Mute (M)';
+            this.menuMuteBtn.innerHTML = '<i class="fas fa-volume-up"></i> Mute';
         }
     }
     
@@ -834,9 +908,11 @@ class ReaverPlayer {
         if (this.isFullscreen) {
             this.fullscreenBtn.innerHTML = '<i class="fas fa-compress"></i>';
             this.fullscreenBtn.title = 'Exit Fullscreen (F)';
+            this.fullscreenBtn.classList.add('active');
         } else {
             this.fullscreenBtn.innerHTML = '<i class="fas fa-expand"></i>';
             this.fullscreenBtn.title = 'Fullscreen (F)';
+            this.fullscreenBtn.classList.remove('active');
         }
     }
     
@@ -864,9 +940,11 @@ class ReaverPlayer {
             if (this.video !== document.pictureInPictureElement) {
                 await this.video.requestPictureInPicture();
                 this.showToast('Picture-in-Picture включен');
+                this.pipBtn.classList.add('active');
             } else {
                 await document.exitPictureInPicture();
                 this.showToast('Picture-in-Picture выключен');
+                this.pipBtn.classList.remove('active');
             }
         } catch (error) {
             console.error('Picture-in-Picture error:', error);
@@ -903,11 +981,13 @@ class ReaverPlayer {
     
     changeSubtitles(index) {
         if (index === -1 || !this.video.textTracks) return;
-
+        
+        // Turn off all tracks first
         for (let i = 0; i < this.video.textTracks.length; i++) {
             this.video.textTracks[i].mode = 'hidden';
         }
         
+        // Enable selected track if available
         if (index < this.video.textTracks.length) {
             this.video.textTracks[index].mode = 'showing';
             this.showToast('Субтитры: ' + this.video.textTracks[index].label);
@@ -945,7 +1025,7 @@ class ReaverPlayer {
             if (settings) {
                 if (settings.volume !== undefined) {
                     this.video.volume = settings.volume;
-                    this.volumeSlider.value = settings.volume;
+                    this.volumeSliderMenu.value = settings.volume;
                     this.volumeSliderMobile.value = settings.volume;
                 }
                 
@@ -1004,6 +1084,7 @@ class ReaverPlayer {
     }
 }
 
+// Автоматическая инициализация всех плееров на странице
 (function(){
     function boot(){
         document.querySelectorAll('.reaver-player').forEach(el=>{
