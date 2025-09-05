@@ -1112,47 +1112,48 @@ class ReaverPlayer {
                     position: this.root.style.position,
                     top: this.root.style.top,
                     left: this.root.style.left,
-                    margin: this.root.style.margin
+                    margin: this.root.style.margin,
+                    transition: this.root.style.transition
                 }
             };
             
-            // Подготавливаем анимацию перехода в мини-плеер
-            const originalRect = this.originalPosition.rect;
-            const targetWidth = 320;
-            const targetHeight = 180;
-            const targetRight = 20;
-            const targetBottom = 20;
-            
             // Устанавливаем фиксированную позицию для плавной анимации
             this.root.style.position = 'fixed';
-            this.root.style.width = originalRect.width + 'px';
-            this.root.style.height = originalRect.height + 'px';
-            this.root.style.top = originalRect.top + 'px';
-            this.root.style.left = originalRect.left + 'px';
-            this.root.style.transition = 'all 0.4s cubic-bezier(0.33, 1, 0.68, 1)';
+            this.root.style.width = this.originalPosition.rect.width + 'px';
+            this.root.style.height = this.originalPosition.rect.height + 'px';
+            this.root.style.top = this.originalPosition.rect.top + 'px';
+            this.root.style.left = this.originalPosition.rect.left + 'px';
             this.root.style.zIndex = '1000';
+            this.root.style.transition = 'all 0.4s cubic-bezier(0.33, 1, 0.68, 1)';
             
             // Даем время для применения стилей
             requestAnimationFrame(() => {
-                // Анимируем к мини-размеру
-                this.root.style.width = targetWidth + 'px';
-                this.root.style.height = targetHeight + 'px';
-                this.root.style.top = 'auto';
-                this.root.style.left = 'auto';
-                this.root.style.right = targetRight + 'px';
-                this.root.style.bottom = targetBottom + 'px';
-                
-                // Добавляем класс для стилизации
+                // Добавляем класс для стилизации перед анимацией
                 this.root.classList.add('mini-player');
                 this.closeMiniBtn.style.display = 'flex';
                 
-                // Включаем перетаскивание
-                this.enableDragging();
+                // Анимируем к мини-размеру
+                setTimeout(() => {
+                    this.root.style.width = '320px';
+                    this.root.style.height = '180px';
+                    this.root.style.top = 'auto';
+                    this.root.style.left = 'auto';
+                    this.root.style.right = '20px';
+                    this.root.style.bottom = '20px';
+                    
+                    // Включаем перетаскивание после анимации
+                    setTimeout(() => {
+                        this.enableDragging();
+                    }, 400);
+                }, 50);
             });
             
             this.miniPlayerEnabled = true;
             
         } else if (!enable && this.miniPlayerEnabled) {
+            // Отключаем перетаскивание сначала
+            this.disableDragging();
+            
             // Анимация возврата к обычному состоянию
             this.root.style.transition = 'all 0.5s cubic-bezier(0.33, 1, 0.68, 1)';
             this.root.style.width = this.originalPosition.rect.width + 'px';
@@ -1162,7 +1163,7 @@ class ReaverPlayer {
             this.root.style.right = 'auto';
             this.root.style.bottom = 'auto';
             
-            // Ждем завершения анимации
+            // Убираем класс мини-плеера после анимации
             setTimeout(() => {
                 this.root.classList.remove('mini-player');
                 this.closeMiniBtn.style.display = 'none';
@@ -1176,13 +1177,8 @@ class ReaverPlayer {
                     }
                 }
                 
-                // Восстанавливаем стили
+                // Восстанавливаем оригинальные стили
                 Object.assign(this.root.style, this.originalPosition.styles);
-                this.root.style.transition = '';
-                this.root.style.zIndex = '';
-                
-                // Отключаем перетаскивание
-                this.disableDragging();
                 
                 this.miniPlayerEnabled = false;
             }, 500);
