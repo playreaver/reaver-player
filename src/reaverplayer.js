@@ -1101,59 +1101,257 @@ class ReaverPlayer {
     // Метод для активации/деактивации мини-плеера
     toggleMiniPlayer(enable) {
         if (enable && !this.miniPlayerEnabled) {
-            // Сохраняем оригинальное положение
-            this.originalPosition.parent = this.root.parentNode;
-            this.originalPosition.nextSibling = this.root.nextSibling;
-            this.originalPosition.style = {
-                width: this.root.style.width,
-                height: this.root.style.height,
-                position: this.root.style.position,
-                top: this.root.style.top,
-                left: this.root.style.left
+            // Сохраняем оригинальное положение и размеры
+            this.originalPosition = {
+                parent: this.root.parentNode,
+                nextSibling: this.root.nextSibling,
+                rect: this.root.getBoundingClientRect(),
+                styles: {
+                    width: this.root.style.width,
+                    height: this.root.style.height,
+                    position: this.root.style.position,
+                    top: this.root.style.top,
+                    left: this.root.style.left,
+                    margin: this.root.style.margin
+                }
             };
             
-            // Активируем мини-плеер
-            this.root.classList.add('mini');
-            this.closeMiniBtn.style.display = 'flex';
-            document.body.appendChild(this.root);
+            // Подготавливаем анимацию перехода в мини-плеер
+            const originalRect = this.originalPosition.rect;
+            const targetWidth = 320;
+            const targetHeight = 180;
+            const targetRight = 20;
+            const targetBottom = 20;
+            
+            // Устанавливаем фиксированную позицию для плавной анимации
+            this.root.style.position = 'fixed';
+            this.root.style.width = originalRect.width + 'px';
+            this.root.style.height = originalRect.height + 'px';
+            this.root.style.top = originalRect.top + 'px';
+            this.root.style.left = originalRect.left + 'px';
+            this.root.style.transition = 'all 0.4s cubic-bezier(0.33, 1, 0.68, 1)';
+            this.root.style.zIndex = '1000';
+            
+            // Даем время для применения стилей
+            requestAnimationFrame(() => {
+                // Анимируем к мини-размеру
+                this.root.style.width = targetWidth + 'px';
+                this.root.style.height = targetHeight + 'px';
+                this.root.style.top = 'auto';
+                this.root.style.left = 'auto';
+                this.root.style.right = targetRight + 'px';
+                this.root.style.bottom = targetBottom + 'px';
+                
+                // Добавляем класс для стилизации
+                this.root.classList.add('mini-player');
+                this.closeMiniBtn.style.display = 'flex';
+                
+                // Включаем перетаскивание
+                this.enableDragging();
+            });
+            
             this.miniPlayerEnabled = true;
             
-            // Пауза видео при активации мини-плеера
-            this.pause();
         } else if (!enable && this.miniPlayerEnabled) {
-            // Деактивируем мини-плеер
-            this.root.classList.remove('mini');
-            this.closeMiniBtn.style.display = 'none';
+            // Анимация возврата к обычному состоянию
+            this.root.style.transition = 'all 0.5s cubic-bezier(0.33, 1, 0.68, 1)';
+            this.root.style.width = this.originalPosition.rect.width + 'px';
+            this.root.style.height = this.originalPosition.rect.height + 'px';
+            this.root.style.top = this.originalPosition.rect.top + 'px';
+            this.root.style.left = this.originalPosition.rect.left + 'px';
+            this.root.style.right = 'auto';
+            this.root.style.bottom = 'auto';
             
-            // Возвращаем на оригинальное место
-            if (this.originalPosition.parent) {
-                if (this.originalPosition.nextSibling) {
-                    this.originalPosition.parent.insertBefore(this.root, this.originalPosition.nextSibling);
-                } else {
-                    this.originalPosition.parent.appendChild(this.root);
+            // Ждем завершения анимации
+            setTimeout(() => {
+                this.root.classList.remove('mini-player');
+                this.closeMiniBtn.style.display = 'none';
+                
+                // Возвращаем на оригинальное место
+                if (this.originalPosition.parent) {
+                    if (this.originalPosition.nextSibling) {
+                        this.originalPosition.parent.insertBefore(this.root, this.originalPosition.nextSibling);
+                    } else {
+                        this.originalPosition.parent.appendChild(this.root);
+                    }
                 }
-            }
+                
+                // Восстанавливаем стили
+                Object.assign(this.root.style, this.originalPosition.styles);
+                this.root.style.transition = '';
+                this.root.style.zIndex = '';
+                
+                // Отключаем перетаскивание
+                this.disableDragging();
+                
+                this.miniPlayerEnabled = false;
+            }, 500);
+        }
+    }
+
+    enableDragging() {
+        let isDragging = false;
+        let startX, startY, initialLeft, initialTop;
+        
+        const onMouseDown = (e) => {
+            isDragging = true;
+            startX = e.clientX;
+            startY = e.clientY;
             
-            // Восстанавливаем стили
-            Object.assign(this.root.style, this.originalPosition.style);
-            this.miniPlayerEnabled = false;
+            // Сохраняем начальную позицию
+            const rect = this.root.getBoundingClientRect();
+            initialLeft = rect.left;
+            initialTop = rect.top;
+            
+            // Временно отключаем transition для плавного перетаскивания
+            this.root.style.transition = 'none';
+            
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', onMouseUp);
+            e.preventDefault();
+        };
+        
+        const onTouchStart = (e) => {
+            if (e.touches.length === 1) {
+                isDragging = true;
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientY;
+                
+                const rect = this.root.getBoundingClientRect();
+                initialLeft = rect.left;
+                initialTop = rect.top;
+                
+                this.root.style.transition = 'none';
+                
+                document.addEventListener('touchmove', onTouchMove);
+                document.addEventListener('touchend', onTouchEnd);
+                e.preventDefault();
+            }
+        };
+        
+        const onMouseMove = (e) => {
+            if (!isDragging) return;
+            
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+            
+            this.root.style.left = (initialLeft + dx) + 'px';
+            this.root.style.top = (initialTop + dy) + 'px';
+            this.root.style.right = 'auto';
+            this.root.style.bottom = 'auto';
+        };
+        
+        const onTouchMove = (e) => {
+            if (!isDragging || e.touches.length !== 1) return;
+            
+            const dx = e.touches[0].clientX - startX;
+            const dy = e.touches[0].clientY - startY;
+            
+            this.root.style.left = (initialLeft + dx) + 'px';
+            this.root.style.top = (initialTop + dy) + 'px';
+            this.root.style.right = 'auto';
+            this.root.style.bottom = 'auto';
+        };
+        
+        const onMouseUp = () => {
+            isDragging = false;
+            this.root.style.transition = 'all 0.3s ease';
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+            
+            // Прилипание к краям
+            this.snapToEdges();
+        };
+        
+        const onTouchEnd = () => {
+            isDragging = false;
+            this.root.style.transition = 'all 0.3s ease';
+            document.removeEventListener('touchmove', onTouchMove);
+            document.removeEventListener('touchend', onTouchEnd);
+            
+            this.snapToEdges();
+        };
+        
+        this.root.addEventListener('mousedown', onMouseDown);
+        this.root.addEventListener('touchstart', onTouchStart, { passive: false });
+        
+        // Сохраняем обработчики для последующего удаления
+        this.dragHandlers = {
+            mouseDown: onMouseDown,
+            touchStart: onTouchStart
+        };
+    }
+    
+    disableDragging() {
+        if (this.dragHandlers) {
+            this.root.removeEventListener('mousedown', this.dragHandlers.mouseDown);
+            this.root.removeEventListener('touchstart', this.dragHandlers.touchStart);
+            this.dragHandlers = null;
         }
     }
     
-    // Метод для обработки скролла
+    snapToEdges() {
+        const rect = this.root.getBoundingClientRect();
+        const windowWidth = window.innerWidth;
+        const windowHeight = window.innerHeight;
+        
+        let targetLeft = parseFloat(this.root.style.left);
+        let targetTop = parseFloat(this.root.style.top);
+        
+        // Прилипание к правому краю
+        if (Math.abs(rect.right - windowWidth) < 50) {
+            targetLeft = windowWidth - rect.width - 20;
+        }
+        // Прилипание к левому краю
+        else if (Math.abs(rect.left) < 50) {
+            targetLeft = 20;
+        }
+        
+        // Прилипание к нижнему краю
+        if (Math.abs(rect.bottom - windowHeight) < 50) {
+            targetTop = windowHeight - rect.height - 20;
+        }
+        // Прилипание к верхнему краю
+        else if (Math.abs(rect.top) < 50) {
+            targetTop = 20;
+        }
+        
+        // Применяем новую позицию
+        this.root.style.left = targetLeft + 'px';
+        this.root.style.top = targetTop + 'px';
+    }
+    
     setupScrollHandler() {
         let lastScrollTop = 0;
         const scrollThreshold = 100;
+        let scrollDirection = 'down';
         
         window.addEventListener('scroll', () => {
-            if (this.isFullscreen) return;
+            if (this.isFullscreen || this.miniPlayerEnabled) return;
             
             const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-            const scrolledDown = scrollTop > lastScrollTop;
+            scrollDirection = scrollTop > lastScrollTop ? 'down' : 'up';
             const scrollDiff = Math.abs(scrollTop - lastScrollTop);
             
-            if (scrolledDown && scrollDiff > scrollThreshold && !this.miniPlayerEnabled) {
-                this.toggleMiniPlayer(true);
+            // Активация мини-плеера при скролле вниз
+            if (scrollDirection === 'down' && scrollDiff > scrollThreshold) {
+                const playerRect = this.root.getBoundingClientRect();
+                
+                // Проверяем, что плеер уходит за верхнюю границу viewport
+                if (playerRect.bottom < 100) {
+                    this.toggleMiniPlayer(true);
+                }
+            }
+            
+            // Деактивация мини-плеера при скролле вверх
+            if (this.miniPlayerEnabled && scrollDirection === 'up' && scrollDiff > scrollThreshold) {
+                const playerRect = this.root.getBoundingClientRect();
+                
+                // Проверяем, что оригинальная позиция плеера снова в viewport
+                const originalTop = this.originalPosition.rect.top;
+                if (scrollTop <= originalTop + 100) {
+                    this.toggleMiniPlayer(false);
+                }
             }
             
             lastScrollTop = scrollTop;
