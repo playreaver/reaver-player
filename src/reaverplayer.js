@@ -10,31 +10,23 @@ class ReaverPlayer {
         this.currentPlaybackRate = 1;
         this.qualityLevels = [];
         this.currentQualityIndex = 0;
+        this.miniPlayerEnabled = false;
+        this.originalPosition = {};
         
         this.initPlayer();
         this.setupFontAwesome();
         this.setupKeyboardShortcuts();
-        
-        // Показываем подсказку о горячих клавишах
         this.showShortcutsHint();
-        
-        // Таймер для скрытия контролов
         this.controlsTimeout = null;
         this.controlsVisible = false;
-        
-        // Инициализация жестов
         this.setupGestures();
-        
-        // Сохранение настроек
         this.loadSettings();
     }
 
     initPlayer() {
-        // Очищаем контейнер
         this.root.innerHTML = '';
         this.root.classList.add('reaver-player');
 
-        // Создаем контейнер для видео
         this.videoContainer = document.createElement('div');
         this.videoContainer.className = 'video-container';
         this.root.appendChild(this.videoContainer);
@@ -47,26 +39,31 @@ class ReaverPlayer {
         this.video.setAttribute('playsinline', '');
         this.videoContainer.appendChild(this.video);
 
-        // Создаем оверлей загрузки
+        // Создаем оверлей завершения видео
+        this.endOverlay = document.createElement('div');
+        this.endOverlay.className = 'end-overlay';
+        this.endOverlay.innerHTML = `
+            <div class="end-message">
+                <h3>Видео завершено</h3>
+                <button class="replay-btn">Пересмотреть</button>
+            </div>
+        `;
+        this.videoContainer.appendChild(this.endOverlay);
+
         this.loadingOverlay = document.createElement('div');
         this.loadingOverlay.className = 'loading-overlay';
-        this.loadingOverlay.innerHTML = `
-            <div class="loading-spinner"></div>
-        `;
+        this.loadingOverlay.innerHTML = '<div class="loading-spinner"></div>';
         this.videoContainer.appendChild(this.loadingOverlay);
 
-        // Создаем кнопку воспроизведения по центру
         this.centerPlayBtn = document.createElement('div');
         this.centerPlayBtn.className = 'center-play-btn';
         this.centerPlayBtn.innerHTML = '<i class="fas fa-play"></i>';
         this.videoContainer.appendChild(this.centerPlayBtn);
 
-        // Создаем превью для перемотки
         this.scrubPreview = document.createElement('div');
         this.scrubPreview.className = 'scrub-preview';
         this.videoContainer.appendChild(this.scrubPreview);
 
-        // Модальное окно для горячих клавиш
         this.shortcutsModal = document.createElement('div');
         this.shortcutsModal.className = 'shortcuts-modal';
         this.shortcutsModal.innerHTML = `
@@ -86,17 +83,14 @@ class ReaverPlayer {
         `;
         this.videoContainer.appendChild(this.shortcutsModal);
 
-        // Оверлей для модальных окон
         this.modalOverlay = document.createElement('div');
         this.modalOverlay.className = 'modal-overlay';
         this.videoContainer.appendChild(this.modalOverlay);
 
-        // Toast уведомления
         this.toast = document.createElement('div');
         this.toast.className = 'toast';
         this.videoContainer.appendChild(this.toast);
 
-        // Мобильный ползунок громкости
         this.volumeSliderMobile = document.createElement('input');
         this.volumeSliderMobile.type = 'range';
         this.volumeSliderMobile.className = 'volume-slider-mobile';
@@ -105,6 +99,13 @@ class ReaverPlayer {
         this.volumeSliderMobile.step = 0.05;
         this.volumeSliderMobile.value = 1;
         this.videoContainer.appendChild(this.volumeSliderMobile);
+
+        // Создаем кнопку закрытия мини-плеера
+        this.closeMiniBtn = document.createElement('button');
+        this.closeMiniBtn.className = 'close-mini-btn';
+        this.closeMiniBtn.innerHTML = '<i class="fas fa-times"></i>';
+        this.closeMiniBtn.style.display = 'none';
+        this.videoContainer.appendChild(this.closeMiniBtn);
 
         this.createControls();
         this.bindEvents();
