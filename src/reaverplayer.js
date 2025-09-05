@@ -152,12 +152,12 @@ class ReaverPlayer {
         controls.appendChild(this.fullscreenBtn);
 
         // Picture-in-Picture (теперь вторая кнопка справа)
-        this.pipBtn = document.createElement('button');
-        this.pipBtn.className = 'btn pip-btn';
-        this.pipBtn.innerHTML = '<i class="fas fa-compress-arrows-alt"></i>';
-        this.pipBtn.title = 'Picture in Picture (P)';
-        this.pipBtn.setAttribute('aria-label', 'Picture in Picture');
-        controls.appendChild(this.pipBtn);
+        //this.pipBtn = document.createElement('button');
+        //this.pipBtn.className = 'btn pip-btn';
+        //this.pipBtn.innerHTML = '<i class="fas fa-compress-arrows-alt"></i>';
+        //this.pipBtn.title = 'Picture in Picture (P)';
+        //this.pipBtn.setAttribute('aria-label', 'Picture in Picture');
+        //controls.appendChild(this.pipBtn);
 
         // Меню (теперь последняя кнопка справа)
         this.menu = document.createElement('div');
