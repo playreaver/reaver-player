@@ -1411,7 +1411,7 @@ class ReaverPlayer {
     }
 }
 
-// Автоматическая инициализация всех плееров на странице
+// Автоматическая инициализация всех плееров на странице 
 (function(){
     function boot(){
         document.querySelectorAll('.reaver-player').forEach(el=>{
