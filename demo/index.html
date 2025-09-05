@@ -5,9 +5,54 @@
   <title>ReaverPlayer Demo</title>
   <link rel="stylesheet" href="/reaver-player/src/reaverplayer.css">
   <script src="/reaver-player/src/reaverplayer.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+      margin: 20px;
+    }
+    section {
+      margin: 40px 0;
+    }
+    .placeholder {
+      height: 400px;
+      background: linear-gradient(135deg, #ddd, #bbb);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      color: #333;
+      border-radius: 12px;
+    }
+  </style>
 </head>
 <body>
   <h1>ReaverPlayer Demo</h1>
   <div class="reaver-player" data-src="https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"></div>
+
+  <section>
+    <h2>Раздел 1</h2>
+    <p>Это демо-текст. Пролистывай вниз, чтобы проверить, как работает скролл. 
+       Здесь можно вставить любой длинный контент.</p>
+    <div class="placeholder">Большой блок контента</div>
+  </section>
+
+  <section>
+    <h2>Раздел 2</h2>
+    <p>Ещё немного текста для проверки поведения плеера при прокрутке.</p>
+    <div class="placeholder">Ещё один блок</div>
+  </section>
+
+  <section>
+    <h2>Раздел 3</h2>
+    <p>Если нужно проверить скролл по-настоящему — сделаем страницу очень длинной.</p>
+    <div class="placeholder">Контент блок</div>
+  </section>
+
+  <section>
+    <h2>Раздел 4</h2>
+    <p>Финальный раздел для проверки фиксации плеера.</p>
+    <div class="placeholder">Большой блок</div>
+  </section>
 </body>
 </html>
