@@ -820,65 +820,113 @@
     transform: translateY(0);
 }
 
-/* Mini-player режим */
-.reaver-player.mini {
-    position: fixed;
+/* Стили для мини-плеера с анимацией и перетаскиванием */
+.reaver-player.mini-player {
+    position: fixed !important;
+    width: 320px;
+    height: 180px;
     bottom: 20px;
     right: 20px;
-    width: 300px;
-    height: 170px;
     z-index: 10000;
-    border-radius: 8px;
-    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.4);
-    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    cursor: pointer;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+    cursor: move;
+    cursor: grab;
+    transition: all 0.4s cubic-bezier(0.33, 1, 0.68, 1);
+    transform-origin: center;
 }
 
-.reaver-player.mini .video-container {
+.reaver-player.mini-player:active {
+    cursor: grabbing;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+}
+
+.reaver-player.mini-player .video-container {
     height: 100%;
+    width: 100%;
 }
 
-.reaver-player.mini .video-container video {
+.reaver-player.mini-player .video-container video {
     object-fit: cover;
     height: 100%;
+    width: 100%;
 }
 
-.reaver-player.mini .controls,
-.reaver-player.mini .player-title,
-.reaver-player.mini .shortcuts-hint,
-.reaver-player.mini .end-overlay {
+.reaver-player.mini-player .controls {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 8px;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.reaver-player.mini-player:hover .controls {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.reaver-player.mini-player .time {
+    font-size: 11px;
+    margin: 0 8px;
+}
+
+.reaver-player.mini-player .btn {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+    margin-right: 8px;
+}
+
+.reaver-player.mini-player .progress-container {
+    height: 4px;
+    margin: 0 10px;
+}
+
+.reaver-player.mini-player .player-title,
+.reaver-player.mini-player .shortcuts-hint,
+.reaver-player.mini-player .end-overlay,
+.reaver-player.mini-player .center-play-btn,
+.reaver-player.mini-player .loading-overlay {
     display: none;
 }
 
-.reaver-player.mini .close-mini-btn {
+/* Кнопка закрытия мини-плеера */
+.close-mini-btn {
     position: absolute;
-    top: -8px;
-    right: -8px;
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    background: #ff0000;
-    color: white;
+    top: 5px;
+    right: 5px;
+    width: 24px;
+    height: 24px;
+    background: rgba(0, 0, 0, 0.7);
     border: none;
-    cursor: pointer;
+    border-radius: 50%;
+    color: white;
     display: flex;
-    justify-content: center;
     align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 1001;
     font-size: 12px;
-    z-index: 10001;
+    transition: all 0.2s ease;
     opacity: 0;
-    transition: opacity 0.3s ease;
 }
 
-.reaver-player.mini:hover .close-mini-btn {
+.reaver-player.mini-player:hover .close-mini-btn {
     opacity: 1;
 }
 
-.reaver-player.mini .close-mini-btn i {
-    margin: 0;
+.close-mini-btn:hover {
+    background: rgba(255, 0, 0, 0.8);
+    transform: scale(1.1);
 }
 
-@keyframes miniPlayerAppear {
+/* Анимации для мини-плеера */
+@keyframes miniPlayerSlideIn {
     from {
         transform: translateY(100px) scale(0.8);
         opacity: 0;
@@ -889,6 +937,138 @@
     }
 }
 
-.reaver-player.mini {
-    animation: miniPlayerAppear 0.4s ease-out;
+@keyframes miniPlayerSlideOut {
+    from {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+    to {
+        transform: translateY(100px) scale(0.8);
+        opacity: 0;
+    }
+}
+
+.reaver-player.mini-player[data-state="entering"] {
+    animation: miniPlayerSlideIn 0.4s cubic-bezier(0.33, 1, 0.68, 1) forwards;
+}
+
+.reaver-player.mini-player[data-state="exiting"] {
+    animation: miniPlayerSlideOut 0.4s cubic-bezier(0.33, 1, 0.68, 1) forwards;
+}
+
+/* Стили для перетаскивания */
+.reaver-player.dragging {
+    transition: none !important;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    transform: scale(1.02);
+}
+
+/* Индикатор перетаскивания */
+.reaver-player.mini-player::after {
+    content: '≡';
+    position: absolute;
+    top: 5px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 16px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.reaver-player.mini-player:hover::after {
+    opacity: 1;
+}
+
+/* Адаптивность для мини-плеера */
+@media (max-width: 480px) {
+    .reaver-player.mini-player {
+        width: 280px;
+        height: 160px;
+        bottom: 15px;
+        right: 15px;
+    }
+    
+    .reaver-player.mini-player .btn {
+        width: 32px;
+        height: 32px;
+        font-size: 14px;
+    }
+    
+    .reaver-player.mini-player .time {
+        font-size: 12px;
+    }
+}
+
+/* Стили для прилипания к краям */
+.reaver-player.mini-player.snapping {
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Эффект ховера для мини-плеера */
+.reaver-player.mini-player:hover {
+    transform: scale(1.02);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+}
+
+/* Плавное скрытие/показ при скролле */
+.reaver-player.mini-player.scroll-hide {
+    transform: translateY(100px);
+    opacity: 0;
+    pointer-events: none;
+}
+
+.reaver-player.mini-player.scroll-show {
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: all;
+}
+
+/* Анимация для кнопки закрытия */
+@keyframes closeBtnPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+.close-mini-btn:hover {
+    animation: closeBtnPulse 0.6s ease-in-out infinite;
+}
+
+/* Улучшенные стили для прогресс-бара в мини-режиме */
+.reaver-player.mini-player .progress-container:hover {
+    height: 6px;
+}
+
+.reaver-player.mini-player .progress::after {
+    width: 8px;
+}
+
+/* Специфические стили для полноэкранного режима с мини-плеером */
+.reaver-player:fullscreen.mini-player {
+    width: 100% !important;
+    height: 100% !important;
+    bottom: 0 !important;
+    right: 0 !important;
+    border-radius: 0 !important;
+}
+
+/* Предотвращение выделения текста при перетаскивании */
+.reaver-player.mini-player {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+/* Плавные переходы для всех состояний */
+.reaver-player.mini-player,
+.reaver-player.mini-player * {
+    transition: all 0.3s cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+/* Индикатор активного перетаскивания */
+.reaver-player.mini-player.drag-active {
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
+    z-index: 10001;
 }
