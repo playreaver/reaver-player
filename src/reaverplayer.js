@@ -1069,12 +1069,29 @@ class ReaverPlayer {
         this.saveSettings();
     }
     
-    showToast(message, duration = 2000) {
+    showToast(message, duration = 2000, type = 'info') {
         this.toast.textContent = message;
+        this.toast.className = 'toast'; 
+        this.toast.classList.add(type);
+        
+        let icon = 'info-circle';
+        switch(type) {
+            case 'success': icon = 'check-circle'; break;
+            case 'warning': icon = 'exclamation-triangle'; break;
+            case 'error': icon = 'exclamation-circle'; break;
+            case 'info': 
+            default: icon = 'info-circle';
+        }
+        
+        this.toast.innerHTML = `<i class="fas fa-${icon}"></i> ${message}`;
         this.toast.classList.add('visible');
         
+        if (type === 'success') {
+            this.toast.classList.add('pulse');
+        }
+        
         setTimeout(() => {
-            this.toast.classList.remove('visible');
+            this.toast.classList.remove('visible', 'pulse');
         }, duration);
     }
     
