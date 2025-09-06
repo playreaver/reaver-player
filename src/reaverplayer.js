@@ -12,6 +12,8 @@ class ReaverPlayer {
         this.currentQualityIndex = 0;
         this.miniPlayerEnabled = false;
         this.originalPosition = {};
+        this.pauseOverlayTimeout = null;
+        this.pauseOverlayDelay = 3000;
         
         this.initPlayer();
         this.setupFontAwesome();
@@ -42,6 +44,20 @@ class ReaverPlayer {
         this.video.style.width = '100%';
         this.video.setAttribute('playsinline', '');
         this.videoContainer.appendChild(this.video);
+
+        this.pauseOverlay = document.createElement('div');
+        this.pauseOverlay.className = 'pause-overlay';
+        this.pauseOverlay.innerHTML = `
+            <div class="pause-message">
+                <h3>Ты остановился на <span class="pause-time">00:00</span>, продолжишь смотреть?</h3>
+                <div class="pause-buttons">
+                    <button class="continue-btn">Продолжить</button>
+                    <button class="restart-btn">Заново</button>
+                </div>
+                <button class="close-pause-overlay"><i class="fas fa-times"></i></button>
+            </div>
+        `;
+        this.videoContainer.appendChild(this.pauseOverlay);
 
         // Создаем оверлей завершения видео
         this.endOverlay = document.createElement('div');
@@ -413,6 +429,23 @@ class ReaverPlayer {
             });
         }
 
+        this.pauseOverlay.querySelector('.continue-btn').addEventListener('click', () => {
+            this.hidePauseOverlay();
+            this.play();
+        });
+
+        this.pauseOverlay.querySelector('.restart-btn').addEventListener('click', () => {
+            this.hidePauseOverlay();
+            this.video.currentTime = 0;
+            this.play();
+        });
+
+        this.pauseOverlay.querySelector('.close-pause-overlay').addEventListener('click', () => {
+            this.hidePauseOverlay();
+            this.video.currentTime = 0;
+            this.play();
+        });
+
         // Субтитры
         if(this.subSelect){
             this.subSelect.addEventListener('change', () => {
@@ -481,6 +514,20 @@ class ReaverPlayer {
         
         // Автоматическое скрытие панели управления
         this.setupAutoHideControls();
+    }
+
+    showPauseOverlay() {
+        // Обновляем время в сообщении
+        const timeElement = this.pauseOverlay.querySelector('.pause-time');
+        timeElement.textContent = this.formatTime(this.video.currentTime);
+        
+        // Показываем оверлей
+        this.pauseOverlay.classList.add('visible');
+    }
+
+    // Метод для скрытия экрана паузы
+    hidePauseOverlay() {
+        this.pauseOverlay.classList.remove('visible');
     }
 
     setupFullscreenChangeListener() {
