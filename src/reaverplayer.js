@@ -1074,25 +1074,22 @@ class ReaverPlayer {
     }
     
     showToast(message, duration = 2000, type = 'info') {
-        // Создаем контейнер если его нет
+
         if (!this.toastContainer) {
             this.toastContainer = document.createElement('div');
             this.toastContainer.className = 'toast-container';
             this.videoContainer.appendChild(this.toastContainer);
         }
-        
-        // Удаляем предыдущее уведомление, если есть
+
         const existingToast = this.toastContainer.querySelector('.toast');
         if (existingToast) {
             existingToast.remove();
         }
         
-        // Создаем новый тост
         const toast = document.createElement('div');
         toast.className = 'toast';
         toast.classList.add(type);
-        
-        // Устанавливаем иконку в зависимости от типа
+
         let icon = 'info-circle';
         switch(type) {
             case 'success': icon = 'check-circle'; break;
@@ -1101,22 +1098,25 @@ class ReaverPlayer {
             case 'info': 
             default: icon = 'info-circle';
         }
-        
-        // Заполняем содержимое
+
         toast.innerHTML = `
             <i class="fas fa-${icon}"></i>
             <span class="toast-text">${message}</span>
         `;
-        
-        // Добавляем в контейнер
+
         this.toastContainer.appendChild(toast);
-        
-        // Показываем новый тост
+
         setTimeout(() => {
             toast.classList.add('visible');
+
+            if (type === 'success') {
+                setTimeout(() => {
+                    toast.classList.add('pulse');
+                    setTimeout(() => toast.classList.remove('pulse'), 600);
+                }, 100);
+            }
         }, 50);
-        
-        // Скрываем через указанное время
+
         setTimeout(() => {
             toast.classList.add('hiding');
             setTimeout(() => {
@@ -1129,7 +1129,6 @@ class ReaverPlayer {
         return toast;
     }
         
-    // Обновляем состояния уведомлений
     updateToastStates() {
         const toasts = this.toastContainer ? this.toastContainer.querySelectorAll('.toast') : [];
         
