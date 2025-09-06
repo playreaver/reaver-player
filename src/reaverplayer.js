@@ -1166,6 +1166,7 @@ class ReaverPlayer {
             requestAnimationFrame(() => {
                 this.root.classList.add('mini-player');
                 this.closeMiniBtn.style.display = 'flex';
+                this.closeMiniBtn.style.opacity = '0'; // Начинаем с прозрачной кнопки
     
                 setTimeout(() => {
                     Object.assign(this.root.style, {
@@ -1179,7 +1180,15 @@ class ReaverPlayer {
     
                     setTimeout(() => {
                         this.enableDragging();
-                        this.isAnimating = false; 
+                        this.isAnimating = false;
+                        
+                        // Показываем кнопку закрытия на 3 секунды при активации
+                        this.closeMiniBtn.style.opacity = '1';
+                        setTimeout(() => {
+                            if (this.miniPlayerEnabled) {
+                                this.closeMiniBtn.style.opacity = '0';
+                            }
+                        }, 3000);
                     }, 400);
                 }, 50);
             });
@@ -1219,12 +1228,18 @@ class ReaverPlayer {
         }
     }
 
-
     enableDragging() {
         let isDragging = false;
         let startX, startY, initialLeft, initialTop;
+        let dragThreshold = 5; // порог для определения клика/перетаскивания
+        let dragStarted = false;
         
         const onMouseDown = (e) => {
+            // Игнорируем клики на кнопке закрытия
+            if (e.target.closest('.close-mini-btn')) {
+                return;
+            }
+            
             isDragging = true;
             startX = e.clientX;
             startY = e.clientY;
@@ -1244,6 +1259,11 @@ class ReaverPlayer {
         
         const onTouchStart = (e) => {
             if (e.touches.length === 1) {
+                // Игнорируем клики на кнопке закрытия
+                if (e.target.closest('.close-mini-btn')) {
+                    return;
+                }
+                
                 isDragging = true;
                 startX = e.touches[0].clientX;
                 startY = e.touches[0].clientY;
@@ -1268,6 +1288,17 @@ class ReaverPlayer {
             const dx = e.clientX - startX;
             const dy = e.clientY - startY;
             
+            // Проверяем, превысили ли порог для начала перетаскивания
+            if (!dragStarted && Math.sqrt(dx * dx + dy * dy) < dragThreshold) {
+                return;
+            }
+            
+            if (!dragStarted) {
+                dragStarted = true;
+                // Показываем кнопку закрытия при начале перетаскивания
+                this.closeMiniBtn.style.opacity = '1';
+            }
+            
             const newLeft = Math.max(0, Math.min(window.innerWidth - getRect().width, initialLeft + dx));
             const newTop = Math.max(0, Math.min(window.innerHeight - getRect().height, initialTop + dy));
             
@@ -1278,22 +1309,78 @@ class ReaverPlayer {
         };
         
         const onMouseUp = () => {
+            if (isDragging && !dragStarted) {
+                // Это был клик, а не перетаскивание - переключаем воспроизведение
+                this.toggle();
+            }
+            
             isDragging = false;
+            dragStarted = false;
             this.root.style.transition = 'all 0.3s ease';
             document.removeEventListener('mousemove', onMouseMove);
             document.removeEventListener('mouseup', onMouseUp);
             
             // Прилипание к краям
             this.snapToEdges();
+            
+            // Плавно скрываем кнопку закрытия через 2 секунды
+            setTimeout(() => {
+                if (!isDragging) {
+                    this.closeMiniBtn.style.opacity = '0';
+                }
+            }, 2000);
+        };
+        
+        const onTouchMove = (e) => {
+            if (!isDragging) return;
+            
+            const touchX = e.touches[0].clientX;
+            const touchY = e.touches[0].clientY;
+            const dx = touchX - startX;
+            const dy = touchY - startY;
+            
+            // Проверяем, превысили ли порог для начала перетаскивания
+            if (!dragStarted && Math.sqrt(dx * dx + dy * dy) < dragThreshold) {
+                return;
+            }
+            
+            if (!dragStarted) {
+                dragStarted = true;
+                // Показываем кнопку закрытия при начале перетаскивания
+                this.closeMiniBtn.style.opacity = '1';
+            }
+            
+            const newLeft = Math.max(0, Math.min(window.innerWidth - getRect().width, initialLeft + dx));
+            const newTop = Math.max(0, Math.min(window.innerHeight - getRect().height, initialTop + dy));
+            
+            this.root.style.left = newLeft + 'px';
+            this.root.style.top = newTop + 'px';
+            this.root.style.right = 'auto';
+            this.root.style.bottom = 'auto';
+            
+            e.preventDefault();
         };
         
         const onTouchEnd = () => {
+            if (isDragging && !dragStarted) {
+                // Это было касание, а не перетаскивание - переключаем воспроизведение
+                this.toggle();
+            }
+            
             isDragging = false;
+            dragStarted = false;
             this.root.style.transition = 'all 0.3s ease';
             document.removeEventListener('touchmove', onTouchMove);
             document.removeEventListener('touchend', onTouchEnd);
             
             this.snapToEdges();
+            
+            // Плавно скрываем кнопку закрытия через 2 секунды
+            setTimeout(() => {
+                if (!isDragging) {
+                    this.closeMiniBtn.style.opacity = '0';
+                }
+            }, 2000);
         };
         
         this.root.addEventListener('mousedown', onMouseDown);
@@ -1302,7 +1389,11 @@ class ReaverPlayer {
         // Сохраняем обработчики для последующего удаления
         this.dragHandlers = {
             mouseDown: onMouseDown,
-            touchStart: onTouchStart
+            touchStart: onTouchStart,
+            mouseMove: onMouseMove,
+            mouseUp: onMouseUp,
+            touchMove: onTouchMove,
+            touchEnd: onTouchEnd
         };
     }
     
@@ -1310,7 +1401,7 @@ class ReaverPlayer {
         if (this.dragHandlers) {
             this.root.removeEventListener('mousedown', this.dragHandlers.mouseDown);
             this.root.removeEventListener('touchstart', this.dragHandlers.touchStart);
-
+    
             if (this.dragHandlers.mouseMove) {
                 document.removeEventListener('mousemove', this.dragHandlers.mouseMove);
             }
@@ -1388,7 +1479,7 @@ class ReaverPlayer {
                 const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
                 scrollDirection = scrollTop > lastScrollTop ? 'down' : 'up';
                 const scrollDiff = Math.abs(scrollTop - lastScrollTop);
-    
+
                 if (scrollDirection === 'down' && scrollDiff > scrollThreshold) {
                     const playerRect = this.root.getBoundingClientRect();
                     
@@ -1396,11 +1487,11 @@ class ReaverPlayer {
                         this.toggleMiniPlayer(true);
                     }
                 }
-    
+
                 if (this.miniPlayerEnabled && scrollDirection === 'up' && scrollDiff > scrollThreshold) {
                     const playerRect = this.root.getBoundingClientRect();
                     const viewportHeight = window.innerHeight;
-
+    
                     if (playerRect.top < viewportHeight * 0.5 || 
                         scrollTop <= originalOffsetTop + 100) {
                         this.toggleMiniPlayer(false);
