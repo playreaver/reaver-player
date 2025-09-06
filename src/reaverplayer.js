@@ -23,23 +23,17 @@ class ReaverPlayer {
         this.loadSettings();
     }
 
-    initPlayer() {
-
-        if (this.toast) {
-            this.toast.remove();
-        }
-        
-        // Создаем контейнер для уведомлений
-        this.toastContainer = document.createElement('div');
-        this.toastContainer.className = 'toast-container';
-        this.videoContainer.appendChild(this.toastContainer);
-        
+    initPlayer() {     
         this.root.innerHTML = '';
         this.root.classList.add('reaver-player');
 
         this.videoContainer = document.createElement('div');
         this.videoContainer.className = 'video-container';
         this.root.appendChild(this.videoContainer);
+
+        this.toastContainer = document.createElement('div');
+        this.toastContainer.className = 'toast-container';
+        this.videoContainer.appendChild(this.toastContainer);
 
         this.video = document.createElement('video');
         this.video.src = this.src;
