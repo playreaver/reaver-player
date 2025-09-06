@@ -1075,42 +1075,85 @@
 
 .reaver-player .toast-container {
     position: absolute;
-    top: 20px; /* Теперь сверху */
-    left: 50%; /* По горизонтали центр */
-    transform: translateX(-50%);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     z-index: 1002;
-    display: flex;
-    flex-direction: column; /* Сверху вниз */
-    align-items: center; /* Центр по горизонтали */
-    gap: 8px; /* Расстояние между тостами */
     pointer-events: none;
 }
 
 .reaver-player .toast {
     background: rgba(20, 20, 20, 0.95);
     color: white;
-    padding: 12px 20px;
-    border-radius: 8px;
-    font-size: 14px;
+    padding: 16px 24px;
+    border-radius: 12px;
+    font-size: 15px;
     opacity: 0;
-    transform: translateY(-20px) scale(0.9); /* Для анимации сверху вниз */
+    transform: translate(-50%, -50%) scale(0.8);
     transition: all 0.3s ease;
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.15);
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     white-space: nowrap;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    max-width: 300px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+    min-width: 200px;
+    text-align: center;
+    justify-content: center;
 }
 
 .reaver-player .toast.visible {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translate(-50%, -50%) scale(1);
 }
 
 .reaver-player .toast.hiding {
     opacity: 0;
-    transform: translateY(-10px) scale(0.95);
+    transform: translate(-50%, -50%) scale(0.9);
+}
+
+.reaver-player .toast i {
+    font-size: 18px;
+}
+
+.reaver-player .toast.success { 
+    background: rgba(46, 125, 50, 0.95);
+    box-shadow: 0 8px 25px rgba(46, 125, 50, 0.3);
+}
+.reaver-player .toast.warning { 
+    background: rgba(237, 108, 2, 0.95);
+    box-shadow: 0 8px 25px rgba(237, 108, 2, 0.3);
+}
+.reaver-player .toast.error { 
+    background: rgba(211, 47, 47, 0.95);
+    box-shadow: 0 8px 25px rgba(211, 47, 47, 0.3);
+}
+.reaver-player .toast.info { 
+    background: rgba(30, 136, 229, 0.95);
+    box-shadow: 0 8px 25px rgba(30, 136, 229, 0.3);
+}
+
+/* Легкая пульсация для успешных действий */
+.reaver-player .toast.pulse {
+    animation: toastPulse 0.6s ease-in-out;
+}
+
+@keyframes toastPulse {
+    0% { transform: translate(-50%, -50%) scale(1); }
+    50% { transform: translate(-50%, -50%) scale(1.05); }
+    100% { transform: translate(-50%, -50%) scale(1); }
+}
+
+@media (max-width: 768px) {
+    .reaver-player .toast {
+        padding: 14px 20px;
+        font-size: 14px;
+        min-width: 160px;
+        border-radius: 10px;
+    }
+    
+    .reaver-player .toast i {
+        font-size: 16px;
+    }
 }
