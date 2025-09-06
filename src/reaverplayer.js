@@ -950,40 +950,36 @@ class ReaverPlayer {
     toggleFullscreen() {
         if (this.miniPlayerEnabled) {
             this.toggleMiniPlayer(false);
-            
-            setTimeout(() => {
-                this.enterFullscreen();
-            }, 500);
-        } else {
-            this.enterFullscreen();
+            return;
         }
-
+    
         if (!document.fullscreenElement) {
-            if (this.root.requestFullscreen) {
-                this.root.requestFullscreen().catch(err => {
-                    console.error(`Ошибка при переходе в полноэкранный режим: ${err.message}`);
-                    this.showToast('Ошибка полноэкранного режима');
-                });
-            }
+            this.enterFullscreen();
         } else {
-            if (document.exitFullscreen) {
-                document.exitFullscreen();
-            }
+            this.exitFullscreen();
         }
     }
-
+    
     enterFullscreen() {
-        if (!document.fullscreenElement) {
-            if (this.root.requestFullscreen) {
-                this.root.requestFullscreen().catch(err => {
-                    console.error('Ошибка полноэкранного режима:', err);
+        if (this.root.requestFullscreen) {
+            this.root.requestFullscreen().catch(err => {
+                if (err.name === 'SecurityError') {
+                    this.showToast('Полноэкранный режим заблокирован настройками безопасности');
+                } else if (err.name === 'TypeError') {
+                    this.showToast('Полноэкранный режим недоступен');
+                } else {
+                    console.error('Fullscreen error:', err);
                     this.showToast('Ошибка полноэкранного режима');
-                });
-            }
-        } else {
-            if (document.exitFullscreen) {
-                document.exitFullscreen();
-            }
+                }
+            });
+        }
+    }
+    
+    exitFullscreen() {
+        if (document.exitFullscreen) {
+            document.exitFullscreen().catch(err => {
+                console.error('Exit fullscreen error:', err);
+            });
         }
     }
 
