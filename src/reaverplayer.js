@@ -1081,6 +1081,12 @@ class ReaverPlayer {
             this.videoContainer.appendChild(this.toastContainer);
         }
         
+        // Удаляем предыдущее уведомление, если есть
+        const existingToast = this.toastContainer.querySelector('.toast');
+        if (existingToast) {
+            existingToast.remove();
+        }
+        
         // Создаем новый тост
         const toast = document.createElement('div');
         toast.className = 'toast';
@@ -1099,25 +1105,15 @@ class ReaverPlayer {
         // Заполняем содержимое
         toast.innerHTML = `
             <i class="fas fa-${icon}"></i>
-            <div class="toast-content">
-                <span class="toast-text">${message}</span>
-            </div>
+            <span class="toast-text">${message}</span>
         `;
         
         // Добавляем в контейнер
         this.toastContainer.appendChild(toast);
         
-        // Обновляем состояние предыдущих уведомлений
-        this.updateToastStates();
-        
         // Показываем новый тост
         setTimeout(() => {
             toast.classList.add('visible');
-            
-            // Для успешных действий добавляем пульсацию
-            if (type === 'success') {
-                toast.classList.add('pulse');
-            }
         }, 50);
         
         // Скрываем через указанное время
@@ -1126,14 +1122,13 @@ class ReaverPlayer {
             setTimeout(() => {
                 if (toast.parentNode) {
                     toast.parentNode.removeChild(toast);
-                    this.updateToastStates();
                 }
-            }, 500);
+            }, 300);
         }, duration);
         
         return toast;
     }
-    
+        
     // Обновляем состояния уведомлений
     updateToastStates() {
         const toasts = this.toastContainer ? this.toastContainer.querySelectorAll('.toast') : [];
