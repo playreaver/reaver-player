@@ -375,11 +375,7 @@ class ReaverPlayer {
         this.fullscreenBtn.addEventListener('click', () => this.toggleFullscreen());
 
         // Обработка изменения полноэкранного режима
-        document.addEventListener('fullscreenchange', () => {
-            this.isFullscreen = !!document.fullscreenElement;
-            this.updateFullscreenIcon();
-            this.handleFullscreenChange();
-        });
+        this.setupFullscreenChangeListener();
 
         // Picture-in-Picture через меню
         this.menuPipBtn.addEventListener('click', () => this.togglePip());
@@ -481,6 +477,28 @@ class ReaverPlayer {
         
         // Автоматическое скрытие панели управления
         this.setupAutoHideControls();
+    }
+
+    setupFullscreenChangeListener() {
+        const fullscreenChangeEvents = [
+            'fullscreenchange',
+            'webkitfullscreenchange',
+            'mozfullscreenchange',
+            'MSFullscreenChange'
+        ];
+        
+        fullscreenChangeEvents.forEach(event => {
+            document.addEventListener(event, () => {
+                this.isFullscreen = !!(
+                    document.fullscreenElement ||
+                    document.webkitFullscreenElement ||
+                    document.mozFullScreenElement ||
+                    document.msFullscreenElement
+                );
+                this.updateFullscreenIcon();
+                this.handleFullscreenChange();
+            });
+        });
     }
     
     setupAutoHideControls() {
@@ -932,7 +950,14 @@ class ReaverPlayer {
     }
     
     updateFullscreenIcon() {
-        if (this.isFullscreen) {
+        const isFullscreen = !!(
+            document.fullscreenElement ||
+            document.webkitFullscreenElement ||
+            document.mozFullScreenElement ||
+            document.msFullscreenElement
+        );
+        
+        if (isFullscreen) {
             this.fullscreenBtn.innerHTML = '<i class="fas fa-compress"></i>';
             this.fullscreenBtn.title = 'Exit Fullscreen (F)';
             this.fullscreenBtn.classList.add('active');
@@ -1124,9 +1149,10 @@ class ReaverPlayer {
                 parent: this.root.parentNode,
                 nextSibling: this.root.nextSibling,
                 rect: this.root.getBoundingClientRect(),
-                styles: { ...this.root.style }
+                styles: { ...this.root.style },
+                offsetTop: this.root.offsetTop
             };
-  
+    
             Object.assign(this.root.style, {
                 position: 'fixed',
                 width: this.originalPosition.rect.width + 'px',
@@ -1351,7 +1377,8 @@ class ReaverPlayer {
         let lastScrollTop = 0;
         const scrollThreshold = 100;
         let scrollDirection = 'down';
-        let debounceTimer = null; 
+        let debounceTimer = null;
+        let originalOffsetTop = this.root.offsetTop;
     
         window.addEventListener('scroll', () => {
             if (this.isFullscreen || this.miniPlayerEnabled) return;
@@ -1364,17 +1391,18 @@ class ReaverPlayer {
     
                 if (scrollDirection === 'down' && scrollDiff > scrollThreshold) {
                     const playerRect = this.root.getBoundingClientRect();
-    
-                    if (playerRect.bottom < 100) {
+                    
+                    if (playerRect.bottom < 100 && !this.miniPlayerEnabled) {
                         this.toggleMiniPlayer(true);
                     }
                 }
-
+    
                 if (this.miniPlayerEnabled && scrollDirection === 'up' && scrollDiff > scrollThreshold) {
                     const playerRect = this.root.getBoundingClientRect();
-    
-                    const originalTop = this.originalPosition.rect.top;
-                    if (scrollTop <= originalTop + 100) {
+                    const viewportHeight = window.innerHeight;
+
+                    if (playerRect.top < viewportHeight * 0.5 || 
+                        scrollTop <= originalOffsetTop + 100) {
                         this.toggleMiniPlayer(false);
                     }
                 }
