@@ -1075,14 +1075,14 @@
 
 .reaver-player .toast-container {
     position: absolute;
-    bottom: 100px;
+    top: 20px;
     left: 50%;
     transform: translateX(-50%);
     z-index: 1002;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     pointer-events: none;
 }
 
@@ -1093,15 +1093,15 @@
     border-radius: 8px;
     font-size: 14px;
     opacity: 0;
-    transform: translateY(20px) scale(0.9);
-    transition: all 0.3s ease;
+    transform: translateY(-30px) scale(0.9);
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.1);
     display: flex;
     align-items: center;
     gap: 10px;
     white-space: nowrap;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
     max-width: 300px;
 }
 
@@ -1112,7 +1112,7 @@
 
 .reaver-player .toast.hiding {
     opacity: 0;
-    transform: translateY(-10px) scale(0.95);
+    transform: translateY(-20px) scale(0.95);
 }
 
 .reaver-player .toast i {
@@ -1137,19 +1137,19 @@
 }
 
 /* Легкая пульсация для успешных действий */
-.reaver-player .toast.success.visible {
-    animation: gentlePulse 2s ease-in-out;
+.reaver-player .toast.pulse {
+    animation: toastPulse 0.6s ease-in-out;
 }
 
-@keyframes gentlePulse {
+@keyframes toastPulse {
     0% { transform: translateY(0) scale(1); }
-    50% { transform: translateY(0) scale(1.02); }
+    50% { transform: translateY(0) scale(1.05); }
     100% { transform: translateY(0) scale(1); }
 }
 
 @media (max-width: 768px) {
     .reaver-player .toast-container {
-        bottom: 120px;
+        top: 10px;
         width: 90%;
     }
     
@@ -1159,5 +1159,6 @@
         text-align: center;
         justify-content: center;
         padding: 10px 16px;
+        font-size: 13px;
     }
 }
