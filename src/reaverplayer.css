@@ -1072,3 +1072,61 @@
     box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
     z-index: 10001;
 }
+
+.reaver-player .toast {
+    position: absolute;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: rgba(20, 20, 20, 0.95);
+    color: white;
+    padding: 16px 24px;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 500;
+    z-index: 1002;
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    pointer-events: none;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    max-width: 80%;
+    text-align: center;
+}
+
+.reaver-player .toast.visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+.reaver-player .toast i {
+    font-size: 18px;
+    min-width: 24px;
+}
+
+.reaver-player .toast.success { background: rgba(46, 125, 50, 0.95); }
+.reaver-player .toast.warning { background: rgba(237, 108, 2, 0.95); }
+.reaver-player .toast.error { background: rgba(211, 47, 47, 0.95); }
+.reaver-player .toast.info { background: rgba(30, 136, 229, 0.95); }
+
+.reaver-player .toast.pulse::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    border-radius: 14px;
+    animation: toastPulse 2s ease-in-out infinite;
+    z-index: -1;
+}
+
+@keyframes toastPulse {
+    0% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(76, 175, 80, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); }
+}
