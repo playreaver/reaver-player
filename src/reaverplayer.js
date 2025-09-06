@@ -24,6 +24,16 @@ class ReaverPlayer {
     }
 
     initPlayer() {
+
+        if (this.toast) {
+            this.toast.remove();
+        }
+        
+        // Создаем контейнер для уведомлений
+        this.toastContainer = document.createElement('div');
+        this.toastContainer.className = 'toast-container';
+        this.videoContainer.appendChild(this.toastContainer);
+        
         this.root.innerHTML = '';
         this.root.classList.add('reaver-player');
 
@@ -1070,10 +1080,19 @@ class ReaverPlayer {
     }
     
     showToast(message, duration = 2000, type = 'info') {
-        this.toast.textContent = message;
-        this.toast.className = 'toast'; 
-        this.toast.classList.add(type);
+        // Создаем контейнер если его нет
+        if (!this.toastContainer) {
+            this.toastContainer = document.createElement('div');
+            this.toastContainer.className = 'toast-container';
+            this.videoContainer.appendChild(this.toastContainer);
+        }
         
+        // Создаем новый тост
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.classList.add(type);
+        
+        // Устанавливаем иконку в зависимости от типа
         let icon = 'info-circle';
         switch(type) {
             case 'success': icon = 'check-circle'; break;
@@ -1083,16 +1102,135 @@ class ReaverPlayer {
             default: icon = 'info-circle';
         }
         
-        this.toast.innerHTML = `<i class="fas fa-${icon}"></i> ${message}`;
-        this.toast.classList.add('visible');
+        // Заполняем содержимое
+        toast.innerHTML = `
+            <i class="fas fa-${icon}"></i>
+            <div class="toast-content">
+                <span class="toast-text">${message}</span>
+            </div>
+        `;
         
-        if (type === 'success') {
-            this.toast.classList.add('pulse');
+        // Добавляем в контейнер
+        this.toastContainer.appendChild(toast);
+        
+        // Обновляем состояние предыдущих уведомлений
+        this.updateToastStates();
+        
+        // Показываем новый тост
+        setTimeout(() => {
+            toast.classList.add('visible');
+            
+            // Для успешных действий добавляем пульсацию
+            if (type === 'success') {
+                toast.classList.add('pulse');
+            }
+        }, 50);
+        
+        // Скрываем через указанное время
+        setTimeout(() => {
+            toast.classList.add('hiding');
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.parentNode.removeChild(toast);
+                    this.updateToastStates();
+                }
+            }, 500);
+        }, duration);
+        
+        return toast;
+    }
+    
+    // Обновляем состояния уведомлений
+    updateToastStates() {
+        const toasts = this.toastContainer ? this.toastContainer.querySelectorAll('.toast') : [];
+        
+        toasts.forEach((toast, index) => {
+            // Сбрасываем все классы состояний
+            toast.classList.remove('previous', 'old');
+            
+            // Применяем классы в зависимости от позиции
+            if (index === toasts.length - 2) { // Предыдущее уведомление
+                toast.classList.add('previous');
+            } else if (index < toasts.length - 2) { // Старые уведомления
+                toast.classList.add('old');
+            }
+        });
+    }showToast(message, duration = 2000, type = 'info') {
+        // Создаем контейнер если его нет
+        if (!this.toastContainer) {
+            this.toastContainer = document.createElement('div');
+            this.toastContainer.className = 'toast-container';
+            this.videoContainer.appendChild(this.toastContainer);
         }
         
+        // Создаем новый тост
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.classList.add(type);
+        
+        // Устанавливаем иконку в зависимости от типа
+        let icon = 'info-circle';
+        switch(type) {
+            case 'success': icon = 'check-circle'; break;
+            case 'warning': icon = 'exclamation-triangle'; break;
+            case 'error': icon = 'exclamation-circle'; break;
+            case 'info': 
+            default: icon = 'info-circle';
+        }
+        
+        // Заполняем содержимое
+        toast.innerHTML = `
+            <i class="fas fa-${icon}"></i>
+            <div class="toast-content">
+                <span class="toast-text">${message}</span>
+            </div>
+        `;
+        
+        // Добавляем в контейнер
+        this.toastContainer.appendChild(toast);
+        
+        // Обновляем состояние предыдущих уведомлений
+        this.updateToastStates();
+        
+        // Показываем новый тост
         setTimeout(() => {
-            this.toast.classList.remove('visible', 'pulse');
+            toast.classList.add('visible');
+            
+            // Для успешных действий добавляем пульсацию
+            if (type === 'success') {
+                toast.classList.add('pulse');
+            }
+        }, 50);
+        
+        // Скрываем через указанное время
+        setTimeout(() => {
+            toast.classList.add('hiding');
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.parentNode.removeChild(toast);
+                    this.updateToastStates();
+                }
+            }, 500);
         }, duration);
+        
+        return toast;
+    }
+    
+    // Обновляем состояния уведомлений
+    updateToastStates() {
+        const toasts = this.toastContainer ? this.toastContainer.querySelectorAll('.toast') : [];
+        
+        toasts.forEach((toast, index) => {
+            // Сбрасываем все классы состояний
+            toast.classList.remove('previous', 'old');
+            
+            // Применяем классы в зависимости от позиции
+            if (index === toasts.length - 2) { // Предыдущее уведомление
+                toast.classList.add('previous');
+            } else if (index < toasts.length - 2) { // Старые уведомления
+                toast.classList.add('old');
+            }
+        });
     }
     
     saveSettings() {
