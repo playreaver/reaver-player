@@ -1075,14 +1075,14 @@
 
 .reaver-player .toast-container {
     position: absolute;
-    top: 20px;
-    left: 50%;
+    top: 20px; /* Теперь сверху */
+    left: 50%; /* По горизонтали центр */
     transform: translateX(-50%);
     z-index: 1002;
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
+    flex-direction: column; /* Сверху вниз */
+    align-items: center; /* Центр по горизонтали */
+    gap: 8px; /* Расстояние между тостами */
     pointer-events: none;
 }
 
@@ -1093,15 +1093,15 @@
     border-radius: 8px;
     font-size: 14px;
     opacity: 0;
-    transform: translateY(-30px) scale(0.9);
-    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transform: translateY(-20px) scale(0.9); /* Для анимации сверху вниз */
+    transition: all 0.3s ease;
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.1);
     display: flex;
     align-items: center;
     gap: 10px;
     white-space: nowrap;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     max-width: 300px;
 }
 
@@ -1112,53 +1112,5 @@
 
 .reaver-player .toast.hiding {
     opacity: 0;
-    transform: translateY(-20px) scale(0.95);
-}
-
-.reaver-player .toast i {
-    font-size: 16px;
-}
-
-.reaver-player .toast.success { 
-    background: rgba(46, 125, 50, 0.95);
-    border-left: 3px solid rgba(76, 175, 80, 0.8);
-}
-.reaver-player .toast.warning { 
-    background: rgba(237, 108, 2, 0.95);
-    border-left: 3px solid rgba(255, 152, 0, 0.8);
-}
-.reaver-player .toast.error { 
-    background: rgba(211, 47, 47, 0.95);
-    border-left: 3px solid rgba(244, 67, 54, 0.8);
-}
-.reaver-player .toast.info { 
-    background: rgba(30, 136, 229, 0.95);
-    border-left: 3px solid rgba(33, 150, 243, 0.8);
-}
-
-/* Легкая пульсация для успешных действий */
-.reaver-player .toast.pulse {
-    animation: toastPulse 0.6s ease-in-out;
-}
-
-@keyframes toastPulse {
-    0% { transform: translateY(0) scale(1); }
-    50% { transform: translateY(0) scale(1.05); }
-    100% { transform: translateY(0) scale(1); }
-}
-
-@media (max-width: 768px) {
-    .reaver-player .toast-container {
-        top: 10px;
-        width: 90%;
-    }
-    
-    .reaver-player .toast {
-        width: 100%;
-        max-width: none;
-        text-align: center;
-        justify-content: center;
-        padding: 10px 16px;
-        font-size: 13px;
-    }
+    transform: translateY(-10px) scale(0.95);
 }
