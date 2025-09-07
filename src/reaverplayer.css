@@ -523,7 +523,7 @@
     }
     
     .reaver-player .btn {
-        width: 80px; /* Увеличиваем размер кнопок на мобильных */
+        width: 80px;
         height: 80px;
         margin-right: 10px;
         font-size: 20px;
@@ -616,6 +616,12 @@
         justify-content: center;
         align-items: center;
         background: #000;
+    }
+    .reaver-player.mini-player {
+        width: 100%; 
+        max-width: 420px; 
+        height: auto;
+        aspect-ratio: 16 / 9; 
     }
 }
 
