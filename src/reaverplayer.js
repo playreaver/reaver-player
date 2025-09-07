@@ -434,16 +434,48 @@ class ReaverPlayer {
     }
     
     toggleNeuralSubtitles() {
-        if (!this.neuralSubtitles) {
-            this.showToast('Модуль субтитров не загружен', 2000, 'error');
+        console.log('Toggle neural subtitles called');
+        console.log('NeuralSubtitles instance:', this.neuralSubtitles);
+        console.log('Window.NeuralSubtitles:', window.NeuralSubtitles);
+        
+        if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+            this.showToast('Распознавание речи не поддерживается в вашем браузере', 3000, 'error');
             return;
+        }
+    
+        if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+            this.showToast('Для нейросубтитров нужен HTTPS или localhost', 3000, 'warning');
+            return;
+        }
+    
+        if (!this.neuralSubtitles) {
+            console.log('NeuralSubtitles is null, trying to reinitialize...');
+            try {
+                if (window.NeuralSubtitles && typeof window.NeuralSubtitles === 'function') {
+                    this.neuralSubtitles = new NeuralSubtitles(this);
+                    console.log('NeuralSubtitles reinitialized successfully');
+                } else {
+                    console.error('NeuralSubtitles class not available');
+                    this.showToast('Модуль субтитров не загружен', 2000, 'error');
+                    return;
+                }
+            } catch (error) {
+                console.error('Error reinitializing neural subtitles:', error);
+                this.showToast('Ошибка инициализации нейросубтитров', 2000, 'error');
+                return;
+            }
         }
     
         this.isNeuralSubtitlesEnabled = !this.isNeuralSubtitlesEnabled;
         
         if (this.isNeuralSubtitlesEnabled) {
-            this.neuralSubtitles.enable();
+            console.log('Enabling neural subtitles...');
+            this.neuralSubtitles.enable().catch(error => {
+                console.error('Error enabling neural subtitles:', error);
+                this.isNeuralSubtitlesEnabled = false;
+            });
         } else {
+            console.log('Disabling neural subtitles...');
             this.neuralSubtitles.disable();
         }
         
