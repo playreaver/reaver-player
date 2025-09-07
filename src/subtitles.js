@@ -10,16 +10,23 @@ class NeuralSubtitles {
         this.DEEPGRAM_API_KEY = "37ae804334d79e16b5c9b83dbab6e24f1dd9dfd2";
         this.audioStream = null;
         this.subtitleTimeout = null;
-
+    
+        console.log('Player object:', player);
+        console.log('Player root:', player.root);
+        
         this.init();
     }
 
     init() {
+        if (!this.player || !this.player.root) {
+            console.error('Player or player root is not defined:', this.player);
+            return;
+        }
         this.createSubtitleContainer();
     }
 
     createSubtitleContainer() {
-        const oldContainer = this.playerRoot.querySelector('.neural-subtitles');
+        const oldContainer = this.player.root.querySelector('.neural-subtitles');
         if (oldContainer) oldContainer.remove();
     
         this.subtitleContainer = document.createElement('div');
@@ -46,7 +53,7 @@ class NeuralSubtitles {
             display: 'none'
         });
         
-        this.playerRoot.appendChild(this.subtitleContainer);
+        this.player.root.appendChild(this.subtitleContainer);
     }
 
     async setupAudioCapture(useMicrophone = false) {
@@ -89,6 +96,11 @@ class NeuralSubtitles {
     }
 
     showAlternativeMethod() {
+        if (!this.subtitleContainer) {
+            console.error('Subtitle container not found');
+            return;
+        }
+        
         this.subtitleContainer.innerHTML = `
             <div style="text-align: center; padding: 10px;">
                 <div style="font-size: 16px; margin-bottom: 8px; color: #ff6b6b;">⚠️ Не удалось захватить аудио</div>
@@ -99,11 +111,16 @@ class NeuralSubtitles {
         this.subtitleContainer.style.display = 'block';
         this.subtitleContainer.style.opacity = '1';
 
-        document.getElementById('use-mic').addEventListener('click', async () => {
-            this.subtitleContainer.style.display = 'none';
-            await this.setupAudioCapture(true);
-            this.enable();
-        });
+        setTimeout(() => {
+            const micButton = document.getElementById('use-mic');
+            if (micButton) {
+                micButton.addEventListener('click', async () => {
+                    this.subtitleContainer.style.display = 'none';
+                    await this.setupAudioCapture(true);
+                    this.enable();
+                });
+            }
+        }, 100);
     }
 
     async toggle() {
@@ -211,22 +228,28 @@ class NeuralSubtitles {
     }
 
     displaySubtitles(text) {
-        if (!this.isEnabled || !text.trim()) return;
-
+        if (!this.isEnabled || !text.trim() || !this.subtitleContainer) return;
+    
         text = text.replace(/\s+/g, ' ').trim();
         if (text.length > 120) text = text.substring(0, 120) + '...';
-
+    
         this.subtitleContainer.textContent = text;
         this.subtitleContainer.style.opacity = '1';
-
+    
         clearTimeout(this.subtitleTimeout);
-        this.subtitleTimeout = setTimeout(() => { this.subtitleContainer.style.opacity = '0'; }, 5000);
+        this.subtitleTimeout = setTimeout(() => { 
+            if (this.subtitleContainer) {
+                this.subtitleContainer.style.opacity = '0'; 
+            }
+        }, 5000);
     }
 
     destroy() {
         this.disable();
         this.audioStream?.getTracks().forEach(track => track.stop());
-        this.subtitleContainer?.remove();
+        if (this.subtitleContainer) {
+            this.subtitleContainer.remove();
+        }
         clearInterval(this.recordingInterval);
     }
 }
