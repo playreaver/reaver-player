@@ -452,7 +452,7 @@ class ReaverPlayer {
             console.log('NeuralSubtitles is null, trying to reinitialize...');
             try {
                 if (window.NeuralSubtitles && typeof window.NeuralSubtitles === 'function') {
-                    this.neuralSubtitles = new NeuralSubtitles(this);
+                    this.neuralSubtitles = new window.NeuralSubtitles(this);
                     console.log('NeuralSubtitles reinitialized successfully');
                 } else {
                     console.error('NeuralSubtitles class not available');
