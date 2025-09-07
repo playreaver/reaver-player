@@ -134,26 +134,17 @@ class NeuralSubtitles {
     }
 
     async transcribeWithAPI(audioBlob) {
-        try {
-            
-            const formData = new FormData();
-            formData.append('audio', audioBlob, 'audio.wav');
-            formData.append('language', 'ru');
-
-            const response = await fetch('https://your-transcription-api.com/transcribe', {
-                method: 'POST',
-                body: formData
-            });
-
-            if (response.ok) {
-                const result = await response.json();
-                return result.text;
-            }
-        } catch (error) {
-            console.error('Transcription API error:', error);
-        }
-        
-        return null;
+        const response = await fetch("https://api.deepgram.com/v1/listen?language=ru", {
+            method: "POST",
+            headers: {
+                "Authorization": "Token 37ae804334d79e16b5c9b83dbab6e24f1dd9dfd2",
+                "Content-Type": "audio/webm"
+            },
+            body: audioBlob
+        });
+    
+        const result = await response.json();
+        return result.results.channels[0].alternatives[0].transcript;
     }
 
     destroy() {
