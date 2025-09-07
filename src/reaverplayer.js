@@ -329,18 +329,23 @@ class ReaverPlayer {
         if (this.video.currentTime > 0) {
             localStorage.setItem('reaverPlayerLastTime', this.video.currentTime);
             localStorage.setItem('reaverPlayerLastSrc', this.video.src);
+            localStorage.removeItem('reaverPlayerShownPrompt');
             console.log('Saved playback state:', this.video.currentTime, this.video.src);
         }
     }
 
     handleVisibilityChange() {
         if (document.hidden) {
-            if (!this.video.paused && this.video.currentTime > 0) {
+            if (this.video.currentTime > 0) {
                 localStorage.setItem('reaverPlayerLastTime', this.video.currentTime);
                 localStorage.setItem('reaverPlayerLastSrc', this.video.src);
+    
+                localStorage.removeItem('reaverPlayerShownPrompt');
             }
         } else {
-            this.checkAndShowResumePrompt();
+            setTimeout(() => {
+                this.checkAndShowResumePrompt();
+            }, 500);
         }
     }
 
@@ -356,15 +361,17 @@ class ReaverPlayer {
             isPaused: this.video.paused
         });
     
-        if (lastTime > 0 && lastSrc === this.video.src && this.video.currentTime === 0) {
+        const hasShownResumePrompt = localStorage.getItem('reaverPlayerShownPrompt') === 'true';
+    
+        if (lastTime > 0 && lastSrc === this.video.src && !hasShownResumePrompt) {
             console.log('Showing resume prompt');
             this.lastPlayedTime = lastTime;
             
             this.pause();
             this.showPauseOverlay();
     
-            localStorage.removeItem('reaverPlayerLastTime');
-            localStorage.removeItem('reaverPlayerLastSrc');
+            localStorage.setItem('reaverPlayerShownPrompt', 'true');
+            
         } else {
             console.log('Conditions not met for resume prompt');
         }
@@ -488,20 +495,32 @@ class ReaverPlayer {
             }
             this.play();
             this.lastPlayedTime = 0;
+            
+            localStorage.removeItem('reaverPlayerLastTime');
+            localStorage.removeItem('reaverPlayerLastSrc');
+            localStorage.removeItem('reaverPlayerShownPrompt');
         });
-
+        
         this.pauseOverlay.querySelector('.restart-btn').addEventListener('click', () => {
             this.hidePauseOverlay();
             this.video.currentTime = 0;
             this.play();
             this.lastPlayedTime = 0;
+            
+            localStorage.removeItem('reaverPlayerLastTime');
+            localStorage.removeItem('reaverPlayerLastSrc');
+            localStorage.removeItem('reaverPlayerShownPrompt');
         });
-
+        
         this.pauseOverlay.querySelector('.close-pause-overlay').addEventListener('click', () => {
             this.hidePauseOverlay();
             this.video.currentTime = 0;
             this.play();
             this.lastPlayedTime = 0; 
+            
+            localStorage.removeItem('reaverPlayerLastTime');
+            localStorage.removeItem('reaverPlayerLastSrc');
+            localStorage.removeItem('reaverPlayerShownPrompt');
         });
 
         // Субтитры
