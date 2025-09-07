@@ -342,37 +342,70 @@ class ReaverPlayer {
     }
     
     loadNeuralSubtitlesScript() {
+        console.log('Loading neural subtitles script...');
+        
         if (document.querySelector('script[src*="subtitles.js"]')) {
-            console.log('Subtitles script already loaded');
+            console.log('Subtitles script already loaded, checking NeuralSubtitles class...');
+            console.log('NeuralSubtitles available:', typeof NeuralSubtitles);
             this.setupNeuralSubtitles();
             return;
         }
     
         const script = document.createElement('script');
         script.src = 'subtitles.js';
+        
         script.onload = () => {
             console.log('Subtitles script loaded successfully');
+            console.log('NeuralSubtitles available:', typeof NeuralSubtitles);
+            console.log('Window.NeuralSubtitles:', window.NeuralSubtitles);
             this.setupNeuralSubtitles();
         };
+        
         script.onerror = (error) => {
             console.error('Failed to load subtitles script:', error);
+            console.error('Script URL:', script.src);
             this.showToast('Ошибка загрузки модуля субтитров', 2000, 'error');
+            
+            this.checkScriptAvailability();
         };
+        
         document.head.appendChild(script);
     }
-    
+        
     setupNeuralSubtitles() {
-        if (window.NeuralSubtitles) {
-            console.log('NeuralSubtitles class available');
+        console.log('Setting up neural subtitles...');
+        console.log('Window.NeuralSubtitles:', window.NeuralSubtitles);
+        
+        if (window.NeuralSubtitles && typeof window.NeuralSubtitles === 'function') {
+            console.log('NeuralSubtitles class is available');
             try {
                 this.neuralSubtitles = new NeuralSubtitles(this);
+                console.log('NeuralSubtitles instance created:', this.neuralSubtitles);
                 this.addNeuralSubtitlesButton();
             } catch (error) {
-                console.error('Error creating NeuralSubtitles:', error);
+                console.error('Error creating NeuralSubtitles instance:', error);
+                this.showToast('Ошибка инициализации нейросубтитров', 2000, 'error');
             }
         } else {
-            console.error('NeuralSubtitles class not found in window');
+            console.error('NeuralSubtitles class not found or not a function');
+            console.log('Available window properties:', Object.keys(window).filter(key => 
+                key.toLowerCase().includes('subtitle') || key.toLowerCase().includes('neural')
+            ));
+            this.showToast('Модуль нейросубтитров не доступен', 2000, 'error');
         }
+    }
+
+    checkScriptAvailability() {
+        fetch('subtitles.js', { method: 'HEAD' })
+            .then(response => {
+                console.log('Script availability check:', response.status, response.statusText);
+                if (!response.ok) {
+                    this.showToast('Файл субтитров не найден', 2000, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Script fetch error:', error);
+            });
     }
     
     addNeuralSubtitlesButton() {
