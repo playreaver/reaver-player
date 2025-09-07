@@ -19,9 +19,9 @@ class NeuralSubtitles {
     }
 
     createSubtitleContainer() {
-        const oldContainer = this.player.videoContainer.querySelector('.neural-subtitles');
+        const oldContainer = this.playerRoot.querySelector('.neural-subtitles');
         if (oldContainer) oldContainer.remove();
-
+    
         this.subtitleContainer = document.createElement('div');
         this.subtitleContainer.className = 'neural-subtitles';
         Object.assign(this.subtitleContainer.style, {
@@ -45,7 +45,8 @@ class NeuralSubtitles {
             border: '1px solid rgba(255,255,255,0.2)',
             display: 'none'
         });
-        this.player.videoContainer.appendChild(this.subtitleContainer);
+        
+        this.playerRoot.appendChild(this.subtitleContainer);
     }
 
     async setupAudioCapture(useMicrophone = false) {
@@ -111,25 +112,40 @@ class NeuralSubtitles {
     }
 
     async enable() {
+        console.log('Enabling neural subtitles...');
+        
         if (!this.mediaRecorder) {
+            console.log('Setting up audio capture...');
             const success = await this.setupAudioCapture();
-            if (!success) return;
+            if (!success) {
+                console.error('Failed to setup audio capture');
+                return;
+            }
         }
-
+    
         this.isEnabled = true;
         this.subtitleContainer.style.display = 'block';
         this.subtitleContainer.style.opacity = '1';
         this.isRecording = true;
-        this.mediaRecorder.start(2000);
-
-        this.recordingInterval = setInterval(() => {
-            if (this.isRecording && this.mediaRecorder.state === 'recording') {
-                this.mediaRecorder.stop();
-                this.mediaRecorder.start(2000);
-            }
-        }, 4000);
-
-        this.player.showToast('Нейросубтитры включены 🎯', 2000, 'success');
+        
+        try {
+            this.mediaRecorder.start(2000);
+            console.log('Media recorder started');
+    
+            this.recordingInterval = setInterval(() => {
+                if (this.isRecording && this.mediaRecorder.state === 'recording') {
+                    this.mediaRecorder.stop();
+                    this.mediaRecorder.start(2000);
+                    console.log('Restarted media recorder');
+                }
+            }, 4000);
+    
+            this.player.showToast('Нейросубтитры включены 🎯', 2000, 'success');
+        } catch (error) {
+            console.error('Error starting media recorder:', error);
+            this.showError('Ошибка записи аудио');
+            this.disable();
+        }
     }
 
     disable() {
@@ -147,6 +163,7 @@ class NeuralSubtitles {
 
     async transcribeWithAPI(blob) {
         try {
+            console.log('Sending audio to Deepgram API...');
             const response = await fetch(
                 "https://api.deepgram.com/v1/listen?model=nova-2&language=ru&punctuate=true",
                 {
@@ -158,12 +175,38 @@ class NeuralSubtitles {
                     body: blob
                 }
             );
-            if (!response.ok) throw new Error(await response.text());
+            
+            console.log('Deepgram response status:', response.status);
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Deepgram API error:', errorText);
+                throw new Error(`API error: ${response.status} - ${errorText}`);
+            }
+            
             const result = await response.json();
-            return result.results?.channels?.[0]?.alternatives?.[0]?.transcript || null;
+            console.log('Deepgram result:', result);
+            
+            const transcript = result.results?.channels?.[0]?.alternatives?.[0]?.transcript || null;
+            console.log('Transcript:', transcript);
+            
+            return transcript;
         } catch (err) {
             console.error('Deepgram API error:', err);
+            this.showError('Ошибка распознавания речи');
             return null;
+        }
+    }
+    
+    showError(message) {
+        if (this.subtitleContainer) {
+            this.subtitleContainer.textContent = message;
+            this.subtitleContainer.style.opacity = '1';
+            this.subtitleContainer.style.background = 'linear-gradient(135deg, rgba(255,0,0,0.8) 0%, rgba(200,0,0,0.6) 100%)';
+            
+            setTimeout(() => {
+                this.subtitleContainer.style.opacity = '0';
+            }, 3000);
         }
     }
 
@@ -188,7 +231,6 @@ class NeuralSubtitles {
     }
 }
 
-// Стили субтитров
 const style = document.createElement('style');
 style.textContent = `
 .neural-subtitles {
