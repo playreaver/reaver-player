@@ -379,7 +379,7 @@ class ReaverPlayer {
         if (window.NeuralSubtitles && typeof window.NeuralSubtitles === 'function') {
             console.log('NeuralSubtitles class is available');
             try {
-                this.neuralSubtitles = new NeuralSubtitles(this);
+                this.neuralSubtitles = new window.NeuralSubtitles(this);
                 console.log('NeuralSubtitles instance created:', this.neuralSubtitles);
                 this.addNeuralSubtitlesButton();
             } catch (error) {
@@ -388,9 +388,6 @@ class ReaverPlayer {
             }
         } else {
             console.error('NeuralSubtitles class not found or not a function');
-            console.log('Available window properties:', Object.keys(window).filter(key => 
-                key.toLowerCase().includes('subtitle') || key.toLowerCase().includes('neural')
-            ));
             this.showToast('Модуль нейросубтитров не доступен', 2000, 'error');
         }
     }
