@@ -27,6 +27,8 @@ class ReaverPlayer {
         this.controlsVisible = false;
         this.setupGestures();
         this.loadSettings();
+        this.neuralSubtitles = null;
+        this.isNeuralSubtitlesEnabled = false;
         setTimeout(() => {
             this.checkAndShowResumePrompt();
         }, 1000);
@@ -133,7 +135,7 @@ class ReaverPlayer {
         this.closeMiniBtn.innerHTML = '<i class="fas fa-times"></i>';
         this.closeMiniBtn.style.display = 'none';
         this.videoContainer.appendChild(this.closeMiniBtn);
-
+        this.initNeuralSubtitles();
         this.createControls();
         this.bindEvents();
     }
@@ -332,6 +334,59 @@ class ReaverPlayer {
             localStorage.removeItem('reaverPlayerShownPrompt');
             console.log('Saved playback state:', this.video.currentTime, this.video.src);
         }
+    }
+
+    initNeuralSubtitles() {
+        this.loadNeuralSubtitlesScript();
+    }
+    
+    loadNeuralSubtitlesScript() {
+        if (document.querySelector('script[src*="subtitles.js"]')) {
+            return; 
+        }
+    
+        const script = document.createElement('script');
+        script.src = 'subtitles.js';
+        script.onload = () => {
+            this.setupNeuralSubtitles();
+        };
+        script.onerror = () => {
+            console.error('Failed to load subtitles script');
+        };
+        document.head.appendChild(script);
+    }
+    
+    setupNeuralSubtitles() {
+        if (window.NeuralSubtitles) {
+            this.neuralSubtitles = new NeuralSubtitles(this);
+            
+            this.addNeuralSubtitlesButton();
+        }
+    }
+    
+    addNeuralSubtitlesButton() {
+        const neuralBtn = document.createElement('button');
+        neuralBtn.innerHTML = '<i class="fas fa-brain"></i> Нейросубтитры';
+        neuralBtn.style.marginBottom = '15px';
+        neuralBtn.addEventListener('click', () => this.toggleNeuralSubtitles());
+        this.menuPipBtn.parentNode.insertBefore(neuralBtn, this.menuPipBtn.nextSibling);
+    }
+    
+    toggleNeuralSubtitles() {
+        if (!this.neuralSubtitles) {
+            this.showToast('Модуль субтитров не загружен', 2000, 'error');
+            return;
+        }
+    
+        this.isNeuralSubtitlesEnabled = !this.isNeuralSubtitlesEnabled;
+        
+        if (this.isNeuralSubtitlesEnabled) {
+            this.neuralSubtitles.enable();
+        } else {
+            this.neuralSubtitles.disable();
+        }
+        
+        this.saveSettings();
     }
 
     handleVisibilityChange() {
@@ -1350,7 +1405,8 @@ class ReaverPlayer {
             currentTime: this.video.currentTime,
             isMuted: this.video.muted,
             quality: this.qualitySelect ? this.qualitySelect.value : 0,
-            subtitles: this.subSelect ? this.subSelect.value : -1
+            subtitles: this.subSelect ? this.subSelect.value : -1,
+            neuralSubtitles: this.isNeuralSubtitlesEnabled
         };
         
         localStorage.setItem('reaverPlayerSettings', JSON.stringify(settings));
@@ -1397,6 +1453,13 @@ class ReaverPlayer {
                     const lastTime = parseFloat(localStorage.getItem('reaverPlayerLastTime') || 0);
                     if (lastTime > 0 && settings.currentTime === undefined) {
                         this.video.currentTime = lastTime;
+                    }
+                }
+
+                if (settings.neuralSubtitles !== undefined && this.neuralSubtitles) {
+                    this.isNeuralSubtitlesEnabled = settings.neuralSubtitles;
+                    if (this.isNeuralSubtitlesEnabled) {
+                        setTimeout(() => this.neuralSubtitles.enable(), 1000);
                     }
                 }
                 
