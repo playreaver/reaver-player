@@ -7,79 +7,123 @@ class NeuralSubtitles {
         this.mediaRecorder = null;
         this.audioChunks = [];
         this.isRecording = false;
-        this.DEEPGRAM_API_KEY = "37ae804334d79e16b5c9b83dbab6e24f1dd9dfd2";
-        this.audioStream = null;
+        this.DEEPGRAM_API_KEY = "37ae804334d79e16b5c9b83dbab6e24f1dd9dfd2"; 
+        this.audioContext = null;
+        this.audioSource = null;
+        this.stream = null;
         this.subtitleTimeout = null;
-    
-        console.log('Player object:', player);
-        console.log('Player root:', player.root);
         
         this.init();
     }
 
     init() {
-        if (!this.player || !this.player.root) {
-            console.error('Player or player root is not defined:', this.player);
-            return;
-        }
         this.createSubtitleContainer();
+        this.addStyles();
     }
 
     createSubtitleContainer() {
-        const oldContainer = this.player.root.querySelector('.neural-subtitles');
+        const oldContainer = document.querySelector('.neural-subtitles-container');
         if (oldContainer) oldContainer.remove();
-    
+        
         this.subtitleContainer = document.createElement('div');
-        this.subtitleContainer.className = 'neural-subtitles';
+        this.subtitleContainer.className = 'neural-subtitles-container';
         Object.assign(this.subtitleContainer.style, {
-            position: 'absolute',
+            position: 'fixed',
             bottom: '100px',
             left: '50%',
             transform: 'translateX(-50%)',
             maxWidth: '80%',
             textAlign: 'center',
             color: 'white',
-            fontSize: '20px',
-            fontWeight: '600',
-            background: 'linear-gradient(135deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.6) 100%)',
-            padding: '12px 20px',
-            borderRadius: '12px',
-            backdropFilter: 'blur(10px)',
-            zIndex: 1000,
+            fontSize: '24px',
+            fontWeight: 'bold',
+            background: 'rgba(0, 0, 0, 0.7)',
+            padding: '15px 25px',
+            borderRadius: '10px',
+            zIndex: 10000,
             opacity: 0,
-            transition: 'all 0.3s ease',
+            transition: 'opacity 0.3s ease',
             pointerEvents: 'none',
-            border: '1px solid rgba(255,255,255,0.2)',
-            display: 'none'
+            backdropFilter: 'blur(5px)',
+            border: '1px solid rgba(255, 255, 255, 0.2)'
         });
         
-        this.player.root.appendChild(this.subtitleContainer);
+        document.body.appendChild(this.subtitleContainer);
     }
 
-    async setupAudioCapture(useMicrophone = false) {
-        try {
-            if (useMicrophone) {
-                this.audioStream = await navigator.mediaDevices.getUserMedia({ 
-                    audio: { echoCancellation: true, noiseSuppression: true, sampleRate: 16000 } 
-                });
-            } else {
-                this.audioStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
-                const videoTracks = this.audioStream.getVideoTracks();
-                videoTracks.forEach(track => track.stop());
+    addStyles() {
+        const style = document.createElement('style');
+        style.textContent = `
+            .neural-subtitles-container {
+                font-family: 'Arial', sans-serif;
+                text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.9);
             }
+            
+            @media (max-width: 768px) {
+                .neural-subtitles-container {
+                    font-size: 18px !important;
+                    bottom: 80px !important;
+                    max-width: 90% !important;
+                    padding: 10px 20px !important;
+                }
+            }
+            
+            .neural-subtitles-btn {
+                background: linear-gradient(135deg, #6e8efb, #a777e3);
+                color: white;
+                border: none;
+                padding: 10px 20px;
+                border-radius: 25px;
+                cursor: pointer;
+                font-weight: bold;
+                transition: all 0.3s ease;
+                margin: 10px;
+            }
+            
+            .neural-subtitles-btn:hover {
+                transform: scale(1.05);
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            }
+            
+            .neural-subtitles-btn:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+            }
+        `;
+        document.head.appendChild(style);
+    }
 
+    async setupAudioCapture() {
+        try {
+            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            
+            this.audioSource = this.audioContext.createMediaElementSource(this.player.video);
+            
+            this.streamDestination = this.audioContext.createMediaStreamDestination();
+            
+            this.audioSource.connect(this.audioContext.destination);
+            this.audioSource.connect(this.streamDestination); 
+            
+            this.stream = this.streamDestination.stream;
+            
             this.setupMediaRecorder();
             return true;
 
         } catch (error) {
             console.error('Audio capture error:', error);
-            this.showAlternativeMethod();
+            this.showError('Ошибка подключения к аудио');
             return false;
         }
     }
 
     setupMediaRecorder() {
-        this.mediaRecorder = new MediaRecorder(this.audioStream, { mimeType: 'audio/webm;codecs=opus' });
+        const options = { mimeType: 'audio/webm' };
+        
+        if (!MediaRecorder.isTypeSupported('audio/webm')) {
+            options.mimeType = 'audio/wav';
+        }
+        
+        this.mediaRecorder = new MediaRecorder(this.stream, options);
         this.audioChunks = [];
 
         this.mediaRecorder.ondataavailable = event => {
@@ -88,79 +132,48 @@ class NeuralSubtitles {
 
         this.mediaRecorder.onstop = async () => {
             if (this.audioChunks.length === 0) return;
-            const blob = new Blob(this.audioChunks, { type: 'audio/webm' });
+            
+            const blob = new Blob(this.audioChunks, { 
+                type: this.mediaRecorder.mimeType 
+            });
+            
             this.audioChunks = [];
             const text = await this.transcribeWithAPI(blob);
+            
             if (text) this.displaySubtitles(text);
+
+            if (this.isRecording) {
+                this.mediaRecorder.start(1000);
+            }
         };
     }
 
-    showAlternativeMethod() {
-        if (!this.subtitleContainer) {
-            console.error('Subtitle container not found');
-            return;
-        }
-        
-        this.subtitleContainer.innerHTML = `
-            <div style="text-align: center; padding: 10px;">
-                <div style="font-size: 16px; margin-bottom: 8px; color: #ff6b6b;">⚠️ Не удалось захватить аудио</div>
-                <div style="font-size: 14px; opacity: 0.8; margin-bottom: 12px;">Используйте микрофон</div>
-                <button id="use-mic" style="padding: 8px 16px; background:#28a745;color:white;border:none;border-radius:6px;cursor:pointer;">Микрофон</button>
-            </div>
-        `;
-        this.subtitleContainer.style.display = 'block';
-        this.subtitleContainer.style.opacity = '1';
-
-        setTimeout(() => {
-            const micButton = document.getElementById('use-mic');
-            if (micButton) {
-                micButton.addEventListener('click', async () => {
-                    this.subtitleContainer.style.display = 'none';
-                    await this.setupAudioCapture(true);
-                    this.enable();
-                });
-            }
-        }, 100);
-    }
-
     async toggle() {
-        if (this.isEnabled) this.disable();
-        else await this.enable();
+        if (this.isEnabled) {
+            this.disable();
+        } else {
+            await this.enable();
+        }
     }
 
     async enable() {
-        console.log('Enabling neural subtitles...');
-        
-        if (!this.mediaRecorder) {
-            console.log('Setting up audio capture...');
-            const success = await this.setupAudioCapture();
-            if (!success) {
-                console.error('Failed to setup audio capture');
-                return;
-            }
-        }
-    
-        this.isEnabled = true;
-        this.subtitleContainer.style.display = 'block';
-        this.subtitleContainer.style.opacity = '1';
-        this.isRecording = true;
-        
         try {
-            this.mediaRecorder.start(2000);
-            console.log('Media recorder started');
-    
-            this.recordingInterval = setInterval(() => {
-                if (this.isRecording && this.mediaRecorder.state === 'recording') {
-                    this.mediaRecorder.stop();
-                    this.mediaRecorder.start(2000);
-                    console.log('Restarted media recorder');
-                }
-            }, 4000);
-    
-            this.player.showToast('Нейросубтитры включены 🎯', 2000, 'success');
+            if (!this.mediaRecorder) {
+                const success = await this.setupAudioCapture();
+                if (!success) return;
+            }
+
+            this.isEnabled = true;
+            this.isRecording = true;
+            this.subtitleContainer.style.opacity = '1';
+
+            this.mediaRecorder.start(1000);
+            
+            this.showNotification('Нейросубтитры включены 🎯', 'success');
+            
         } catch (error) {
-            console.error('Error starting media recorder:', error);
-            this.showError('Ошибка записи аудио');
+            console.error('Enable error:', error);
+            this.showError('Ошибка включения нейросубтитров');
             this.disable();
         }
     }
@@ -169,18 +182,19 @@ class NeuralSubtitles {
         this.isEnabled = false;
         this.isRecording = false;
 
-        if (this.mediaRecorder?.state === 'recording') this.mediaRecorder.stop();
-        clearInterval(this.recordingInterval);
+        if (this.mediaRecorder && this.mediaRecorder.state === 'recording') {
+            this.mediaRecorder.stop();
+        }
 
-        this.subtitleContainer.style.opacity = '0';
-        setTimeout(() => { this.subtitleContainer.style.display = 'none'; }, 300);
-
-        this.player.showToast('Нейросубтитры выключены', 2000, 'info');
+        if (this.subtitleContainer) {
+            this.subtitleContainer.style.opacity = '0';
+        }
+        
+        this.showNotification('Нейросубтитры выключены', 'info');
     }
 
     async transcribeWithAPI(blob) {
         try {
-            console.log('Sending audio to Deepgram API...');
             const response = await fetch(
                 "https://api.deepgram.com/v1/listen?model=nova-2&language=ru&punctuate=true",
                 {
@@ -193,79 +207,103 @@ class NeuralSubtitles {
                 }
             );
             
-            console.log('Deepgram response status:', response.status);
-            
             if (!response.ok) {
-                const errorText = await response.text();
-                console.error('Deepgram API error:', errorText);
-                throw new Error(`API error: ${response.status} - ${errorText}`);
+                throw new Error(`API error: ${response.status}`);
             }
             
             const result = await response.json();
-            console.log('Deepgram result:', result);
+            return result.results?.channels?.[0]?.alternatives?.[0]?.transcript || null;
             
-            const transcript = result.results?.channels?.[0]?.alternatives?.[0]?.transcript || null;
-            console.log('Transcript:', transcript);
-            
-            return transcript;
         } catch (err) {
-            console.error('Deepgram API error:', err);
+            console.error('Transcription error:', err);
             this.showError('Ошибка распознавания речи');
             return null;
         }
     }
-    
+
+    displaySubtitles(text) {
+        if (!this.isEnabled || !text.trim()) return;
+        
+        text = text.replace(/\s+/g, ' ').trim();
+        
+        if (text.length > 100) {
+            text = text.substring(0, 100) + '...';
+        }
+        
+        this.subtitleContainer.textContent = text;
+        this.subtitleContainer.style.opacity = '1';
+        
+        clearTimeout(this.subtitleTimeout);
+        this.subtitleTimeout = setTimeout(() => {
+            this.subtitleContainer.style.opacity = '0';
+        }, 5000);
+    }
+
     showError(message) {
         if (this.subtitleContainer) {
             this.subtitleContainer.textContent = message;
+            this.subtitleContainer.style.background = 'rgba(255, 0, 0, 0.7)';
             this.subtitleContainer.style.opacity = '1';
-            this.subtitleContainer.style.background = 'linear-gradient(135deg, rgba(255,0,0,0.8) 0%, rgba(200,0,0,0.6) 100%)';
             
             setTimeout(() => {
                 this.subtitleContainer.style.opacity = '0';
+                this.subtitleContainer.style.background = 'rgba(0, 0, 0, 0.7)';
             }, 3000);
         }
     }
 
-    displaySubtitles(text) {
-        if (!this.isEnabled || !text.trim() || !this.subtitleContainer) return;
-    
-        text = text.replace(/\s+/g, ' ').trim();
-        if (text.length > 120) text = text.substring(0, 120) + '...';
-    
-        this.subtitleContainer.textContent = text;
-        this.subtitleContainer.style.opacity = '1';
-    
-        clearTimeout(this.subtitleTimeout);
-        this.subtitleTimeout = setTimeout(() => { 
-            if (this.subtitleContainer) {
-                this.subtitleContainer.style.opacity = '0'; 
-            }
-        }, 5000);
+    showNotification(message, type = 'info') {
+        console.log(`${type}: ${message}`);
     }
 
     destroy() {
         this.disable();
-        this.audioStream?.getTracks().forEach(track => track.stop());
+        
+        if (this.audioContext) {
+            this.audioContext.close();
+        }
+        
         if (this.subtitleContainer) {
             this.subtitleContainer.remove();
         }
-        clearInterval(this.recordingInterval);
+        
+        clearTimeout(this.subtitleTimeout);
     }
 }
 
-const style = document.createElement('style');
-style.textContent = `
-.neural-subtitles {
-    font-family: 'Arial', sans-serif;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.9), 0px 0px 10px rgba(0,0,0,0.5);
-    line-height: 1.4;
+function addSubtitlesButton(player) {
+    const button = document.createElement('button');
+    button.className = 'neural-subtitles-btn';
+    button.textContent = 'Нейросубтитры';
+    button.onclick = () => neuralSubtitles.toggle();
+    
+    const controls = player.root.querySelector('.controls');
+    if (controls) {
+        controls.appendChild(button);
+    }
+    
+    return button;
 }
 
-@media (max-width: 768px) {
-    .neural-subtitles { font-size: 16px !important; bottom: 70px !important; max-width: 90% !important; padding: 8px 16px !important; }
-}
-`;
-document.head.appendChild(style);
+let neuralSubtitles = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+    const checkPlayer = setInterval(() => {
+        const player = document.querySelector('video') || 
+                      document.querySelector('.video-player') ||
+                      document.querySelector('[data-player]');
+        
+        if (player) {
+            clearInterval(checkPlayer);
+            
+            neuralSubtitles = new NeuralSubtitles({
+                video: player,
+                root: player.parentElement
+            });
+            
+            addSubtitlesButton(neuralSubtitles);
+        }
+    }, 1000);
+});
 
 window.NeuralSubtitles = NeuralSubtitles;
