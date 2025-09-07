@@ -337,39 +337,67 @@ class ReaverPlayer {
     }
 
     initNeuralSubtitles() {
+        console.log('Initializing neural subtitles...');
         this.loadNeuralSubtitlesScript();
     }
     
     loadNeuralSubtitlesScript() {
         if (document.querySelector('script[src*="subtitles.js"]')) {
-            return; 
+            console.log('Subtitles script already loaded');
+            this.setupNeuralSubtitles();
+            return;
         }
     
         const script = document.createElement('script');
         script.src = 'subtitles.js';
         script.onload = () => {
+            console.log('Subtitles script loaded successfully');
             this.setupNeuralSubtitles();
         };
-        script.onerror = () => {
-            console.error('Failed to load subtitles script');
+        script.onerror = (error) => {
+            console.error('Failed to load subtitles script:', error);
+            this.showToast('Ошибка загрузки модуля субтитров', 2000, 'error');
         };
         document.head.appendChild(script);
     }
     
     setupNeuralSubtitles() {
         if (window.NeuralSubtitles) {
-            this.neuralSubtitles = new NeuralSubtitles(this);
-            
-            this.addNeuralSubtitlesButton();
+            console.log('NeuralSubtitles class available');
+            try {
+                this.neuralSubtitles = new NeuralSubtitles(this);
+                this.addNeuralSubtitlesButton();
+            } catch (error) {
+                console.error('Error creating NeuralSubtitles:', error);
+            }
+        } else {
+            console.error('NeuralSubtitles class not found in window');
         }
     }
     
     addNeuralSubtitlesButton() {
-        const neuralBtn = document.createElement('button');
-        neuralBtn.innerHTML = '<i class="fas fa-brain"></i> Нейросубтитры';
-        neuralBtn.style.marginBottom = '15px';
-        neuralBtn.addEventListener('click', () => this.toggleNeuralSubtitles());
-        this.menuPipBtn.parentNode.insertBefore(neuralBtn, this.menuPipBtn.nextSibling);
+        try {
+            if (this.menuContent.querySelector('.neural-subtitles-btn')) {
+                console.log('Neural subtitles button already exists');
+                return;
+            }
+    
+            const neuralBtn = document.createElement('button');
+            neuralBtn.className = 'neural-subtitles-btn';
+            neuralBtn.innerHTML = '<i class="fas fa-brain"></i> Нейросубтитры';
+            neuralBtn.style.marginBottom = '15px';
+            neuralBtn.addEventListener('click', () => this.toggleNeuralSubtitles());
+            
+            if (this.menuPipBtn && this.menuPipBtn.parentNode) {
+                this.menuPipBtn.parentNode.insertBefore(neuralBtn, this.menuPipBtn.nextSibling);
+            } else {
+                this.menuContent.appendChild(neuralBtn);
+            }
+            
+            console.log('Neural subtitles button added successfully');
+        } catch (error) {
+            console.error('Error adding neural subtitles button:', error);
+        }
     }
     
     toggleNeuralSubtitles() {
