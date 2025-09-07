@@ -500,7 +500,7 @@
 }
 
 /* Адаптивность для мобильных устройств */
-@media (max-width: 768px) {
+@media (max-width: 960px) {
     .reaver-player {
         border-radius: 0;
         max-width: 100%;
