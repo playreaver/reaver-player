@@ -521,15 +521,15 @@
     }
     
     .reaver-player .btn {
-        width: 52px; /* Увеличиваем размер кнопок на мобильных */
-        height: 52px;
+        width: 80px; /* Увеличиваем размер кнопок на мобильных */
+        height: 80px;
         margin-right: 10px;
         font-size: 20px;
     }
     
     .reaver-player .menu-btn {
-        width: 52px;
-        height: 52px;
+        width: 80px;
+        height: 80px;
         font-size: 20px;
     }
     
