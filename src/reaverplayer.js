@@ -15,6 +15,9 @@ class ReaverPlayer {
         this.pauseOverlayTimeout = null;
         this.pauseOverlayDelay = 3000;
         this.lastPlayedTime = 0;
+
+        window.addEventListener('beforeunload', () => this.handleBeforeUnload());
+        document.addEventListener('visibilitychange', () => this.handleVisibilityChange());
         
         this.initPlayer();
         this.setupFontAwesome();
@@ -133,9 +136,6 @@ class ReaverPlayer {
 
         this.createControls();
         this.bindEvents();
-
-        window.addEventListener('beforeunload', () => this.handleBeforeUnload());
-        document.addEventListener('visibilitychange', () => this.handleVisibilityChange());
     }
 
     createControls() {
@@ -326,9 +326,10 @@ class ReaverPlayer {
     }
 
     handleBeforeUnload() {
-        if (!this.video.paused && this.video.currentTime > 0) {
+        if (this.video.currentTime > 0) {
             localStorage.setItem('reaverPlayerLastTime', this.video.currentTime);
             localStorage.setItem('reaverPlayerLastSrc', this.video.src);
+            console.log('Saved playback state:', this.video.currentTime, this.video.src);
         }
     }
 
@@ -346,15 +347,26 @@ class ReaverPlayer {
     checkAndShowResumePrompt() {
         const lastTime = parseFloat(localStorage.getItem('reaverPlayerLastTime') || 0);
         const lastSrc = localStorage.getItem('reaverPlayerLastSrc');
-
-        if (lastTime > 0 && lastSrc === this.video.src && !this.video.paused) {
+    
+        console.log('Checking resume prompt:', {
+            lastTime,
+            lastSrc, 
+            currentSrc: this.video.src,
+            currentTime: this.video.currentTime,
+            isPaused: this.video.paused
+        });
+    
+        if (lastTime > 0 && lastSrc === this.video.src && this.video.currentTime === 0) {
+            console.log('Showing resume prompt');
             this.lastPlayedTime = lastTime;
             
             this.pause();
             this.showPauseOverlay();
-
+    
             localStorage.removeItem('reaverPlayerLastTime');
             localStorage.removeItem('reaverPlayerLastSrc');
+        } else {
+            console.log('Conditions not met for resume prompt');
         }
     }
 
