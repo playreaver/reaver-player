@@ -2,6 +2,8 @@
 .reaver-player {
     position: relative;
     background: #0a0a0a;
+    width: var(--player-width, 100%);
+    height: var(--player-height, auto);
     max-width: 100%;
     margin: 0 auto;
     border-radius: 12px;
