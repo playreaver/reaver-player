@@ -1799,7 +1799,16 @@ class ReaverPlayer {
     }
 }
 
-// Автоматическая инициализация всех плееров на странице 
+document.addEventListener("DOMContentLoaded", () => {
+  document.querySelectorAll(".reaver-player").forEach(player => {
+    const width = player.getAttribute("data-width");
+    const height = player.getAttribute("data-height");
+
+    if (width) player.style.setProperty("--player-width", width);
+    if (height) player.style.setProperty("--player-height", height);
+  });
+});
+
 (function(){
     function boot(){
         document.querySelectorAll('.reaver-player').forEach(el=>{
