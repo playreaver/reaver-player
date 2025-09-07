@@ -14,6 +14,7 @@ class ReaverPlayer {
         this.originalPosition = {};
         this.pauseOverlayTimeout = null;
         this.pauseOverlayDelay = 3000;
+        this.lastPlayedTime = 0;
         
         this.initPlayer();
         this.setupFontAwesome();
@@ -23,6 +24,9 @@ class ReaverPlayer {
         this.controlsVisible = false;
         this.setupGestures();
         this.loadSettings();
+        setTimeout(() => {
+            this.checkAndShowResumePrompt();
+        }, 1000);
     }
 
     initPlayer() {     
@@ -129,6 +133,9 @@ class ReaverPlayer {
 
         this.createControls();
         this.bindEvents();
+
+        window.addEventListener('beforeunload', () => this.handleBeforeUnload());
+        document.addEventListener('visibilitychange', () => this.handleVisibilityChange());
     }
 
     createControls() {
@@ -318,6 +325,39 @@ class ReaverPlayer {
         this.root.appendChild(controls);
     }
 
+    handleBeforeUnload() {
+        if (!this.video.paused && this.video.currentTime > 0) {
+            localStorage.setItem('reaverPlayerLastTime', this.video.currentTime);
+            localStorage.setItem('reaverPlayerLastSrc', this.video.src);
+        }
+    }
+
+    handleVisibilityChange() {
+        if (document.hidden) {
+            if (!this.video.paused && this.video.currentTime > 0) {
+                localStorage.setItem('reaverPlayerLastTime', this.video.currentTime);
+                localStorage.setItem('reaverPlayerLastSrc', this.video.src);
+            }
+        } else {
+            this.checkAndShowResumePrompt();
+        }
+    }
+
+    checkAndShowResumePrompt() {
+        const lastTime = parseFloat(localStorage.getItem('reaverPlayerLastTime') || 0);
+        const lastSrc = localStorage.getItem('reaverPlayerLastSrc');
+
+        if (lastTime > 0 && lastSrc === this.video.src && !this.video.paused) {
+            this.lastPlayedTime = lastTime;
+            
+            this.pause();
+            this.showPauseOverlay();
+
+            localStorage.removeItem('reaverPlayerLastTime');
+            localStorage.removeItem('reaverPlayerLastSrc');
+        }
+    }
+
     bindEvents() {
         this.playBtn.addEventListener('click', () => this.toggle());
         
@@ -431,19 +471,25 @@ class ReaverPlayer {
 
         this.pauseOverlay.querySelector('.continue-btn').addEventListener('click', () => {
             this.hidePauseOverlay();
+            if (this.lastPlayedTime > 0) {
+                this.video.currentTime = this.lastPlayedTime;
+            }
             this.play();
+            this.lastPlayedTime = 0;
         });
 
         this.pauseOverlay.querySelector('.restart-btn').addEventListener('click', () => {
             this.hidePauseOverlay();
             this.video.currentTime = 0;
             this.play();
+            this.lastPlayedTime = 0;
         });
 
         this.pauseOverlay.querySelector('.close-pause-overlay').addEventListener('click', () => {
             this.hidePauseOverlay();
             this.video.currentTime = 0;
             this.play();
+            this.lastPlayedTime = 0; 
         });
 
         // Субтитры
@@ -517,11 +563,9 @@ class ReaverPlayer {
     }
 
     showPauseOverlay() {
-        // Обновляем время в сообщении
+        const displayTime = this.lastPlayedTime > 0 ? this.lastPlayedTime : this.video.currentTime;
         const timeElement = this.pauseOverlay.querySelector('.pause-time');
-        timeElement.textContent = this.formatTime(this.video.currentTime);
-        
-        // Показываем оверлей
+        timeElement.textContent = this.formatTime(displayTime);
         this.pauseOverlay.classList.add('visible');
     }
 
@@ -1315,6 +1359,14 @@ class ReaverPlayer {
                 if (settings.subtitles !== undefined && this.subSelect) {
                     this.subSelect.value = settings.subtitles;
                     this.changeSubtitles(parseInt(settings.subtitles));
+                }
+
+                const lastSrc = localStorage.getItem('reaverPlayerLastSrc');
+                if (lastSrc === this.video.src) {
+                    const lastTime = parseFloat(localStorage.getItem('reaverPlayerLastTime') || 0);
+                    if (lastTime > 0 && settings.currentTime === undefined) {
+                        this.video.currentTime = lastTime;
+                    }
                 }
                 
                 this.updateVolumeIcon();
