@@ -1257,7 +1257,6 @@
     color: white;
 }
 
-/* Адаптивность для мобильных */
 @media (max-width: 768px) {
     .pause-message {
         padding: 20px;
@@ -1276,4 +1275,30 @@
     .pause-buttons button {
         width: 100%;
     }
+}
+
+.neural-subtitles {
+    background: rgba(0, 0, 0, 0.6);
+    border-radius: 10px;
+    backdrop-filter: blur(5px);
+    max-width: 80%;
+    margin: 0 auto;
+    line-height: 1.4;
+}
+
+@media (max-width: 768px) {
+    .neural-subtitles {
+        font-size: 18px;
+        bottom: 100px;
+        max-width: 90%;
+    }
+}
+
+.neural-subtitles {
+    animation: subtitleFadeIn 0.3s ease;
+}
+
+@keyframes subtitleFadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
 }
