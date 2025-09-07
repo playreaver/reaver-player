@@ -135,9 +135,9 @@ class ReaverPlayer {
         this.closeMiniBtn.innerHTML = '<i class="fas fa-times"></i>';
         this.closeMiniBtn.style.display = 'none';
         this.videoContainer.appendChild(this.closeMiniBtn);
-        this.initNeuralSubtitles();
         this.createControls();
         this.bindEvents();
+        this.initNeuralSubtitles();
     }
 
     createControls() {
