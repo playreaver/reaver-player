@@ -101,6 +101,10 @@
       opacity: 1;
     }
 
+    .wws-menu-overlay.closing .wws-menu-backdrop {
+      opacity: 0;
+    }
+
     .wws-menu-container {
       position: absolute;
       left: 0;
@@ -115,6 +119,10 @@
 
     .wws-menu-overlay.active .wws-menu-container {
       transform: translateX(0) scale(1);
+    }
+
+    .wws-menu-overlay.closing .wws-menu-container {
+      transform: translateX(-100%) scale(0.9);
     }
 
     .wws-menu-shell {
@@ -132,6 +140,26 @@
       position: relative;
     }
 
+    /* Кастомный скроллбар */
+    .wws-menu-shell::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .wws-menu-shell::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 3px;
+    }
+
+    .wws-menu-shell::-webkit-scrollbar-thumb {
+      background: linear-gradient(135deg, #a78bfa, #60a5fa);
+      border-radius: 3px;
+      transition: all 0.3s ease;
+    }
+
+    .wws-menu-shell::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(135deg, #9370db, #4a90e2);
+    }
+
     .wws-menu-shell::before {
       content: '';
       position: absolute;
@@ -142,7 +170,6 @@
       background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
     }
 
-    /* Анимация появления контента */
     @keyframes slideInItem {
       0% {
         opacity: 0;
@@ -151,6 +178,17 @@
       100% {
         opacity: 1;
         transform: translateX(0) scale(1);
+      }
+    }
+
+    @keyframes slideOutItem {
+      0% {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+      }
+      100% {
+        opacity: 0;
+        transform: translateX(-30px) scale(0.95);
       }
     }
 
@@ -165,6 +203,17 @@
       }
     }
 
+    @keyframes slideOutHeader {
+      0% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      100% {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+    }
+
     .wws-menu-header {
       margin-bottom: 40px;
       padding-bottom: 25px;
@@ -175,6 +224,10 @@
 
     .wws-menu-overlay.active .wws-menu-header {
       animation: slideInHeader 0.6s cubic-bezier(0.23, 1, 0.32, 1) 0.3s forwards;
+    }
+
+    .wws-menu-overlay.closing .wws-menu-header {
+      animation: slideOutHeader 0.4s cubic-bezier(0.23, 1, 0.32, 1) forwards;
     }
 
     .wws-menu-header h2 {
@@ -223,10 +276,21 @@
       animation: slideInItem 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards;
     }
 
+    .wws-menu-overlay.closing .wws-menu-item {
+      animation: slideOutItem 0.4s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+    }
+
     .wws-menu-item:nth-child(1) { animation-delay: 0.4s; }
     .wws-menu-item:nth-child(2) { animation-delay: 0.5s; }
     .wws-menu-item:nth-child(3) { animation-delay: 0.6s; }
     .wws-menu-item:nth-child(4) { animation-delay: 0.7s; }
+    .wws-menu-item:nth-child(5) { animation-delay: 0.8s; }
+    .wws-menu-item:nth-child(6) { animation-delay: 0.9s; }
+
+    .wws-menu-overlay.closing .wws-menu-item:nth-child(1) { animation-delay: 0.1s; }
+    .wws-menu-overlay.closing .wws-menu-item:nth-child(2) { animation-delay: 0.2s; }
+    .wws-menu-overlay.closing .wws-menu-item:nth-child(3) { animation-delay: 0.3s; }
+    .wws-menu-overlay.closing .wws-menu-item:nth-child(4) { animation-delay: 0.4s; }
 
     .wws-menu-item::before {
       content: '';
@@ -297,20 +361,61 @@
     }
 
     .wws-menu-badge {
-      background: linear-gradient(135deg, #a78bfa, #60a5fa);
       padding: 5px 12px;
       border-radius: 20px;
       font-size: 11px;
       font-weight: 600;
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      border: 1px solid;
       transition: all 0.3s ease;
-      box-shadow: 0 4px 15px rgba(96, 165, 250, 0.3);
       flex-shrink: 0;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .wws-menu-badge.new {
+      background: linear-gradient(135deg, #a78bfa, #60a5fa);
+      border-color: rgba(255, 255, 255, 0.2);
+      box-shadow: 0 4px 15px rgba(96, 165, 250, 0.3);
+    }
+
+    .wws-menu-badge.beta {
+      background: linear-gradient(135deg, #fbc531, #e84118);
+      border-color: rgba(255, 255, 255, 0.2);
+      box-shadow: 0 4px 15px rgba(235, 87, 87, 0.3);
+    }
+
+    .wws-menu-badge.pro {
+      background: linear-gradient(135deg, #00b894, #0984e3);
+      border-color: rgba(255, 255, 255, 0.2);
+      box-shadow: 0 4px 15px rgba(9, 132, 227, 0.3);
+    }
+
+    .wws-menu-badge.free {
+      background: linear-gradient(135deg, #00cec9, #fd79a8);
+      border-color: rgba(255, 255, 255, 0.2);
+      box-shadow: 0 4px 15px rgba(253, 121, 168, 0.3);
+    }
+
+    .wws-menu-badge.coming {
+      background: linear-gradient(135deg, #636e72, #2d3436);
+      border-color: rgba(255, 255, 255, 0.1);
+      box-shadow: 0 4px 15px rgba(45, 52, 54, 0.3);
     }
 
     .wws-menu-item:hover .wws-menu-badge {
       transform: scale(1.05);
+    }
+
+    .wws-menu-item:hover .wws-menu-badge.new {
       box-shadow: 0 6px 20px rgba(96, 165, 250, 0.4);
+    }
+
+    .wws-menu-item:hover .wws-menu-badge.beta {
+      box-shadow: 0 6px 20px rgba(235, 87, 87, 0.4);
+    }
+
+    .wws-menu-item:hover .wws-menu-badge.pro {
+      box-shadow: 0 6px 20px rgba(9, 132, 227, 0.4);
     }
 
     .wws-menu-footer {
@@ -325,6 +430,10 @@
 
     .wws-menu-overlay.active .wws-menu-footer {
       animation: slideInHeader 0.6s cubic-bezier(0.23, 1, 0.32, 1) 0.8s forwards;
+    }
+
+    .wws-menu-overlay.closing .wws-menu-footer {
+      animation: slideOutHeader 0.4s cubic-bezier(0.23, 1, 0.32, 1) 0.1s forwards;
     }
 
     @keyframes morphOpen {
@@ -344,6 +453,25 @@
 
     .wws-menu-overlay.active .wws-menu-container {
       animation: morphOpen 0.9s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+
+    @keyframes morphClose {
+      0% {
+        transform: translateX(0) scale(1) rotateY(0deg);
+        opacity: 1;
+      }
+      50% {
+        transform: translateX(-20%) scale(0.95) rotateY(5deg);
+        opacity: 0.7;
+      }
+      100% {
+        transform: translateX(-100%) scale(0.8) rotateY(15deg);
+        opacity: 0;
+      }
+    }
+
+    .wws-menu-overlay.closing .wws-menu-container {
+      animation: morphClose 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
     }
 
     @media (max-width: 480px) {
@@ -400,35 +528,12 @@
       }
     }
 
-    /* Улучшенная производительность */
     .wws-menu-container {
       will-change: transform;
     }
 
     .wws-menu-item {
       will-change: transform, opacity;
-    }
-
-    @media (prefers-color-scheme: light) {
-      .wws-menu-shell {
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(245, 245, 255, 0.98) 100%);
-        color: #333;
-        border-right-color: rgba(0, 0, 0, 0.1);
-      }
-
-      .wws-menu-item {
-        background: rgba(0, 0, 0, 0.05);
-        border-color: rgba(0, 0, 0, 0.08);
-        color: #333;
-      }
-
-      .wws-menu-item:hover {
-        background: rgba(0, 0, 0, 0.08);
-      }
-
-      .wws-menu-icon {
-        background: rgba(0, 0, 0, 0.05);
-      }
     }
   `;
 
@@ -471,7 +576,7 @@
                 <div class="wws-menu-title">Основной сайт WWS</div>
                 <div class="wws-menu-desc">Главный портал компании</div>
               </div>
-              <div class="wws-menu-badge">NEW</div>
+              <div class="wws-menu-badge new">NEW</div>
             </a>
 
             <a class="wws-menu-item" href="https://reaver-gradient.example" target="_blank" rel="noopener">
@@ -482,6 +587,7 @@
                 <div class="wws-menu-title">Reaver Gradient</div>
                 <div class="wws-menu-desc">Создание градиентов</div>
               </div>
+              <div class="wws-menu-badge beta">BETA</div>
             </a>
 
             <a class="wws-menu-item" href="https://reaver-markdown.example" target="_blank" rel="noopener">
@@ -492,6 +598,7 @@
                 <div class="wws-menu-title">Reaver Markdown</div>
                 <div class="wws-menu-desc">Редактор Markdown</div>
               </div>
+              <div class="wws-menu-badge pro">PRO</div>
             </a>
 
             <a class="wws-menu-item" href="https://reaver-table.example" target="_blank" rel="noopener">
@@ -502,6 +609,29 @@
                 <div class="wws-menu-title">Reaver Table</div>
                 <div class="wws-menu-desc">Работа с таблицами</div>
               </div>
+              <div class="wws-menu-badge free">FREE</div>
+            </a>
+
+            <a class="wws-menu-item" href="https://reaver-ai.example" target="_blank" rel="noopener">
+              <div class="wws-menu-icon">
+                <i class="fas fa-robot"></i>
+              </div>
+              <div class="wws-menu-content">
+                <div class="wws-menu-title">Reaver AI</div>
+                <div class="wws-menu-desc">Искусственный интеллект</div>
+              </div>
+              <div class="wws-menu-badge coming">SOON</div>
+            </a>
+
+            <a class="wws-menu-item" href="https://reaver-cloud.example" target="_blank" rel="noopener">
+              <div class="wws-menu-icon">
+                <i class="fas fa-cloud"></i>
+              </div>
+              <div class="wws-menu-content">
+                <div class="wws-menu-title">Reaver Cloud</div>
+                <div class="wws-menu-desc">Облачное хранилище</div>
+              </div>
+              <div class="wws-menu-badge new">NEW</div>
             </a>
           </div>
 
@@ -514,46 +644,72 @@
     document.body.appendChild(overlay);
 
     let isOpen = false;
+    let isAnimating = false;
 
-    function toggleMenu(open) {
-      isOpen = open;
+    function openMenu() {
+      if (isAnimating) return;
       
-      if (open) {
-        overlay.classList.add('active');
-        btn.classList.add('active');
-        overlay.setAttribute('aria-hidden', 'false');
-        btn.setAttribute('aria-label', 'Close menu');
-        btn.querySelector('i').className = 'fas fa-times';
+      isAnimating = true;
+      isOpen = true;
+      
+      overlay.classList.remove('closing');
+      overlay.classList.add('active');
+      btn.classList.add('active');
+      overlay.setAttribute('aria-hidden', 'false');
+      btn.setAttribute('aria-label', 'Close menu');
+      btn.querySelector('i').className = 'fas fa-times';
+
+      setTimeout(() => {
+        isAnimating = false;
+      }, 900);
+    }
+
+    function closeMenu() {
+      if (isAnimating) return;
+      
+      isAnimating = true;
+      overlay.classList.add('closing');
+      btn.classList.remove('active');
+      overlay.setAttribute('aria-hidden', 'true');
+      btn.setAttribute('aria-label', 'Open menu');
+      btn.querySelector('i').className = 'fas fa-bars';
+
+      setTimeout(() => {
+        overlay.classList.remove('active', 'closing');
+        isOpen = false;
+        isAnimating = false;
+      }, 700);
+    }
+
+    function toggleMenu() {
+      if (isOpen) {
+        closeMenu();
       } else {
-        overlay.classList.remove('active');
-        btn.classList.remove('active');
-        overlay.setAttribute('aria-hidden', 'true');
-        btn.setAttribute('aria-label', 'Open menu');
-        btn.querySelector('i').className = 'fas fa-bars';
+        openMenu();
       }
     }
 
     btn.addEventListener("click", (e) => {
       e.stopPropagation();
-      toggleMenu(!isOpen);
+      toggleMenu();
     });
 
     overlay.addEventListener('click', (e) => {
       if (e.target.classList.contains('wws-menu-backdrop')) {
-        toggleMenu(false);
+        closeMenu();
       }
     });
 
     document.addEventListener("keydown", (e) => {
       if(e.key === "Escape" && isOpen){
-        toggleMenu(false);
+        closeMenu();
       }
     });
 
     overlay.querySelectorAll('.wws-menu-item').forEach(item => {
       item.addEventListener('click', () => {
         if (window.innerWidth <= 768) {
-          toggleMenu(false);
+          closeMenu();
         }
       });
     });
@@ -574,10 +730,16 @@
       currentX = e.touches[0].clientX;
       const diff = startX - currentX;
       
-      if (diff > 50) { 
-        toggleMenu(false);
+      if (diff > 50) {
+        closeMenu();
       }
     }, { passive: true });
+
+    window.WWSMenu = {
+      open: openMenu,
+      close: closeMenu,
+      toggle: toggleMenu
+    };
   }
 
 })();
