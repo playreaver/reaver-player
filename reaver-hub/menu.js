@@ -1,17 +1,23 @@
-(function () {
+(function(){
+
+  const faLink = document.createElement('link');
+  faLink.rel = 'stylesheet';
+  faLink.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css';
+  document.head.appendChild(faLink);
+
   const css = `
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
     
-    .rg-menu-trigger {
+    .wws-menu-trigger {
       position: fixed;
-      left: 24px;
-      bottom: 24px;
-      z-index: 999999;
-      width: 60px;
-      height: 60px;
+      left: 30px;
+      bottom: 30px;
+      z-index: 10000;
+      width: 70px;
+      height: 70px;
       border-radius: 50%;
-      backdrop-filter: blur(22px) saturate(190%);
-      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.35), rgba(255,255,255,0.08));
+      backdrop-filter: blur(25px) saturate(200%);
+      background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.1) 100%);
       border: 1px solid rgba(255, 255, 255, 0.25);
       color: #fff;
       font-family: 'Inter', system-ui, sans-serif;
@@ -19,117 +25,129 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
       box-shadow: 
-        0 10px 35px rgba(0, 0, 0, 0.35),
-        inset 0 1px 0 rgba(255, 255, 255, 0.4),
-        inset 0 -1px 0 rgba(0, 0, 0, 0.15);
+        0 12px 40px rgba(0, 0, 0, 0.25),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.1);
       overflow: hidden;
     }
 
-    .rg-menu-trigger::before {
+    .wws-menu-trigger::before {
       content: '';
       position: absolute;
-      inset: -40%;
-      background:
-        radial-gradient(circle at 20% 20%, rgba(255,255,255,0.4), transparent 55%),
-        radial-gradient(circle at 80% 80%, rgba(147,197,253,0.3), transparent 55%);
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: radial-gradient(circle at 30% 30%, rgba(120, 119, 198, 0.3) 0%, transparent 70%);
       opacity: 0;
-      transition: opacity 0.3s ease;
+      transition: opacity 0.4s ease;
     }
 
-    .rg-menu-trigger:hover {
-      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.5), rgba(255,255,255,0.14));
-      transform: translateY(-2px) scale(1.06);
+    .wws-menu-trigger::after {
+      content: '';
+      position: absolute;
+      top: -2px;
+      left: -2px;
+      right: -2px;
+      bottom: -2px;
+      background: conic-gradient(from 0deg, #ff6b6b, #ee5a24, #fbc531, #4cd137, #00a8ff, #9c88ff, #ff6b6b);
+      border-radius: 50%;
+      z-index: -1;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+
+    .wws-menu-trigger:hover {
+      transform: translateY(-3px) scale(1.08);
       box-shadow: 
-        0 14px 45px rgba(0, 0, 0, 0.45),
-        inset 0 1px 0 rgba(255, 255, 255, 0.5),
-        inset 0 -1px 0 rgba(0, 0, 0, 0.08);
+        0 20px 50px rgba(0, 0, 0, 0.35),
+        inset 0 1px 0 rgba(255, 255, 255, 0.4),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.05);
     }
 
-    .rg-menu-trigger:hover::before {
+    .wws-menu-trigger:hover::before {
       opacity: 1;
     }
 
-    .rg-menu-trigger i {
-      font-size: 22px;
-      transition: all 0.45s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    .wws-menu-trigger:hover::after {
+      opacity: 1;
+      animation: rotate 3s linear infinite;
+    }
+
+    @keyframes rotate {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .wws-menu-trigger i {
+      font-size: 24px;
+      transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
       position: relative;
       z-index: 2;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.2);
     }
 
-    .rg-menu-trigger:hover i {
-      transform: rotate(15deg) scale(1.05);
+    .wws-menu-trigger.active i {
+      transform: rotate(90deg);
     }
 
-    .rg-menu-overlay {
+    .wws-menu-overlay {
       position: fixed;
       inset: 0;
-      z-index: 999998;
+      z-index: 9999;
       display: none;
-      opacity: 0;
     }
 
-    .rg-menu-overlay.rg-open {
+    .wws-menu-overlay.active {
       display: block;
     }
 
-    .rg-menu-backdrop {
+    .wws-menu-backdrop {
       position: absolute;
       inset: 0;
-      backdrop-filter: blur(28px) brightness(0.7);
-      background: radial-gradient(circle at top left, rgba(59,130,246,0.35), transparent 60%),
-                  radial-gradient(circle at bottom right, rgba(236,72,153,0.25), transparent 60%),
-                  rgba(0, 0, 0, 0.60);
+      backdrop-filter: blur(30px) brightness(0.6);
+      background: rgba(10, 10, 15, 0.7);
       opacity: 0;
-      transition: opacity 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      transition: opacity 0.6s cubic-bezier(0.23, 1, 0.32, 1);
     }
 
-    .rg-menu-overlay.rg-open .rg-menu-backdrop {
+    .wws-menu-overlay.active .wws-menu-backdrop {
       opacity: 1;
     }
 
-    .rg-menu-shell {
+    .wws-menu-container {
       position: absolute;
       left: 0;
       top: 0;
       height: 100%;
-      width: 380px;
-      background: radial-gradient(circle at 0% 0%, rgba(255,255,255,0.14), transparent 55%),
-                  radial-gradient(circle at 100% 100%, rgba(129,140,248,0.18), transparent 55%),
-                  rgba(15, 23, 42, 0.92);
-      border-right: 1px solid rgba(255, 255, 255, 0.18);
-      backdrop-filter: blur(40px) saturate(210%);
-      transform: translateX(-100%) skewX(-5deg);
-      transition: transform 0.65s cubic-bezier(0.34, 1.56, 0.64, 1);
-      padding: 30px;
+      width: 420px;
+      transform: translateX(-100%) perspective(1000px) rotateY(10deg);
+      transition: transform 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+      padding: 40px 0;
+    }
+
+    .wws-menu-overlay.active .wws-menu-container {
+      transform: translateX(0) perspective(1000px) rotateY(0deg);
+    }
+
+    .wws-menu-shell {
+      height: 100%;
+      background: linear-gradient(135deg, rgba(25, 25, 35, 0.95) 0%, rgba(15, 15, 25, 0.98) 100%);
+      border-right: 1px solid rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(50px) saturate(200%);
+      padding: 40px 35px;
       color: #fff;
       font-family: 'Inter', system-ui, sans-serif;
       box-shadow: 
-        18px 0 60px rgba(15, 23, 42, 0.6),
-        inset 1px 0 0 rgba(255, 255, 255, 0.12);
-      overflow: hidden;
+        25px 0 80px rgba(0, 0, 0, 0.5),
+        inset 1px 0 0 rgba(255, 255, 255, 0.1);
+      overflow-y: auto;
+      position: relative;
     }
 
-    .rg-menu-shell::before {
-      content: '';
-      position: absolute;
-      top: -40%;
-      right: -30%;
-      width: 260px;
-      height: 260px;
-      background: radial-gradient(circle at center, rgba(96,165,250,0.22), transparent 65%);
-      filter: blur(2px);
-      opacity: 0.9;
-      pointer-events: none;
-    }
-
-    .rg-menu-overlay.rg-open .rg-menu-shell {
-      transform: translateX(0) skewX(0);
-      transition-delay: 0.08s;
-    }
-
-    .rg-menu-shell::after {
+    .wws-menu-shell::before {
       content: '';
       position: absolute;
       top: 0;
@@ -137,76 +155,83 @@
       right: 0;
       height: 1px;
       background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-      opacity: 0.7;
     }
 
-    .rg-menu-header {
-      margin-bottom: 40px;
-      padding-bottom: 25px;
-      border-bottom: 1px solid rgba(148, 163, 184, 0.35);
+    .wws-menu-header {
+      margin-bottom: 50px;
+      padding-bottom: 30px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
       position: relative;
-      transform: translateX(-40px);
+      transform: translateX(-50px);
       opacity: 0;
-      transition: all 0.55s cubic-bezier(0.34, 1.56, 0.64, 1);
+      transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1) 0.2s;
     }
 
-    .rg-menu-overlay.rg-open .rg-menu-header {
+    .wws-menu-overlay.active .wws-menu-header {
       transform: translateX(0);
       opacity: 1;
-      transition-delay: 0.3s;
     }
 
-    .rg-menu-header h2 {
-      margin: 0 0 8px 0;
-      font-size: 26px;
-      font-weight: 600;
-      letter-spacing: 0.03em;
-      background: linear-gradient(135deg, #ffffff 0%, #c4b5fd 40%, #38bdf8 100%);
+    .wws-menu-header h2 {
+      margin: 0 0 12px 0;
+      font-size: 32px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #fff 0%, #a78bfa 50%, #60a5fa 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
+      background-size: 200% 200%;
+      animation: gradientShift 4s ease infinite;
     }
 
-    .rg-menu-header p {
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .wws-menu-header p {
       margin: 0;
-      font-size: 13px;
+      font-size: 15px;
       opacity: 0.8;
+      font-weight: 300;
+      letter-spacing: 0.5px;
     }
 
-    .rg-menu-items {
+    .wws-menu-items {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 15px;
     }
 
-    .rg-menu-item {
-      padding: 18px 18px;
+    .wws-menu-item {
+      padding: 22px 25px;
       border-radius: 18px;
-      background: radial-gradient(circle at top left, rgba(255,255,255,0.14), rgba(15,23,42,0.9));
-      border: 1px solid rgba(148, 163, 184, 0.45);
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 18px;
       cursor: pointer;
-      transition: all 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
       text-decoration: none;
-      color: #f9fafb;
+      color: #fff;
       position: relative;
       overflow: hidden;
       transform: translateX(-60px);
       opacity: 0;
     }
 
-    .rg-menu-overlay.rg-open .rg-menu-item {
+    .wws-menu-overlay.active .wws-menu-item {
       transform: translateX(0);
       opacity: 1;
     }
 
-    .rg-menu-item:nth-child(1) { transition-delay: 0.40s; }
-    .rg-menu-item:nth-child(2) { transition-delay: 0.46s; }
-    .rg-menu-item:nth-child(3) { transition-delay: 0.52s; }
-    .rg-menu-item:nth-child(4) { transition-delay: 0.58s; }
+    .wws-menu-item:nth-child(1) { transition-delay: 0.3s; }
+    .wws-menu-item:nth-child(2) { transition-delay: 0.4s; }
+    .wws-menu-item:nth-child(3) { transition-delay: 0.5s; }
+    .wws-menu-item:nth-child(4) { transition-delay: 0.6s; }
 
-    .rg-menu-item::before {
+    .wws-menu-item::before {
       content: '';
       position: absolute;
       top: 0;
@@ -215,133 +240,119 @@
       height: 100%;
       background: linear-gradient(90deg, 
         transparent, 
-        rgba(255, 255, 255, 0.18), 
+        rgba(255, 255, 255, 0.1), 
         transparent
       );
-      transition: left 0.6s ease;
+      transition: left 0.7s ease;
     }
 
-    .rg-menu-item:hover {
-      background: radial-gradient(circle at top left, rgba(255,255,255,0.22), rgba(15,23,42,0.95));
-      border-color: rgba(191, 219, 254, 0.75);
-      transform: translateX(8px) translateY(-1px) !important;
-      box-shadow: 0 18px 40px rgba(15,23,42,0.55);
+    .wws-menu-item:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.2);
+      transform: translateX(15px) scale(1.02);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
     }
 
-    .rg-menu-item:hover::before {
+    .wws-menu-item:hover::before {
       left: 100%;
     }
 
-    .rg-menu-icon {
-      width: 28px;
-      text-align: center;
-      opacity: 0.95;
+    .wws-menu-item:hover .wws-menu-icon {
+      transform: scale(1.15) rotate(5deg);
+      background: linear-gradient(135deg, #a78bfa, #60a5fa);
+    }
+
+    .wws-menu-icon {
+      width: 50px;
+      height: 50px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
       transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-      font-size: 18px;
-      flex-shrink: 0;
+      font-size: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
     }
 
-    .rg-menu-item:hover .rg-menu-icon {
-      transform: scale(1.18) rotate(8deg) translateY(-1px);
-      text-shadow: 0 0 10px rgba(129,140,248,0.7);
-    }
-
-    .rg-menu-text {
+    .wws-menu-content {
       flex: 1;
-      font-weight: 500;
-      font-size: 14px;
     }
 
-    .rg-menu-subtext {
-      font-size: 11px;
+    .wws-menu-title {
+      font-weight: 600;
+      font-size: 16px;
+      margin-bottom: 4px;
+    }
+
+    .wws-menu-desc {
+      font-size: 13px;
       opacity: 0.7;
-      margin-top: 2px;
+      font-weight: 300;
     }
 
-    .rg-menu-badge {
-      background: linear-gradient(135deg, rgba(129,140,248,0.15), rgba(56,189,248,0.2));
-      padding: 6px 12px;
-      border-radius: 999px;
-      font-size: 11px;
-      font-weight: 500;
-      border: 1px solid rgba(191, 219, 254, 0.7);
+    .wws-menu-badge {
+      background: linear-gradient(135deg, #a78bfa, #60a5fa);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      border: 1px solid rgba(255, 255, 255, 0.2);
       transition: all 0.3s ease;
-      white-space: nowrap;
+      box-shadow: 0 4px 15px rgba(96, 165, 250, 0.3);
     }
 
-    .rg-menu-item:hover .rg-menu-badge {
-      background: linear-gradient(135deg, rgba(129,140,248,0.3), rgba(56,189,248,0.35));
-      transform: scale(1.05) translateY(-1px);
+    .wws-menu-item:hover .wws-menu-badge {
+      transform: scale(1.08);
+      box-shadow: 0 6px 20px rgba(96, 165, 250, 0.4);
     }
 
-    .rg-menu-footer {
+    .wws-menu-footer {
       position: absolute;
-      bottom: 26px;
-      left: 30px;
-      right: 30px;
+      bottom: 40px;
+      left: 35px;
+      right: 35px;
       text-align: center;
-      font-size: 11px;
+      font-size: 13px;
+      opacity: 0.5;
+      transform: translateY(30px);
       opacity: 0;
-      transform: translateY(20px);
-      transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-      color: rgba(209,213,219,0.85);
+      transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
     }
 
-    .rg-menu-footer span {
-      opacity: 0.85;
-    }
-
-    .rg-menu-footer i {
-      font-size: 10px;
-      margin: 0 4px;
-      opacity: 0.9;
-    }
-
-    .rg-menu-overlay.rg-open .rg-menu-footer {
+    .wws-menu-overlay.active .wws-menu-footer {
       transform: translateY(0);
-      opacity: 0.7;
-      transition-delay: 0.65s;
+      opacity: 0.5;
+      transition-delay: 0.7s;
     }
 
-    @keyframes pulse {
-      0% { transform: scale(1); box-shadow: 0 10px 35px rgba(0,0,0,0.35); }
-      50% { transform: scale(1.05); box-shadow: 0 14px 45px rgba(59,130,246,0.55); }
-      100% { transform: scale(1); box-shadow: 0 10px 35px rgba(0,0,0,0.35); }
+    @keyframes pulse-glow {
+      0% { box-shadow: 0 0 0 0 rgba(167, 139, 250, 0.4); }
+      70% { box-shadow: 0 0 0 15px rgba(167, 139, 250, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(167, 139, 250, 0); }
     }
 
-    .rg-menu-trigger.pulse {
-      animation: pulse 2.4s infinite;
+    .wws-menu-trigger.pulse {
+      animation: pulse-glow 3s infinite;
     }
 
-    @media (max-width: 600px) {
-      .rg-menu-shell {
-        width: 82%;
-        max-width: 360px;
+    @media (max-width: 768px) {
+      .wws-menu-container {
+        width: 100%;
       }
-      .rg-menu-header h2 {
-        font-size: 22px;
+      
+      .wws-menu-trigger {
+        left: 20px;
+        bottom: 20px;
+        width: 60px;
+        height: 60px;
       }
     }
   `;
 
-  // Inject Font Awesome if not present
-  function ensureFontAwesome() {
-    const existing = Array.from(document.querySelectorAll('link[rel="stylesheet"]'))
-      .some(link => link.href && link.href.includes('font-awesome'));
-    if (!existing) {
-      const fa = document.createElement('link');
-      fa.rel = 'stylesheet';
-      fa.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css';
-      fa.crossOrigin = 'anonymous';
-      fa.referrerPolicy = 'no-referrer';
-      document.head.appendChild(fa);
-    }
-  }
-
-  const style = document.createElement('style');
+  const style = document.createElement("style");
   style.textContent = css;
   document.head.appendChild(style);
-  ensureFontAwesome();
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initMenu);
@@ -350,126 +361,120 @@
   }
 
   function initMenu() {
-    // Trigger button
-    const btn = document.createElement('button');
-    btn.className = 'rg-menu-trigger pulse';
-    btn.setAttribute('aria-label', 'Open WWS navigation');
-    btn.innerHTML = `<i class="fa-solid fa-bars"></i>`;
+
+    const btn = document.createElement("button");
+    btn.className = "wws-menu-trigger pulse";
+    btn.innerHTML = `<i class="fas fa-compass"></i>`;
     document.body.appendChild(btn);
 
-    // Overlay
-    const overlay = document.createElement('div');
-    overlay.className = 'rg-menu-overlay';
+
+    const overlay = document.createElement("div");
+    overlay.className = "wws-menu-overlay";
     overlay.innerHTML = `
-      <div class="rg-menu-backdrop"></div>
-      <div class="rg-menu-shell">
-        <div class="rg-menu-header">
-          <h2>WWS Quick Hub</h2>
-          <p>Your liquid-glass dock for Wandering Wizardry Studios tools.</p>
-        </div>
+      <div class="wws-menu-backdrop"></div>
+      <div class="wws-menu-container">
+        <div class="wws-menu-shell">
+          <div class="wws-menu-header">
+            <h2>WWS Navigation</h2>
+            <p>Откройте для себя все возможности платформы</p>
+          </div>
 
-        <div class="rg-menu-items">
-          <a class="rg-menu-item" href="https://wanderingwizardry.com" target="_blank" rel="noreferrer">
-            <div class="rg-menu-icon">
-              <i class="fa-solid fa-meteor"></i>
-            </div>
-            <div class="rg-menu-text">
-              Main WWS Website
-              <div class="rg-menu-subtext">Studio overview, projects & news</div>
-            </div>
-            <div class="rg-menu-badge">Core hub</div>
-          </a>
+          <div class="wws-menu-items">
+            <a class="wws-menu-item" href="https://wws.com" target="_blank">
+              <div class="wws-menu-icon">
+                <i class="fas fa-rocket"></i>
+              </div>
+              <div class="wws-menu-content">
+                <div class="wws-menu-title">Основной сайт WWS</div>
+                <div class="wws-menu-desc">Главный портал компании</div>
+              </div>
+              <div class="wws-menu-badge">NEW</div>
+            </a>
 
-          <a class="rg-menu-item" href="https://reaver-gradient.example" target="_blank" rel="noreferrer">
-            <div class="rg-menu-icon">
-              <i class="fa-solid fa-palette"></i>
-            </div>
-            <div class="rg-menu-text">
-              Reaver Gradient
-              <div class="rg-menu-subtext">Liquid-glass CSS gradients & presets</div>
-            </div>
-          </a>
+            <a class="wws-menu-item" href="https://reaver-gradient.example" target="_blank">
+              <div class="wws-menu-icon">
+                <i class="fas fa-palette"></i>
+              </div>
+              <div class="wws-menu-content">
+                <div class="wws-menu-title">Reaver Gradient</div>
+                <div class="wws-menu-desc">Создание градиентов</div>
+              </div>
+            </a>
 
-          <a class="rg-menu-item" href="https://reaver-markdown.example" target="_blank" rel="noreferrer">
-            <div class="rg-menu-icon">
-              <i class="fa-solid fa-pen-nib"></i>
-            </div>
-            <div class="rg-menu-text">
-              Reaver Markdown
-              <div class="rg-menu-subtext">Clean writing, notes & docs editor</div>
-            </div>
-          </a>
+            <a class="wws-menu-item" href="https://reaver-markdown.example" target="_blank">
+              <div class="wws-menu-icon">
+                <i class="fas fa-file-alt"></i>
+              </div>
+              <div class="wws-menu-content">
+                <div class="wws-menu-title">Reaver Markdown</div>
+                <div class="wws-menu-desc">Редактор Markdown</div>
+              </div>
+            </a>
 
-          <a class="rg-menu-item" href="https://reaver-table.example" target="_blank" rel="noreferrer">
-            <div class="rg-menu-icon">
-              <i class="fa-solid fa-table-list"></i>
-            </div>
-            <div class="rg-menu-text">
-              Reaver Table
-              <div class="rg-menu-subtext">Smart tables & structured content</div>
-            </div>
-          </a>
-        </div>
+            <a class="wws-menu-item" href="https://reaver-table.example" target="_blank">
+              <div class="wws-menu-icon">
+                <i class="fas fa-table"></i>
+              </div>
+              <div class="wws-menu-content">
+                <div class="wws-menu-title">Reaver Table</div>
+                <div class="wws-menu-desc">Работа с таблицами</div>
+              </div>
+            </a>
+          </div>
 
-        <div class="rg-menu-footer">
-          <span>Wandering Wizardry Studios • <span id="rg-year"></span></span>
-          <i class="fa-solid fa-sparkles"></i>
+          <div class="wws-menu-footer">
+            WWS Platform &copy; 2024 • Все права защищены
+          </div>
         </div>
       </div>
     `;
     document.body.appendChild(overlay);
 
-    const footerYear = overlay.querySelector('#rg-year');
-    if (footerYear) footerYear.textContent = new Date().getFullYear().toString();
+    let isAnimating = false;
 
-    const icon = btn.querySelector('i');
-
-    btn.addEventListener('click', (e) => {
+    btn.addEventListener("click", (e) => {
       e.stopPropagation();
-      const isOpening = !overlay.classList.contains('rg-open');
-
-      if (isOpening) {
-        overlay.classList.add('rg-open');
-        btn.classList.remove('pulse');
-        if (icon) {
-          icon.classList.remove('fa-bars');
-          icon.classList.add('fa-xmark');
-        }
-        btn.style.transform = 'translateY(-2px) scale(1.1)';
-      } else {
-        closeMenu();
-      }
+      if (isAnimating) return;
+      
+      const isOpening = !overlay.classList.contains('active');
+      toggleMenu(isOpening);
     });
 
     overlay.addEventListener('click', (e) => {
-      if (e.target.classList.contains('rg-menu-backdrop')) {
-        closeMenu();
+      if (e.target.classList.contains('wws-menu-backdrop')) {
+        toggleMenu(false);
       }
     });
 
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
-        closeMenu();
+    document.addEventListener("keydown", (e) => {
+      if(e.key === "Escape" && overlay.classList.contains('active')){
+        toggleMenu(false);
       }
     });
 
-    function closeMenu() {
-      overlay.classList.remove('rg-open');
-      if (icon) {
-        icon.classList.add('fa-bars');
-        icon.classList.remove('fa-xmark');
-      }
-      btn.style.transform = '';
-
-      setTimeout(() => {
-        if (!overlay.classList.contains('rg-open')) {
+    function toggleMenu(open) {
+      isAnimating = true;
+      
+      if (open) {
+        overlay.classList.add('active');
+        btn.classList.add('active');
+        btn.classList.remove('pulse');
+        setTimeout(() => {
+          isAnimating = false;
+        }, 800);
+      } else {
+        overlay.classList.remove('active');
+        btn.classList.remove('active');
+        setTimeout(() => {
           btn.classList.add('pulse');
-        }
-      }, 900);
+          isAnimating = false;
+        }, 600);
+      }
     }
 
-    overlay.querySelector('.rg-menu-shell').addEventListener('click', (e) => {
+    overlay.querySelector('.wws-menu-shell').addEventListener('click', (e) => {
       e.stopPropagation();
     });
   }
+
 })();
