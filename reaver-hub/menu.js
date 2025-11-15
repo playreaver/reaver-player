@@ -1,5 +1,4 @@
-(function(){
-
+(function () {
   const faLink = document.createElement('link');
   faLink.rel = 'stylesheet';
   faLink.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css';
@@ -40,11 +39,18 @@
     }
 
     .wws-menu-trigger:hover {
-      transform: translateY(-2px);
+      transform: translateY(-2px) scale(1.03);
       box-shadow: 
         0 12px 40px rgba(0, 0, 0, 0.3),
         inset 0 1px 0 rgba(255, 255, 255, 0.4),
         inset 0 -1px 0 rgba(0, 0, 0, 0.05);
+    }
+
+    .wws-menu-trigger.active {
+      transform: translateY(-2px) scale(1.05);
+      box-shadow:
+        0 14px 45px rgba(0, 0, 0, 0.4),
+        0 0 18px rgba(96, 165, 250, 0.8);
     }
 
     .wws-menu-trigger i {
@@ -62,12 +68,13 @@
       position: fixed;
       inset: 0;
       z-index: 9999;
-      display: none;
+      opacity: 0;
       pointer-events: none;
+      transition: opacity 0.35s ease;
     }
 
     .wws-menu-overlay.active {
-      display: block;
+      opacity: 1;
       pointer-events: all;
     }
 
@@ -75,7 +82,9 @@
       position: absolute;
       inset: 0;
       backdrop-filter: blur(25px);
-      background: rgba(10, 10, 15, 0.7);
+      background: radial-gradient(circle at top left, rgba(96,165,250,0.25), transparent 55%), 
+                  radial-gradient(circle at bottom right, rgba(244,114,182,0.25), transparent 55%),
+                  rgba(10, 10, 15, 0.75);
       opacity: 0;
       transition: opacity 0.4s ease;
     }
@@ -90,13 +99,13 @@
       top: 0;
       height: 100%;
       width: min(420px, 90vw);
-      transform: translateX(-100%);
+      transform: translateX(-100%) scale(0.96);
       transition: transform 0.5s cubic-bezier(0.33, 1, 0.68, 1);
       padding: 20px 0;
     }
 
     .wws-menu-overlay.active .wws-menu-container {
-      transform: translateX(0);
+      transform: translateX(0) scale(1);
     }
 
     .wws-menu-shell {
@@ -147,6 +156,11 @@
       padding-bottom: 25px;
       border-bottom: 1px solid rgba(255, 255, 255, 0.1);
       position: relative;
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+
+    .wws-menu-overlay.active .wws-menu-header {
       animation: fadeInDown 0.6s ease 0.2s both;
     }
 
@@ -197,8 +211,20 @@
       color: #fff;
       position: relative;
       overflow: hidden;
+      opacity: 0;
+      transform: translateX(-30px);
+    }
+
+    .wws-menu-overlay.active .wws-menu-item {
       animation: slideInLeft 0.6s ease both;
     }
+
+    .wws-menu-overlay.active .wws-menu-item:nth-child(1) { animation-delay: 0.3s; }
+    .wws-menu-overlay.active .wws-menu-item:nth-child(2) { animation-delay: 0.4s; }
+    .wws-menu-overlay.active .wws-menu-item:nth-child(3) { animation-delay: 0.5s; }
+    .wws-menu-overlay.active .wws-menu-item:nth-child(4) { animation-delay: 0.6s; }
+    .wws-menu-overlay.active .wws-menu-item:nth-child(5) { animation-delay: 0.7s; }
+    .wws-menu-overlay.active .wws-menu-item:nth-child(6) { animation-delay: 0.8s; }
 
     @keyframes slideInLeft {
       from {
@@ -210,13 +236,6 @@
         transform: translateX(0);
       }
     }
-
-    .wws-menu-item:nth-child(1) { animation-delay: 0.3s; }
-    .wws-menu-item:nth-child(2) { animation-delay: 0.4s; }
-    .wws-menu-item:nth-child(3) { animation-delay: 0.5s; }
-    .wws-menu-item:nth-child(4) { animation-delay: 0.6s; }
-    .wws-menu-item:nth-child(5) { animation-delay: 0.7s; }
-    .wws-menu-item:nth-child(6) { animation-delay: 0.8s; }
 
     .wws-menu-item::before {
       content: '';
@@ -237,6 +256,7 @@
       background: rgba(255, 255, 255, 0.1);
       border-color: rgba(255, 255, 255, 0.2);
       transform: translateX(8px);
+      box-shadow: 0 16px 35px rgba(15,23,42,0.7);
     }
 
     .wws-menu-item:hover::before {
@@ -330,7 +350,10 @@
       margin-top: 40px;
       text-align: center;
       font-size: clamp(11px, 2.5vw, 13px);
-      opacity: 0.5;
+      opacity: 0;
+    }
+
+    .wws-menu-overlay.active .wws-menu-footer {
       animation: fadeIn 0.6s ease 0.9s both;
     }
 
@@ -505,14 +528,20 @@
 
   function initMenu() {
     function detectTheme() {
-      if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
-        document.body.classList.add('wws-menu-light');
-      }
+      const isLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+      document.body.classList.toggle('wws-menu-light', isLight);
     }
 
     detectTheme();
 
-    window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', detectTheme);
+    if (window.matchMedia) {
+      const mq = window.matchMedia('(prefers-color-scheme: light)');
+      if (typeof mq.addEventListener === 'function') {
+        mq.addEventListener('change', detectTheme);
+      } else if (typeof mq.addListener === 'function') {
+        mq.addListener(detectTheme);
+      }
+    }
 
     const btn = document.createElement("button");
     btn.className = "wws-menu-trigger";
@@ -529,7 +558,7 @@
         <div class="wws-menu-shell">
           <div class="wws-menu-header">
             <h2>WWS Navigation</h2>
-            <p>Откройте для себя все возможности платформы</p>
+            <p>Discover everything the platform can do.</p>
           </div>
 
           <div class="wws-menu-items">
@@ -538,8 +567,8 @@
                 <i class="fas fa-rocket"></i>
               </div>
               <div class="wws-menu-content">
-                <div class="wws-menu-title">Основной сайт WWS</div>
-                <div class="wws-menu-desc">Главный портал компании</div>
+                <div class="wws-menu-title">Main WWS Website</div>
+                <div class="wws-menu-desc">Primary portal for the studio</div>
               </div>
               <div class="wws-menu-badge new">NEW</div>
             </a>
@@ -550,7 +579,7 @@
               </div>
               <div class="wws-menu-content">
                 <div class="wws-menu-title">Reaver Gradient</div>
-                <div class="wws-menu-desc">Создание градиентов</div>
+                <div class="wws-menu-desc">Advanced CSS gradient generator</div>
               </div>
               <div class="wws-menu-badge beta">BETA</div>
             </a>
@@ -561,7 +590,7 @@
               </div>
               <div class="wws-menu-content">
                 <div class="wws-menu-title">Reaver Markdown</div>
-                <div class="wws-menu-desc">Редактор Markdown</div>
+                <div class="wws-menu-desc">Clean markdown writing environment</div>
               </div>
               <div class="wws-menu-badge pro">PRO</div>
             </a>
@@ -572,7 +601,7 @@
               </div>
               <div class="wws-menu-content">
                 <div class="wws-menu-title">Reaver Table</div>
-                <div class="wws-menu-desc">Работа с таблицами</div>
+                <div class="wws-menu-desc">Tables and structured data tools</div>
               </div>
               <div class="wws-menu-badge free">FREE</div>
             </a>
@@ -583,7 +612,7 @@
               </div>
               <div class="wws-menu-content">
                 <div class="wws-menu-title">Reaver AI</div>
-                <div class="wws-menu-desc">Искусственный интеллект</div>
+                <div class="wws-menu-desc">AI-powered assistants and tools</div>
               </div>
               <div class="wws-menu-badge coming">SOON</div>
             </a>
@@ -594,14 +623,14 @@
               </div>
               <div class="wws-menu-content">
                 <div class="wws-menu-title">Reaver Cloud</div>
-                <div class="wws-menu-desc">Облачное хранилище</div>
+                <div class="wws-menu-desc">Cloud storage and sync</div>
               </div>
               <div class="wws-menu-badge new">NEW</div>
             </a>
           </div>
 
           <div class="wws-menu-footer">
-            WWS Platform &copy; 2024 • Все права защищены
+            WWS Platform &copy; 2024 • All rights reserved
           </div>
         </div>
       </div>
@@ -610,15 +639,8 @@
 
     let isOpen = false;
 
-    function toggleMenu() {
-      if (isOpen) {
-        closeMenu();
-      } else {
-        openMenu();
-      }
-    }
-
     function openMenu() {
+      if (isOpen) return;
       isOpen = true;
       overlay.classList.add('active');
       btn.classList.add('active');
@@ -628,6 +650,7 @@
     }
 
     function closeMenu() {
+      if (!isOpen) return;
       isOpen = false;
       overlay.classList.remove('active');
       btn.classList.remove('active');
@@ -636,32 +659,40 @@
       btn.querySelector('i').className = 'fas fa-bars';
     }
 
-    btn.addEventListener("click", (e) => {
+    function toggleMenu() {
+      if (isOpen) {
+        closeMenu();
+      } else {
+        openMenu();
+      }
+    }
+
+    btn.addEventListener("click", function (e) {
       e.stopPropagation();
       toggleMenu();
     });
 
-    overlay.addEventListener('click', (e) => {
+    overlay.addEventListener('click', function (e) {
       if (e.target.classList.contains('wws-menu-backdrop')) {
         closeMenu();
       }
     });
 
-    document.addEventListener("keydown", (e) => {
-      if(e.key === "Escape" && isOpen){
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && isOpen) {
         closeMenu();
       }
     });
 
-    overlay.querySelectorAll('.wws-menu-item').forEach(item => {
-      item.addEventListener('click', () => {
+    overlay.querySelectorAll('.wws-menu-item').forEach(function (item) {
+      item.addEventListener('click', function () {
         if (window.innerWidth <= 768) {
           closeMenu();
         }
       });
     });
 
-    overlay.querySelector('.wws-menu-shell').addEventListener('click', (e) => {
+    overlay.querySelector('.wws-menu-shell').addEventListener('click', function (e) {
       e.stopPropagation();
     });
 
@@ -669,10 +700,10 @@
       open: openMenu,
       close: closeMenu,
       toggle: toggleMenu,
-      setTheme: (theme) => {
+      setTheme: function (theme) {
         document.body.classList.toggle('wws-menu-light', theme === 'light');
       }
     };
   }
-
 })();
+
