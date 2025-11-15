@@ -5,28 +5,45 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Reaver Services Menu</title>
 
-  <!-- Fonts & Icons -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Шрифты и иконки -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
   <style>
     :root{
-      --bg: transparent;
-      --card: rgba(10,11,30,0.96);
-      --card-soft: rgba(255,255,255,0.03);
-      --stroke: rgba(255,255,255,0.18);
-      --accent: #6c63ff;
-      --accent-soft: rgba(108,99,255,0.18);
-      --accent-2: #ff6584;
-      --text: #f4f6ff;
-      --muted: #a2a7c5;
-      --shadow-main: 0 18px 45px rgba(0,0,0,0.6);
-      --radius-xl: 22px;
-      --radius-lg: 16px;
-      --radius-pill: 999px;
-      --transition-fast: .16s ease-out;
-      --transition-med: .22s cubic-bezier(.19,.7,.25,1);
-      --blur: 16px;
+      font-family: Poppins, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color-scheme: light dark;
+
+      /* Базовые переменные, дальше переопределяем в медиа */
+      --rg-panel-bg: rgba(255,255,255,0.82);
+      --rg-panel-border: rgba(15,23,42,0.08);
+      --rg-panel-shadow: 0 18px 40px rgba(15,23,42,0.18);
+      --rg-text-main: #0f172a;
+      --rg-text-muted: #6b7280;
+      --rg-accent: #6366f1;
+      --rg-accent-soft: rgba(99,102,241,0.12);
+      --rg-chip-bg: rgba(148,163,184,0.1);
+      --rg-icon-bg: rgba(15,23,42,0.04);
+      --rg-border-subtle: rgba(148,163,184,0.35);
+      --rg-blur: 18px;
+      --rg-radius-lg: 16px;
+      --rg-radius-pill: 999px;
+      --rg-speed: .18s;
+    }
+
+    @media (prefers-color-scheme: dark){
+      :root{
+        --rg-panel-bg: rgba(15,23,42,0.88);
+        --rg-panel-border: rgba(148,163,184,0.32);
+        --rg-panel-shadow: 0 20px 48px rgba(15,23,42,0.9);
+        --rg-text-main: #e5e7eb;
+        --rg-text-muted: #9ca3af;
+        --rg-accent: #818cf8;
+        --rg-accent-soft: rgba(129,140,248,0.18);
+        --rg-chip-bg: rgba(31,41,55,0.9);
+        --rg-icon-bg: rgba(15,23,42,0.9);
+        --rg-border-subtle: rgba(55,65,81,0.8);
+      }
     }
 
     *{
@@ -40,65 +57,65 @@
     }
 
     body{
-      font-family: Poppins, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: var(--bg);
-      color:var(--text);
+      background:transparent;
+      color:var(--rg-text-main);
       -webkit-font-smoothing:antialiased;
       overflow:hidden;
     }
 
-    /* ===== Floating burger button ===== */
-    .menu-trigger{
+    /* ===== Плавающая кнопка ===== */
+    .rg-menu-trigger{
       position:fixed;
       left:16px;
       bottom:16px;
       z-index:101;
       border:none;
       border-radius:999px;
-      padding:10px 14px;
-      background:radial-gradient(circle at 0 0, #ffffff, #d3dbff 40%, #6c63ff 100%);
-      color:#141226;
+      padding:9px 12px;
+      background:var(--rg-panel-bg);
+      color:var(--rg-text-main);
       display:inline-flex;
       align-items:center;
       gap:8px;
-      box-shadow:0 12px 28px rgba(0,0,0,0.55);
+      box-shadow:0 10px 26px rgba(15,23,42,0.35);
       cursor:pointer;
       font-size:13px;
-      font-weight:600;
-      letter-spacing:.03em;
-      text-transform:uppercase;
-      transition:transform var(--transition-med), box-shadow var(--transition-med), filter var(--transition-fast);
+      font-weight:500;
+      transition:
+        transform var(--rg-speed) ease-out,
+        box-shadow var(--rg-speed) ease-out,
+        background var(--rg-speed) ease-out,
+        border-color var(--rg-speed) ease-out;
+      border:1px solid var(--rg-panel-border);
+      backdrop-filter:blur(var(--rg-blur));
     }
 
-    .menu-trigger-icon{
-      width:22px;
-      height:22px;
-      border-radius:999px;
-      background:rgba(10,11,30,0.92);
+    .rg-menu-trigger-icon{
+      width:24px;
+      height:24px;
+      border-radius:50%;
+      background:var(--rg-icon-bg);
       display:grid;
       place-items:center;
-      color:#f9f9ff;
       font-size:13px;
     }
 
-    .menu-trigger:hover{
-      transform:translateY(-2px);
-      box-shadow:0 16px 34px rgba(0,0,0,0.7);
-      filter:brightness(1.02);
+    .rg-menu-trigger span.rg-menu-trigger-label{
+      white-space:nowrap;
     }
 
-    .menu-trigger:active{
+    .rg-menu-trigger:hover{
+      transform:translateY(-1px);
+      box-shadow:0 16px 36px rgba(15,23,42,0.45);
+    }
+
+    .rg-menu-trigger:active{
       transform:translateY(0);
-      box-shadow:0 10px 20px rgba(0,0,0,0.6);
+      box-shadow:0 8px 18px rgba(15,23,42,0.35);
     }
 
-    /* Состояние "открыто" — лёгкая подсветка */
-    .menu-trigger.open{
-      filter:brightness(1.05);
-    }
-
-    /* ===== Overlay & panel ===== */
-    .menu-overlay{
+    /* ===== Оверлей и панель ===== */
+    .rg-menu-overlay{
       position:fixed;
       inset:0;
       z-index:100;
@@ -107,629 +124,433 @@
       justify-content:flex-start;
       pointer-events:none;
       opacity:0;
-      transition:opacity var(--transition-med);
+      transition:opacity var(--rg-speed) ease-out;
     }
 
-    .menu-overlay.open{
-      opacity:1;
+    .rg-menu-overlay.rg-open{
       pointer-events:auto;
+      opacity:1;
     }
 
-    .menu-overlay-backdrop{
-      position:absolute;
-      inset:0;
-      background:radial-gradient(circle at 0 100%, rgba(5,6,20,0.7), transparent 60%);
-      pointer-events:none;
-    }
-
-    .menu-shell{
+    .rg-menu-shell{
       position:relative;
       margin:0 0 64px 16px;
-      width:min(720px, 100% - 32px);
-      border-radius:var(--radius-xl);
-      border:1px solid rgba(255,255,255,0.18);
-      background:linear-gradient(135deg, rgba(15,17,45,0.96), rgba(9,9,28,0.98));
-      box-shadow:var(--shadow-main);
-      backdrop-filter: blur(var(--blur)) saturate(150%);
-      padding:18px 18px 20px;
-      overflow:hidden;
-      transform:translateY(16px) scale(0.98);
+      width:min(560px, 100% - 32px);
+      border-radius:var(--rg-radius-lg);
+      border:1px solid var(--rg-panel-border);
+      background:var(--rg-panel-bg);
+      box-shadow:var(--rg-panel-shadow);
+      backdrop-filter:blur(var(--rg-blur)) saturate(160%);
+      padding:14px 14px 12px;
+      transform:translateY(12px) scale(.98);
       opacity:0;
       transition:
-        transform var(--transition-med),
-        opacity var(--transition-med);
+        transform var(--rg-speed) ease-out,
+        opacity var(--rg-speed) ease-out;
     }
 
-    .menu-overlay.open .menu-shell{
+    .rg-menu-overlay.rg-open .rg-menu-shell{
       transform:translateY(0) scale(1);
       opacity:1;
     }
 
-    .menu-shell::before{
-      content:"";
-      position:absolute;
-      inset:-40%;
-      opacity:.55;
-      background:
-        radial-gradient(circle at -10% -10%, rgba(108,99,255,0.38), transparent 55%),
-        radial-gradient(circle at 120% 120%, rgba(255,101,132,0.26), transparent 55%);
-      mix-blend-mode:screen;
-      pointer-events:none;
-    }
-
-    .menu-inner{
-      position:relative;
-      z-index:2;
-    }
-
-    /* ===== Header ===== */
-    .menu-header{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:16px;
-      margin-bottom:16px;
-      flex-wrap:wrap;
-    }
-
-    .brand{
-      display:flex;
-      align-items:center;
-      gap:10px;
-    }
-
-    .brand-logo{
-      width:40px;
-      height:40px;
-      border-radius:14px;
-      background:conic-gradient(from 200deg, #6c63ff, #ff6584, #ffd66b, #6c63ff);
-      display:grid;
-      place-items:center;
-      color:#fff;
-      box-shadow:0 10px 26px rgba(0,0,0,.6);
-    }
-
-    .brand-text-main{
-      font-weight:600;
-      letter-spacing:.04em;
-      font-size:13px;
-      text-transform:uppercase;
-      color:var(--muted);
-    }
-
-    .brand-text-sub{
-      font-weight:700;
-      font-size:18px;
-      display:flex;
-      align-items:center;
-      gap:6px;
-    }
-
-    .badge-pill{
-      border-radius:var(--radius-pill);
-      border:1px solid rgba(255,255,255,0.28);
-      padding:4px 10px;
-      font-size:11px;
-      text-transform:uppercase;
-      letter-spacing:.06em;
-      color:var(--muted);
-      display:inline-flex;
-      align-items:center;
-      gap:6px;
-      background:rgba(5,8,22,0.88);
-    }
-
-    .badge-dot{
-      width:8px;
-      height:8px;
-      border-radius:50%;
-      background: #4ade80;
-      box-shadow:0 0 0 4px rgba(74,222,128,0.18);
-    }
-
-    .cta{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      flex-wrap:wrap;
-    }
-
-    .cta-note{
-      font-size:12px;
-      color:var(--muted);
-      display:flex;
-      align-items:center;
-      gap:6px;
-      padding:6px 10px;
-      border-radius:var(--radius-pill);
-      background:rgba(5,8,22,0.92);
-      border:1px solid rgba(255,255,255,0.18);
-    }
-
-    .cta-note i{
-      color:var(--accent);
-    }
-
-    .cta-link{
-      border-radius:var(--radius-pill);
-      padding:8px 14px;
-      border:none;
-      background:linear-gradient(135deg, var(--accent), var(--accent-2));
-      color:#fff;
-      font-size:12px;
-      font-weight:600;
-      cursor:pointer;
-      display:inline-flex;
-      align-items:center;
-      gap:6px;
-      box-shadow:0 10px 24px rgba(0,0,0,0.5);
-      text-decoration:none;
-      white-space:nowrap;
-      transition:transform var(--transition-med), box-shadow var(--transition-med);
-    }
-
-    .cta-link:hover{
-      transform:translateY(-1px);
-      box-shadow:0 14px 32px rgba(0,0,0,0.65);
-    }
-
-    /* ===== Subheader ===== */
-    .menu-subheader{
-      display:flex;
-      flex-wrap:wrap;
-      align-items:flex-start;
-      justify-content:space-between;
-      gap:18px;
-      margin-bottom:12px;
-    }
-
-    .menu-subheader-text{
-      max-width:430px;
-      font-size:13px;
-      color:var(--muted);
-      line-height:1.5;
-    }
-
-    .menu-tags{
-      display:flex;
-      flex-wrap:wrap;
-      gap:8px;
-      font-size:11px;
-    }
-
-    .tag-chip{
-      padding:4px 9px;
-      border-radius:var(--radius-pill);
-      border:1px solid rgba(255,255,255,0.15);
-      background:rgba(5,8,22,0.94);
-      color:var(--muted);
-      display:inline-flex;
-      gap:6px;
-      align-items:center;
-    }
-
-    .tag-chip i{
-      font-size:10px;
-      color:var(--accent);
-    }
-
-    /* ===== Services grid ===== */
-    .services-grid{
-      display:grid;
-      grid-template-columns:repeat(3, minmax(0, 1fr));
-      gap:12px;
-    }
-
-    @media (max-width:860px){
-      .services-grid{
-        grid-template-columns:repeat(2, minmax(0, 1fr));
-      }
-    }
-
-    @media (max-width:620px){
-      .services-grid{
-        grid-template-columns:1fr;
-      }
-      .menu-shell{
-        margin:0 8px 64px 8px;
+    @media (max-width:600px){
+      .rg-menu-shell{
+        margin:0 8px 68px 8px;
         width:calc(100% - 16px);
       }
     }
 
-    .service-card{
-      position:relative;
-      border-radius:var(--radius-lg);
-      background:linear-gradient(145deg, rgba(11,14,35,0.96), rgba(10,8,32,0.98));
-      border:1px solid rgba(255,255,255,0.14);
-      padding:12px 11px 11px;
+    .rg-menu-header{
       display:flex;
-      flex-direction:column;
-      gap:8px;
-      overflow:hidden;
-      cursor:pointer;
-      transition:
-        transform var(--transition-med),
-        box-shadow var(--transition-med),
-        border-color var(--transition-fast),
-        background var(--transition-fast);
-    }
-
-    .service-card::before{
-      content:"";
-      position:absolute;
-      inset:-40%;
-      opacity:0;
-      background:
-        radial-gradient(circle at 0 0, rgba(108,99,255,0.42), transparent 55%),
-        radial-gradient(circle at 100% 100%, rgba(255,101,132,0.32), transparent 55%);
-      mix-blend-mode:screen;
-      transition:opacity var(--transition-med);
-      pointer-events:none;
-    }
-
-    .service-card:hover{
-      transform:translateY(-3px);
-      box-shadow:0 18px 34px rgba(0,0,0,0.7);
-      border-color:rgba(255,255,255,0.35);
-      background:linear-gradient(145deg, rgba(16,19,55,0.98), rgba(12,10,40,0.98));
-    }
-
-    .service-card:hover::before{
-      opacity:1;
-    }
-
-    .service-top{
-      display:flex;
-      align-items:flex-start;
+      align-items:center;
+      justify-content:space-between;
       gap:10px;
+      margin-bottom:10px;
     }
 
-    .service-icon{
-      width:32px;
-      height:32px;
-      border-radius:12px;
-      background:radial-gradient(circle at 30% 0, #fff, #e0e5ff 35%, #6c63ff 100%);
-      display:grid;
-      place-items:center;
-      color:#2b255f;
-      box-shadow:0 8px 18px rgba(0,0,0,0.6);
-      flex-shrink:0;
-    }
-
-    .service-icon--table{
-      background:radial-gradient(circle at 30% 0, #fff, #e0ffe8 35%, #22c55e 100%);
-      color:#14532d;
-    }
-
-    .service-icon--markdown{
-      background:radial-gradient(circle at 30% 0, #fff, #ffe5f3 35%, #ec4899 100%);
-      color:#831843;
-    }
-
-    .service-meta{
-      flex:1;
+    .rg-brand{
+      display:flex;
+      align-items:center;
+      gap:8px;
       min-width:0;
     }
 
-    .service-title{
+    .rg-brand-icon{
+      width:28px;
+      height:28px;
+      border-radius:9px;
+      background:var(--rg-icon-bg);
+      display:grid;
+      place-items:center;
       font-size:14px;
-      font-weight:600;
+      color:var(--rg-accent);
+    }
+
+    .rg-brand-text{
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+      min-width:0;
+    }
+
+    .rg-brand-title{
+      font-size:13px;
+      font-weight:500;
       display:flex;
       align-items:center;
       gap:6px;
+      white-space:nowrap;
     }
 
-    .service-label{
+    .rg-brand-pill{
+      font-size:10px;
+      border-radius:var(--rg-radius-pill);
+      padding:2px 7px;
+      border:1px solid var(--rg-border-subtle);
+      color:var(--rg-text-muted);
+    }
+
+    .rg-brand-sub{
       font-size:11px;
-      font-weight:500;
-      text-transform:uppercase;
-      letter-spacing:.06em;
-      color:var(--muted);
+      color:var(--rg-text-muted);
+      white-space:nowrap;
+      text-overflow:ellipsis;
+      overflow:hidden;
+      max-width:200px;
     }
 
-    .service-desc{
-      font-size:12px;
-      color:var(--muted);
-      margin-top:2px;
-      line-height:1.4;
+    .rg-meta{
+      font-size:11px;
+      color:var(--rg-text-muted);
+      text-align:right;
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+      align-items:flex-end;
     }
 
-    .service-footer{
+    .rg-meta-chip{
+      border-radius:var(--rg-radius-pill);
+      padding:3px 8px;
+      background:var(--rg-chip-bg);
+      border:1px solid rgba(148,163,184,0.35);
+      display:flex;
+      align-items:center;
+      gap:6px;
+      white-space:nowrap;
+    }
+
+    .rg-dot{
+      width:6px;
+      height:6px;
+      border-radius:50%;
+      background:var(--rg-accent);
+      box-shadow:0 0 0 4px var(--rg-accent-soft);
+    }
+
+    .rg-meta-note{
+      opacity:.9;
+    }
+
+    /* ===== Список сервисов ===== */
+    .rg-services{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      margin-bottom:8px;
+      margin-top:4px;
+    }
+
+    .rg-service{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      padding:7px 8px;
+      border-radius:12px;
+      background:rgba(148,163,184,0.08);
+      border:1px solid rgba(148,163,184,0.32);
+      transition:
+        background var(--rg-speed) ease-out,
+        border-color var(--rg-speed) ease-out,
+        transform var(--rg-speed) ease-out;
+    }
+
+    .rg-service:hover{
+      background:rgba(148,163,184,0.16);
+      border-color:var(--rg-accent-soft);
+      transform:translateY(-1px);
+    }
+
+    .rg-service-icon{
+      width:26px;
+      height:26px;
+      border-radius:999px;
+      background:var(--rg-icon-bg);
+      display:grid;
+      place-items:center;
+      font-size:13px;
+      flex-shrink:0;
+    }
+
+    .rg-service-body{
+      flex:1;
+      min-width:0;
+      display:flex;
+      flex-direction:column;
+      gap:1px;
+    }
+
+    .rg-service-title-row{
       display:flex;
       align-items:center;
       justify-content:space-between;
       gap:8px;
-      margin-top:4px;
     }
 
-    .service-pill{
+    .rg-service-title{
+      font-size:13px;
+      font-weight:500;
+      white-space:nowrap;
+    }
+
+    .rg-service-tag{
+      font-size:10px;
+      border-radius:var(--rg-radius-pill);
+      padding:2px 7px;
+      border:1px solid rgba(148,163,184,0.5);
+      color:var(--rg-text-muted);
+      white-space:nowrap;
+    }
+
+    .rg-service-desc{
       font-size:11px;
-      color:var(--muted);
-      display:flex;
-      align-items:center;
-      gap:6px;
-      padding:4px 8px;
-      border-radius:var(--radius-pill);
-      background:rgba(5,8,22,0.96);
-      border:1px solid rgba(255,255,255,0.08);
+      color:var(--rg-text-muted);
+      white-space:nowrap;
+      text-overflow:ellipsis;
+      overflow:hidden;
     }
 
-    .service-pill span.dot{
-      width:6px;
-      height:6px;
-      border-radius:50%;
-      background:var(--accent);
-    }
-
-    .service-pill--beta span.dot{
-      background:#f97316;
-    }
-
-    .service-open{
-      border-radius:var(--radius-pill);
-      border:none;
-      padding:5px 10px;
+    .rg-service-link{
       font-size:11px;
-      font-weight:600;
-      text-transform:uppercase;
-      letter-spacing:.08em;
-      background:rgba(255,255,255,0.14);
-      color:var(--text);
+      border-radius:var(--rg-radius-pill);
+      padding:3px 9px;
+      background:rgba(15,23,42,0.06);
+      color:var(--rg-text-main);
+      text-decoration:none;
       display:inline-flex;
       align-items:center;
       gap:6px;
-      cursor:pointer;
       white-space:nowrap;
-      transition:background var(--transition-fast), transform var(--transition-fast);
+      border:1px solid rgba(148,163,184,0.4);
+      transition:background var(--rg-speed) ease-out, border-color var(--rg-speed) ease-out;
+      flex-shrink:0;
     }
 
-    .service-open:hover{
-      background:rgba(255,255,255,0.24);
-      transform:translateY(-1px);
+    .rg-service-link i{
+      font-size:9px;
     }
 
-    .service-open i{
-      font-size:10px;
+    .rg-service-link:hover{
+      background:var(--rg-accent-soft);
+      border-color:var(--rg-accent);
     }
 
-    /* ===== Footer ===== */
-    .menu-footer{
-      margin-top:12px;
+    /* ===== Футер ===== */
+    .rg-menu-footer{
+      margin-top:4px;
+      padding-top:6px;
+      border-top:1px solid rgba(148,163,184,0.25);
       display:flex;
-      align-items:center;
       justify-content:space-between;
-      gap:10px;
-      font-size:11px;
-      color:var(--muted);
-      opacity:.9;
+      align-items:center;
+      gap:8px;
+      font-size:10px;
+      color:var(--rg-text-muted);
       flex-wrap:wrap;
     }
 
-    .menu-footer span{
+    .rg-menu-footer span{
       display:inline-flex;
       align-items:center;
       gap:6px;
     }
 
-    .footer-dot{
-      width:6px;
-      height:6px;
+    .rg-footer-dot{
+      width:5px;
+      height:5px;
       border-radius:50%;
-      background:var(--accent-soft);
+      background:rgba(148,163,184,0.7);
     }
 
-    .footer-link{
+    .rg-footer-link{
+      color:var(--rg-text-muted);
       text-decoration:none;
-      color:var(--muted);
-      opacity:.9;
     }
 
-    .footer-link:hover{
-      opacity:1;
+    .rg-footer-link:hover{
       text-decoration:underline;
     }
   </style>
 </head>
 <body>
-  <!-- Floating burger button -->
-  <button class="menu-trigger" id="menuTrigger" type="button">
-    <span class="menu-trigger-icon">
+  <!-- Плавающая кнопка -->
+  <button class="rg-menu-trigger" id="rgMenuTrigger" type="button">
+    <span class="rg-menu-trigger-icon">
       <i class="fa-solid fa-bars"></i>
     </span>
-    <span>Reaver menu</span>
+    <span class="rg-menu-trigger-label">Reaver menu</span>
   </button>
 
-  <!-- Overlay + panel -->
-  <div class="menu-overlay" id="menuOverlay">
-    <div class="menu-overlay-backdrop"></div>
-    <div class="menu-shell">
-      <div class="menu-inner">
-        <!-- Header -->
-        <header class="menu-header">
-          <div class="brand">
-            <div class="brand-logo">
-              <i class="fa-solid fa-wand-magic-sparkles"></i>
+  <!-- Оверлей и панель -->
+  <div class="rg-menu-overlay" id="rgMenuOverlay">
+    <div class="rg-menu-shell" role="dialog" aria-modal="true" aria-label="Reaver services menu">
+      <header class="rg-menu-header">
+        <div class="rg-brand">
+          <div class="rg-brand-icon">
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+          </div>
+          <div class="rg-brand-text">
+            <div class="rg-brand-title">
+              Reaver services
+              <span class="rg-brand-pill">shared menu</span>
             </div>
-            <div>
-              <div class="brand-text-main">Wandering Wizardry Studios</div>
-              <div class="brand-text-sub">
-                Reaver Services Hub
-                <span class="badge-pill">
-                  <span class="badge-dot"></span>
-                  Shared menu
-                </span>
-              </div>
+            <div class="rg-brand-sub">
+              Один embed для всех сайтов
             </div>
           </div>
-          <div class="cta">
-            <div class="cta-note">
-              <i class="fa-regular fa-circle-check"></i>
-              Один файл — встраивается на все сайты
-            </div>
-            <a href="#" class="cta-link">
-              Main hub
-              <i class="fa-solid fa-arrow-up-right-from-square"></i>
-            </a>
+        </div>
+        <div class="rg-meta">
+          <div class="rg-meta-chip">
+            <span class="rg-dot"></span>
+            Live
           </div>
-        </header>
+          <div class="rg-meta-note">Редактируешь один файл — меню обновляется везде.</div>
+        </div>
+      </header>
 
-        <!-- Subheader -->
-        <section class="menu-subheader">
-          <p class="menu-subheader-text">
-            Небольшой общий хаб для сервисов серии <strong>Reaver</strong>.
-            Встраивается как <strong>мини-окно</strong> (iframe) в проекты:
-            добавляешь новый сервис здесь — он появляется сразу везде.
-          </p>
-
-          <div class="menu-tags">
-            <span class="tag-chip">
-              <i class="fa-solid fa-link"></i>
-              Single embed
-            </span>
-            <span class="tag-chip">
-              <i class="fa-solid fa-microchip"></i>
-              Static • GitHub Pages
-            </span>
-            <span class="tag-chip">
-              <i class="fa-solid fa-wand-magic-sparkles"></i>
-              Reaver ecosystem
-            </span>
+      <main class="rg-services">
+        <!-- Reaver.Gradient -->
+        <div class="rg-service">
+          <div class="rg-service-icon">
+            <i class="fa-solid fa-palette"></i>
           </div>
-        </section>
+          <div class="rg-service-body">
+            <div class="rg-service-title-row">
+              <div class="rg-service-title">Reaver.Gradient</div>
+              <div class="rg-service-tag">Production</div>
+            </div>
+            <div class="rg-service-desc">
+              CSS-градиенты, PNG/SVG экспорт, пресеты, шаринг.
+            </div>
+          </div>
+          <!-- ВПИШИ СЮДА ССЫЛКУ НА ГРАДИЕНТ -->
+          <a
+            class="rg-service-link"
+            href="https://example.com/reaver-gradient"
+            target="_blank"
+            rel="noopener"
+          >
+            Открыть
+            <i class="fa-solid fa-arrow-up-right-from-square"></i>
+          </a>
+        </div>
 
-        <!-- Services grid -->
-        <section class="services-grid">
-          <!-- Reaver.Gradient -->
-          <article class="service-card" onclick="openService('https://example.com/reaver-gradient')">
-            <div class="service-top">
-              <div class="service-icon">
-                <i class="fa-solid fa-palette"></i>
-              </div>
-              <div class="service-meta">
-                <div class="service-title">
-                  Reaver.Gradient
-                </div>
-                <div class="service-label">CSS Gradient Studio</div>
-                <p class="service-desc">
-                  Продвинутый генератор CSS-градиентов: пресеты, автосейвы, экспорт PNG/SVG, публичные пресеты и быстрый шаринг.
-                </p>
-              </div>
+        <!-- Reaver.Table -->
+        <div class="rg-service">
+          <div class="rg-service-icon">
+            <i class="fa-solid fa-table-cells-large"></i>
+          </div>
+          <div class="rg-service-body">
+            <div class="rg-service-title-row">
+              <div class="rg-service-title">Reaver.Table</div>
+              <div class="rg-service-tag">Beta</div>
             </div>
-            <div class="service-footer">
-              <div class="service-pill">
-                <span class="dot"></span>
-                Production
-              </div>
-              <button class="service-open" type="button">
-                Open
-                <i class="fa-solid fa-arrow-up-right-from-square"></i>
-              </button>
+            <div class="rg-service-desc">
+              Быстрый конструктор таблиц для конспектов и документов.
             </div>
-          </article>
+          </div>
+          <!-- ВПИШИ СЮДА ССЫЛКУ НА TABLE -->
+          <a
+            class="rg-service-link"
+            href="https://example.com/reaver-table"
+            target="_blank"
+            rel="noopener"
+          >
+            Открыть
+            <i class="fa-solid fa-arrow-up-right-from-square"></i>
+          </a>
+        </div>
 
-          <!-- Reaver.Table -->
-          <article class="service-card" onclick="openService('https://example.com/reaver-table')">
-            <div class="service-top">
-              <div class="service-icon service-icon--table">
-                <i class="fa-solid fa-table-cells-large"></i>
-              </div>
-              <div class="service-meta">
-                <div class="service-title">
-                  Reaver.Table
-                </div>
-                <div class="service-label">Smart table builder</div>
-                <p class="service-desc">
-                  Конструктор таблиц с умными стилями, быстрым оформлением под документы и экспортом в HTML/Markdown.
-                </p>
-              </div>
+        <!-- Reaver.Markdown -->
+        <div class="rg-service">
+          <div class="rg-service-icon">
+            <i class="fa-solid fa-pen-to-square"></i>
+          </div>
+          <div class="rg-service-body">
+            <div class="rg-service-title-row">
+              <div class="rg-service-title">Reaver.Markdown</div>
+              <div class="rg-service-tag">Early access</div>
             </div>
-            <div class="service-footer">
-              <div class="service-pill service-pill--beta">
-                <span class="dot"></span>
-                Beta
-              </div>
-              <button class="service-open" type="button">
-                Open
-                <i class="fa-solid fa-arrow-up-right-from-square"></i>
-              </button>
+            <div class="rg-service-desc">
+              Минималистичный Markdown-редактор с предпросмотром.
             </div>
-          </article>
+          </div>
+          <!-- ВПИШИ СЮДА ССЫЛКУ НА MARKDOWN -->
+          <a
+            class="rg-service-link"
+            href="https://example.com/reaver-markdown"
+            target="_blank"
+            rel="noopener"
+          >
+            Открыть
+            <i class="fa-solid fa-arrow-up-right-from-square"></i>
+          </a>
+        </div>
+      </main>
 
-          <!-- Reaver.Markdown -->
-          <article class="service-card" onclick="openService('https://example.com/reaver-markdown')">
-            <div class="service-top">
-              <div class="service-icon service-icon--markdown">
-                <i class="fa-solid fa-pen-to-square"></i>
-              </div>
-              <div class="service-meta">
-                <div class="service-title">
-                  Reaver.Markdown
-                </div>
-                <div class="service-label">Markdown editor</div>
-                <p class="service-desc">
-                  Лёгкий редактор Markdown с предпросмотром, горячими клавишами и чистым HTML-экспортом для сайтов и конспектов.
-                </p>
-              </div>
-            </div>
-            <div class="service-footer">
-              <div class="service-pill service-pill--beta">
-                <span class="dot"></span>
-                Early access
-              </div>
-              <button class="service-open" type="button">
-                Open
-                <i class="fa-solid fa-arrow-up-right-from-square"></i>
-              </button>
-            </div>
-          </article>
-        </section>
-
-        <!-- Footer -->
-        <footer class="menu-footer">
-          <span>
-            <span class="footer-dot"></span>
-            Embed once • use everywhere
-          </span>
-          <span>
-            Powered by&nbsp;
-            <span style="font-weight:600;">Wandering Wizardry Studios</span>
-          </span>
-        </footer>
-      </div>
+      <footer class="rg-menu-footer">
+        <span>
+          <span class="rg-footer-dot"></span>
+          Embed once · use everywhere
+        </span>
+        <span>
+          by&nbsp;<a class="rg-footer-link" href="#" target="_blank" rel="noopener">Wandering Wizardry Studios</a>
+        </span>
+      </footer>
     </div>
   </div>
 
   <script>
-    const trigger = document.getElementById('menuTrigger');
-    const overlay = document.getElementById('menuOverlay');
+    (function(){
+      const trigger = document.getElementById('rgMenuTrigger');
+      const overlay = document.getElementById('rgMenuOverlay');
 
-    function toggleMenu() {
-      const isOpen = overlay.classList.toggle('open');
-      trigger.classList.toggle('open', isOpen);
-      const icon = trigger.querySelector('.menu-trigger-icon i');
-      if(icon){
-        icon.classList.toggle('fa-bars', !isOpen);
-        icon.classList.toggle('fa-xmark', isOpen);
+      function toggleMenu() {
+        const isOpen = overlay.classList.toggle('rg-open');
+        const icon = trigger.querySelector('.rg-menu-trigger-icon i');
+        if(icon){
+          icon.classList.toggle('fa-bars', !isOpen);
+          icon.classList.toggle('fa-xmark', isOpen);
+        }
       }
-    }
 
-    trigger.addEventListener('click', toggleMenu);
+      trigger.addEventListener('click', toggleMenu);
 
-    // Клик по фону — закрыть
-    overlay.addEventListener('click', (e)=>{
-      if(e.target === overlay){
-        toggleMenu();
-      }
-    });
+      // Закрытие по клику вне панели
+      overlay.addEventListener('click', (e)=>{
+        if(e.target === overlay){
+          toggleMenu();
+        }
+      });
 
-    // Открыть сервис в новой вкладке
-    function openService(url){
-      if(!url || url === '#') return;
-      window.open(url, '_blank');
-    }
-
-    // Делаем функцию глобальной для inline onclick
-    window.openService = openService;
+      // ESC закрывает меню
+      document.addEventListener('keydown', (e)=>{
+        if(e.key === 'Escape' && overlay.classList.contains('rg-open')){
+          toggleMenu();
+        }
+      });
+    })();
   </script>
 </body>
 </html>
