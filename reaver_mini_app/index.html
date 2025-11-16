@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Hey-Reaver • Mini Panel</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Telegram WebApp SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        :root {
+            --bg: #050513;
+            --card: rgba(255,255,255,0.06);
+            --text: #f5f5ff;
+            --accent: #8c7aff;
+            --accent-soft: rgba(140,122,255,0.18);
+            --danger: #ff6584;
+        }
+
+        body {
+            margin: 0;
+            padding: 16px;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        .wrapper {
+            max-width: 480px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: var(--card);
+            border-radius: 18px;
+            padding: 16px 18px;
+            backdrop-filter: blur(16px);
+            box-shadow: 0 18px 40px rgba(0,0,0,0.45);
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+
+        .title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .title span.logo {
+            width: 26px;
+            height: 26px;
+            border-radius: 9px;
+            background: radial-gradient(circle at 0 0, #ff6584, #8c7aff);
+        }
+
+        .subtitle {
+            font-size: 13px;
+            opacity: .7;
+            margin-bottom: 14px;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            background: var(--accent-soft);
+            color: var(--accent);
+            margin-bottom: 10px;
+        }
+
+        .user-line {
+            font-size: 13px;
+            opacity: .8;
+            margin-bottom: 10px;
+        }
+
+        .status {
+            margin: 10px 0 14px;
+            padding: 10px 12px;
+            border-radius: 14px;
+            background: rgba(255,255,255,0.03);
+            font-size: 13px;
+        }
+
+        .status strong {
+            color: var(--accent);
+        }
+
+        .btn-row {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .btn {
+            border: none;
+            border-radius: 999px;
+            padding: 10px 14px;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: transform .12s ease-out, box-shadow .12s ease-out, opacity .12s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #ff6584, #8c7aff);
+            color: #fff;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+
+        .btn-ghost {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.12);
+            color: var(--text);
+        }
+
+        .btn:active {
+            transform: translateY(1px) scale(0.98);
+            box-shadow: none;
+            opacity: .85;
+        }
+
+        .small {
+            font-size: 11px;
+            opacity: .7;
+            margin-top: 10px;
+        }
+
+        .pill-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 6px;
+        }
+
+        .pill {
+            font-size: 11px;
+            padding: 3px 8px;
+            border-radius: 999px;
+            background: rgba(255,255,255,0.05);
+            opacity: .8;
+        }
+    </style>
+</head>
+<body>
+<div class="wrapper">
+    <div class="card">
+        <div class="title">
+            <span class="logo"></span>
+            Hey-Reaver • Premium
+        </div>
+        <div class="subtitle">
+            Мини-панель для управления подпиской и тестовым периодом.
+        </div>
+
+        <div class="badge" id="user-badge">
+            Загрузка профиля…
+        </div>
+
+        <div class="status" id="status-block">
+            Статус подписки: <strong>неизвестно</strong><br>
+            Подключение к боту пока не настроено.
+        </div>
+
+        <div class="btn-row">
+            <button class="btn btn-primary" id="btn-open-premium">
+                ⭐ Открыть /premium в боте
+            </button>
+            <button class="btn btn-ghost" id="btn-open-status">
+                📊 Открыть /status в боте
+            </button>
+        </div>
+
+        <div class="small">
+            В ближайших планах:
+            <div class="pill-row">
+                <div class="pill">• просмотр статуса Premium</div>
+                <div class="pill">• активация промокода</div>
+                <div class="pill">• история скачиваний</div>
+                <div class="pill">• управление авто-продлением</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const tg = window.Telegram?.WebApp;
+
+    function initThemeFromTelegram() {
+        if (!tg) return;
+        document.body.style.backgroundColor = tg.backgroundColor || "#050513";
+    }
+
+    function initUserInfo() {
+        const badge = document.getElementById("user-badge");
+        if (!tg || !tg.initDataUnsafe || !tg.initDataUnsafe.user) {
+            badge.textContent = "Открыто вне Telegram • режим предпросмотра";
+            return;
+        }
+
+        const user = tg.initDataUnsafe.user;
+        const name = user.username
+            ? "@" + user.username
+            : (user.first_name || "Пользователь");
+
+        badge.textContent = `Вы вошли как ${name} (id: ${user.id})`;
+    }
+
+    function initButtons() {
+        const btnPremium = document.getElementById("btn-open-premium");
+        const btnStatus = document.getElementById("btn-open-status");
+
+        btnPremium.addEventListener("click", () => {
+            if (tg) {
+                tg.openTelegramLink(`https://t.me/${tg.initDataUnsafe?.user?.username || ""}?start=premium`);
+            } else {
+                alert("Эта кнопка сработает внутри Telegram Mini App.");
+            }
+        });
+
+        btnStatus.addEventListener("click", () => {
+            if (tg) {
+                // Можно отправлять данные боту через sendData,
+                // а бот по web_app_data сделать /status.
+                tg.sendData(JSON.stringify({ action: "open_status" }));
+            } else {
+                alert("Эта кнопка сработает внутри Telegram Mini App.");
+            }
+        });
+    }
+
+    if (tg) {
+        tg.ready();
+        tg.expand(); // растянуть на весь экран
+    }
+
+    initThemeFromTelegram();
+    initUserInfo();
+    initButtons();
+</script>
+</body>
+</html>
