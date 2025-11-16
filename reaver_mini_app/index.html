@@ -2,20 +2,23 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>Hey, Reaver • AI Чат + Mini App</title>
+  <title>Hey, Reaver • Liquid Glass AI чат</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     :root {
-      --bg1: #090018;
-      --bg2: #041226;
+      --bg1: #050716;
+      --bg2: #040b20;
       --accent1: #00d4ff;
       --accent2: #4e6bff;
       --accent3: #ff6584;
-      --text: #f5f5ff;
+      --accent4: #6cffc8;
+      --text: #f7f7ff;
       --muted: #a9b0d9;
-      --glass: rgba(7, 13, 32, 0.76);
-      --border: rgba(255, 255, 255, 0.12);
+      --glass: rgba(8, 13, 32, 0.35);
+      --glass-inner: rgba(10, 16, 40, 0.65);
+      --border-soft: rgba(255, 255, 255, 0.14);
+      --border-strong: rgba(255, 255, 255, 0.22);
     }
 
     * {
@@ -28,15 +31,14 @@
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       color: var(--text);
       background:
-        radial-gradient(circle at 0 0, #3b0066 0, transparent 55%),
-        radial-gradient(circle at 100% 100%, #004b8b 0, transparent 55%),
-        radial-gradient(circle at 0 100%, #20004b 0, transparent 55%),
-        radial-gradient(circle at 100% 0, #00748b 0, transparent 55%),
+        radial-gradient(circle at 0 0, #38136f 0, transparent 55%),
+        radial-gradient(circle at 110% 100%, #004e99 0, transparent 55%),
+        radial-gradient(circle at -10% 120%, #180e40 0, transparent 55%),
         linear-gradient(135deg, var(--bg1), var(--bg2));
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 16px;
+      padding: 14px;
       overflow: hidden;
     }
 
@@ -46,85 +48,108 @@
       position: relative;
     }
 
-    .blob {
+    /* большие “пузырьки” на фоне */
+    .bubble {
       position: absolute;
       border-radius: 999px;
-      filter: blur(32px);
-      opacity: 0.7;
-      pointer-events: none;
+      background: radial-gradient(circle at 30% 20%, rgba(255,255,255,0.3), transparent 55%);
+      backdrop-filter: blur(24px);
+      opacity: 0.35;
       mix-blend-mode: screen;
+      pointer-events: none;
     }
 
-    .blob.one {
+    .bubble.b1 {
       width: 220px;
       height: 220px;
-      background: radial-gradient(circle, var(--accent1), transparent 70%);
-      top: -40px;
+      top: -70px;
       right: -40px;
-      animation: blobFloat1 12s ease-in-out infinite;
+      background: radial-gradient(circle at 30% 20%, rgba(0, 212, 255, 0.45), transparent 60%);
+      animation: bubbleFloat1 20s ease-in-out infinite;
     }
 
-    .blob.two {
+    .bubble.b2 {
       width: 260px;
       height: 260px;
-      background: radial-gradient(circle, var(--accent3), transparent 70%);
-      bottom: -80px;
-      left: -60px;
-      animation: blobFloat2 16s ease-in-out infinite;
+      bottom: -110px;
+      left: -80px;
+      background: radial-gradient(circle at 60% 70%, rgba(255, 101, 132, 0.45), transparent 60%);
+      animation: bubbleFloat2 24s ease-in-out infinite;
     }
 
-    @keyframes blobFloat1 {
+    .bubble.b3 {
+      width: 160px;
+      height: 160px;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -40%);
+      background: radial-gradient(circle at 50% 40%, rgba(108, 255, 200, 0.5), transparent 65%);
+      animation: bubbleFloat3 28s ease-in-out infinite;
+    }
+
+    @keyframes bubbleFloat1 {
       0%, 100% { transform: translate(0, 0); }
-      50% { transform: translate(-20px, 30px); }
+      50% { transform: translate(-28px, 26px); }
     }
-
-    @keyframes blobFloat2 {
+    @keyframes bubbleFloat2 {
       0%, 100% { transform: translate(0, 0); }
-      50% { transform: translate(25px, -25px); }
+      50% { transform: translate(30px, -24px); }
+    }
+    @keyframes bubbleFloat3 {
+      0%, 100% { transform: translate(-50%, -40%); }
+      50% { transform: translate(-47%, -46%); }
     }
 
+    /* основная “капсула” */
     .card {
       position: relative;
       z-index: 2;
-      background: var(--glass);
-      border-radius: 24px;
-      padding: 18px 18px 20px;
-      border: 1px solid var(--border);
+      border-radius: 30px;
+      padding: 2px;
+      background:
+        radial-gradient(circle at 0 0, rgba(255,255,255,0.24), transparent 60%),
+        radial-gradient(circle at 100% 100%, rgba(0,212,255,0.35), transparent 60%),
+        linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.18));
       box-shadow:
-        0 18px 45px rgba(0, 0, 0, 0.7),
-        0 0 0 1px rgba(255, 255, 255, 0.02);
-      backdrop-filter: blur(18px);
-      animation: cardEntrance 0.8s ease-out both;
+        0 26px 60px rgba(0, 0, 0, 0.78),
+        0 0 50px rgba(0, 212, 255, 0.15);
+      backdrop-filter: blur(32px);
+      animation: cardFloat 12s ease-in-out infinite;
     }
 
-    @keyframes cardEntrance {
-      0% {
-        transform: translateY(24px);
-        opacity: 0;
-      }
-      100% {
-        transform: translateY(0);
-        opacity: 1;
-      }
+    @keyframes cardFloat {
+      0%,100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+
+    .card-inner {
+      border-radius: 28px;
+      background: var(--glass-inner);
+      padding: 16px 16px 18px;
+      border: 1px solid rgba(255,255,255,0.12);
+      backdrop-filter: blur(28px);
     }
 
     .header-row {
       display: flex;
       align-items: center;
       gap: 12px;
-      margin-bottom: 8px;
+      margin-bottom: 10px;
     }
 
     .logo-chip {
-      width: 52px;
-      height: 52px;
-      border-radius: 18px;
-      background: linear-gradient(135deg, #00c6ff, #008cff);
+      width: 56px;
+      height: 56px;
+      border-radius: 22px;
+      background: linear-gradient(135deg, rgba(0,198,255,0.2), rgba(0,140,255,0.65));
       display: flex;
       align-items: center;
       justify-content: center;
       overflow: hidden;
-      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.6);
+      border: 1px solid rgba(255,255,255,0.32);
+      box-shadow:
+        0 16px 35px rgba(0,0,0,0.8),
+        0 0 25px rgba(0,198,255,0.6);
     }
 
     .logo-chip img {
@@ -135,14 +160,15 @@
 
     .title-block {
       flex: 1;
+      min-width: 0;
     }
 
     .title {
       font-size: 18px;
       font-weight: 700;
-      letter-spacing: 0.03em;
+      letter-spacing: 0.04em;
       text-transform: uppercase;
-      background: linear-gradient(90deg, #ffffff, #e4f4ff);
+      background: linear-gradient(110deg, #ffffff, #e6f6ff, #ffe9f0);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
@@ -151,7 +177,7 @@
     .subtitle {
       font-size: 12px;
       color: var(--muted);
-      margin-top: 3px;
+      margin-top: 4px;
     }
 
     .soon-pill {
@@ -161,9 +187,11 @@
       padding: 4px 10px;
       border-radius: 999px;
       font-size: 11px;
-      background: rgba(0, 0, 0, 0.4);
-      border: 1px solid rgba(255, 255, 255, 0.14);
+      background: radial-gradient(circle at 0 0, rgba(0,212,255,0.26), transparent 70%);
+      background-color: rgba(3, 7, 25, 0.9);
+      border: 1px solid rgba(255,255,255,0.28);
       margin-top: 8px;
+      backdrop-filter: blur(18px);
     }
 
     .soon-dot {
@@ -171,13 +199,13 @@
       height: 8px;
       border-radius: 999px;
       background: var(--accent1);
-      box-shadow: 0 0 12px rgba(0, 212, 255, 0.8);
+      box-shadow: 0 0 12px rgba(0,212,255,0.9);
       animation: pulse 1.4s ease-out infinite;
     }
 
     @keyframes pulse {
       0% { transform: scale(1); opacity: 1; }
-      70% { transform: scale(1.6); opacity: 0; }
+      70% { transform: scale(1.7); opacity: 0; }
       100% { transform: scale(1); opacity: 0; }
     }
 
@@ -190,20 +218,25 @@
     .mode-btn {
       flex: 1;
       padding: 9px 12px;
-      border: none;
-      border-radius: 12px;
-      background: rgba(255, 255, 255, 0.04);
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.18);
+      background: radial-gradient(circle at 0 0, rgba(255,255,255,0.16), transparent 60%);
+      background-color: rgba(5, 9, 28, 0.9);
       color: var(--muted);
       font-size: 12px;
       font-weight: 600;
       cursor: pointer;
       transition: all 0.22s ease;
+      backdrop-filter: blur(18px);
     }
 
     .mode-btn.active {
-      background: linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(78, 107, 255, 0.25));
+      background:
+        radial-gradient(circle at 0 0, rgba(0,212,255,0.5), transparent 60%),
+        linear-gradient(135deg, rgba(0,212,255,0.3), rgba(78,107,255,0.45));
       color: var(--text);
-      box-shadow: 0 0 14px rgba(0, 212, 255, 0.35);
+      box-shadow: 0 0 22px rgba(0, 212, 255, 0.5);
+      border-color: rgba(255,255,255,0.55);
     }
 
     .mode-btn:active {
@@ -211,14 +244,41 @@
       box-shadow: none;
     }
 
-    /* ===== блок «Функции» ===== */
+    /* ===== ФУНКЦИИ ===== */
     .features {
-      border-radius: 18px;
-      padding: 10px 12px;
-      background: rgba(2, 5, 22, 0.9);
-      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 22px;
+      padding: 12px 13px;
+      background: radial-gradient(circle at 0 100%, rgba(0,212,255,0.35), transparent 70%);
+      background-color: rgba(5, 10, 30, 0.9);
+      border: 1px solid rgba(255,255,255,0.14);
       overflow: hidden;
       position: relative;
+      backdrop-filter: blur(20px);
+    }
+
+    .features::before {
+      content: "";
+      position: absolute;
+      inset: -40%;
+      background: conic-gradient(
+        from 210deg,
+        transparent 0deg,
+        rgba(255,255,255,0.08) 40deg,
+        transparent 80deg
+      );
+      opacity: 0.4;
+      mix-blend-mode: screen;
+      animation: rotateGlow 24s linear infinite;
+    }
+
+    @keyframes rotateGlow {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .features-content {
+      position: relative;
+      z-index: 1;
     }
 
     .features-label {
@@ -231,7 +291,7 @@
 
     .features-viewport {
       position: relative;
-      height: 52px;
+      height: 54px;
     }
 
     .feature-item {
@@ -242,7 +302,7 @@
       gap: 8px;
       font-size: 13px;
       opacity: 0;
-      transform: translateY(12px);
+      transform: translateY(10px);
       animation: featureCycle 15s infinite;
     }
 
@@ -259,39 +319,28 @@
     .feature-item:nth-child(5) { animation-delay: 12s; }
 
     @keyframes featureCycle {
-      0% {
-        opacity: 0;
-        transform: translateY(12px);
-      }
-      8% {
-        opacity: 1;
-        transform: translateY(0);
-      }
-      22% {
-        opacity: 1;
-        transform: translateY(0);
-      }
-      30% {
-        opacity: 0;
-        transform: translateY(-8px);
-      }
-      100% {
-        opacity: 0;
-        transform: translateY(-8px);
-      }
+      0%   { opacity: 0; transform: translateY(10px); }
+      8%   { opacity: 1; transform: translateY(0); }
+      22%  { opacity: 1; transform: translateY(0); }
+      30%  { opacity: 0; transform: translateY(-8px); }
+      100% { opacity: 0; transform: translateY(-8px); }
     }
 
-    /* ===== чат ===== */
+    /* ===== ЧАТ ===== */
+
     .chat-container {
-      margin-top: 10px;
-      border-radius: 18px;
-      padding: 12px 12px 14px;
-      background: rgba(2, 5, 22, 0.9);
-      border: 1px solid rgba(255, 255, 255, 0.06);
+      margin-top: 11px;
+      border-radius: 22px;
+      padding: 12px 13px 14px;
+      background:
+        radial-gradient(circle at 100% 0, rgba(255,101,132,0.3), transparent 70%);
+      background-color: rgba(5, 10, 30, 0.92);
+      border: 1px solid rgba(255,255,255,0.14);
       display: none;
       flex-direction: column;
       max-height: 65vh;
       min-height: 50vh;
+      backdrop-filter: blur(20px);
     }
 
     @media (max-height: 650px) {
@@ -303,34 +352,36 @@
 
     .chat-controls {
       display: flex;
-      gap: 6px;
+      gap: 7px;
       margin-bottom: 8px;
       flex-wrap: wrap;
     }
 
     .chat-mode-btn {
       padding: 7px 10px;
-      border: none;
-      border-radius: 10px;
-      background: rgba(255, 255, 255, 0.04);
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.18);
+      background-color: rgba(7, 10, 32, 0.9);
       color: var(--muted);
       font-size: 11px;
       cursor: pointer;
-      transition: all 0.2s ease;
       flex: 1;
       min-width: 0;
+      backdrop-filter: blur(18px);
     }
 
     .chat-mode-btn.active {
-      background: linear-gradient(135deg, rgba(255, 101, 132, 0.2), rgba(255, 101, 132, 0.1));
+      background: linear-gradient(135deg, rgba(255,101,132,0.3), rgba(255,101,132,0.12));
       color: var(--text);
+      border-color: rgba(255,255,255,0.5);
+      box-shadow: 0 0 18px rgba(255,101,132,0.55);
     }
 
     .clear-chat-btn {
       padding: 7px 10px;
-      border: none;
-      border-radius: 10px;
-      background: rgba(255, 101, 132, 0.12);
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.2);
+      background-color: rgba(35, 5, 22, 0.9);
       color: var(--accent3);
       font-size: 11px;
       cursor: pointer;
@@ -340,15 +391,13 @@
     .chat-messages {
       flex: 1;
       overflow-y: auto;
-      margin-bottom: 10px;
+      margin-bottom: 9px;
       padding-right: 4px;
     }
 
-    .chat-messages::-webkit-scrollbar {
-      width: 4px;
-    }
+    .chat-messages::-webkit-scrollbar { width: 4px; }
     .chat-messages::-webkit-scrollbar-track {
-      background: rgba(255, 255, 255, 0.04);
+      background: rgba(255,255,255,0.05);
       border-radius: 2px;
     }
     .chat-messages::-webkit-scrollbar-thumb {
@@ -357,9 +406,9 @@
     }
 
     .message {
-      margin-bottom: 10px;
-      padding: 9px 10px;
-      border-radius: 12px;
+      margin-bottom: 9px;
+      padding: 8px 10px;
+      border-radius: 16px;
       font-size: 13px;
       line-height: 1.4;
       animation: messageSlide 0.22s ease-out both;
@@ -371,15 +420,17 @@
     }
 
     .message.user {
-      background: linear-gradient(135deg, rgba(0, 212, 255, 0.18), rgba(78, 107, 255, 0.16));
-      border: 1px solid rgba(0, 212, 255, 0.3);
-      margin-left: 28px;
+      background: linear-gradient(135deg, rgba(0,212,255,0.25), rgba(78,107,255,0.22));
+      border: 1px solid rgba(0,212,255,0.5);
+      margin-left: 26px;
+      box-shadow: 0 6px 20px rgba(0,212,255,0.33);
     }
 
     .message.assistant {
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(255, 255, 255, 0.14);
-      margin-right: 28px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.22);
+      margin-right: 26px;
+      box-shadow: 0 6px 22px rgba(0,0,0,0.8);
     }
 
     .message-text {
@@ -389,7 +440,7 @@
     .message-text code {
       font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
       font-size: 12px;
-      background: rgba(0, 0, 0, 0.4);
+      background: rgba(0,0,0,0.4);
       padding: 1px 4px;
       border-radius: 4px;
     }
@@ -397,8 +448,8 @@
     .message-text pre {
       margin: 6px 0 4px;
       padding: 8px;
-      background: rgba(0, 0, 0, 0.5);
-      border-radius: 8px;
+      background: rgba(0,0,0,0.6);
+      border-radius: 10px;
       overflow-x: auto;
       font-size: 12px;
     }
@@ -419,7 +470,7 @@
     .typing-indicator {
       display: flex;
       gap: 4px;
-      padding: 8px 4px;
+      padding: 6px 4px;
       align-items: center;
       font-size: 12px;
       color: var(--muted);
@@ -451,40 +502,46 @@
     .chat-input {
       flex: 1;
       padding: 10px 12px;
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      border-radius: 12px;
-      background: rgba(0, 0, 0, 0.35);
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.22);
+      background: radial-gradient(circle at 0 0, rgba(255,255,255,0.18), transparent 65%);
+      background-color: rgba(5, 8, 28, 0.95);
       color: var(--text);
       font-size: 13px;
       outline: none;
       resize: none;
       min-height: 40px;
       max-height: 110px;
+      backdrop-filter: blur(18px);
     }
 
     .chat-input:focus {
       border-color: var(--accent1);
-      box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.2);
+      box-shadow: 0 0 0 2px rgba(0,212,255,0.25);
     }
 
     .send-btn {
       padding: 10px 12px;
-      border: none;
-      border-radius: 12px;
-      background: linear-gradient(135deg, var(--accent1), var(--accent2));
-      color: white;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,0.4);
+      background:
+        radial-gradient(circle at 0 0, rgba(255,255,255,0.35), transparent 60%),
+        linear-gradient(135deg, var(--accent1), var(--accent2));
+      color: #050714;
       cursor: pointer;
-      font-weight: 600;
+      font-weight: 700;
       min-width: 44px;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: all 0.2s ease;
+      box-shadow: 0 12px 24px rgba(0,212,255,0.75);
+      backdrop-filter: blur(18px);
+      transition: all 0.18s ease-out;
     }
 
     .send-btn:active {
-      transform: scale(0.97);
-      box-shadow: none;
+      transform: scale(0.95) translateY(1px);
+      box-shadow: 0 6px 16px rgba(0,212,255,0.6);
     }
 
     .send-btn:disabled {
@@ -498,118 +555,123 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-top: 12px;
+      margin-top: 13px;
       font-size: 11px;
       color: var(--muted);
     }
 
     .tag {
-      padding: 4px 8px;
+      padding: 4px 9px;
       border-radius: 999px;
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(255, 255, 255, 0.06);
+      background-color: rgba(4, 10, 28, 0.9);
+      border: 1px solid rgba(255,255,255,0.22);
+      backdrop-filter: blur(18px);
     }
 
     .bot-handle {
-      opacity: 0.9;
+      opacity: 0.92;
     }
 
     @media (max-width: 360px) {
-      .card { padding: 14px; }
+      .card-inner { padding: 13px; }
       .title { font-size: 16px; }
-      .chat-container { min-height: 48vh; }
+      .logo-chip { width: 50px; height: 50px; border-radius: 20px; }
+      .chat-container { min-height: 46vh; }
     }
   </style>
 </head>
 <body>
   <div class="wrapper">
-    <div class="blob one"></div>
-    <div class="blob two"></div>
+    <div class="bubble b1"></div>
+    <div class="bubble b2"></div>
+    <div class="bubble b3"></div>
 
     <div class="card">
-      <div class="header-row">
-        <div class="logo-chip">
-          <!-- Подставь сюда логотип в стиле обложки -->
-          <img src="heyreaver_logo.png" alt="Hey, Reaver logo">
-        </div>
-        <div class="title-block">
-          <div class="title">Hey, Reaver • AI чат</div>
-          <div class="subtitle">Новая айдентика в деле. Искусственный интеллект внутри бота.</div>
-          <div class="soon-pill">
-            <div class="soon-dot"></div>
-            <span>Groq AI • ultra fast ответ</span>
+      <div class="card-inner">
+        <div class="header-row">
+          <div class="logo-chip">
+            <!-- сюда твой логотип, как на баннере -->
+            <img src="heyreaver_logo.png" alt="Hey, Reaver logo">
           </div>
-        </div>
-      </div>
-
-      <div class="mode-switcher">
-        <button class="mode-btn active" id="mode-features" onclick="switchMode('features')">Функции бота</button>
-        <button class="mode-btn" id="mode-chat" onclick="switchMode('chat')">AI-чат</button>
-      </div>
-
-      <!-- Блок функций -->
-      <div class="features" id="features-section">
-        <div class="features-label">что уже умеет hey, reaver</div>
-        <div class="features-viewport">
-          <div class="feature-item">
-            <span class="icon">🎵</span>
-            <span>Скачивает треки в MP3 по запросу <code>найти&nbsp;трек</code></span>
-          </div>
-          <div class="feature-item">
-            <span class="icon">📹</span>
-            <span>Отправляет видео 360p / 720p с YouTube</span>
-          </div>
-          <div class="feature-item">
-            <span class="icon">⭐</span>
-            <span>Premium: 1080p, безлимит и соцсети (Instagram, X)</span>
-          </div>
-          <div class="feature-item">
-            <span class="icon">⏳</span>
-            <span>Триал и подписка за Telegram Stars — без карт</span>
-          </div>
-          <div class="feature-item">
-            <span class="icon">🎁</span>
-            <span>Промокоды, акции и подарочный Premium</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Блок чата -->
-      <div class="chat-container" id="chat-section">
-        <div class="chat-controls">
-          <button class="chat-mode-btn active" onclick="switchChatMode('assistant', this)">Ассистент</button>
-          <button class="chat-mode-btn" onclick="switchChatMode('creative', this)">Креативный</button>
-          <button class="chat-mode-btn" onclick="switchChatMode('expert', this)">Эксперт</button>
-          <button class="clear-chat-btn" onclick="clearChat()">Очистить</button>
-        </div>
-
-        <div class="chat-messages" id="chat-messages">
-          <div class="message assistant">
-            <div class="message-text">
-              <p><strong>Привет!</strong> Я AI-ассистент Hey, Reaver.</p>
-              <p>Выбери режим общения или просто задай вопрос — помогу с функциями бота, идеями и чем угодно. 🚀</p>
+          <div class="title-block">
+            <div class="title">Hey, Reaver • AI чат</div>
+            <div class="subtitle">Новая айдентика в деле. Жидкое стекло + искусственный интеллект.</div>
+            <div class="soon-pill">
+              <div class="soon-dot"></div>
+              <span>Groq AI • ultra fast</span>
             </div>
-            <div class="message-meta">Система • только что</div>
           </div>
         </div>
 
-        <div class="chat-input-container">
-          <textarea
-            class="chat-input"
-            id="chat-input"
-            placeholder="Напиши сообщение… (Enter — отправить, Shift+Enter — новая строка)"
-            maxlength="1000"
-            rows="1"
-          ></textarea>
-          <button class="send-btn" id="send-btn" onclick="sendMessage()">
-            ➤
-          </button>
+        <div class="mode-switcher">
+          <button class="mode-btn active" id="mode-features" onclick="switchMode('features')">Функции бота</button>
+          <button class="mode-btn" id="mode-chat" onclick="switchMode('chat')">AI-чат</button>
         </div>
-      </div>
 
-      <div class="bottom-row">
-        <div class="tag">Groq AI • Markdown-ответы</div>
-        <div class="bot-handle">@reaver_youtube_bot</div>
+        <!-- ФУНКЦИИ -->
+        <div class="features" id="features-section">
+          <div class="features-content">
+            <div class="features-label">что уже умеет hey, reaver</div>
+            <div class="features-viewport">
+              <div class="feature-item">
+                <span class="icon">🎵</span>
+                <span>Скачивает треки в MP3 по запросу <code>найти&nbsp;трек</code></span>
+              </div>
+              <div class="feature-item">
+                <span class="icon">📹</span>
+                <span>Отправляет видео 360p / 720p с YouTube</span>
+              </div>
+              <div class="feature-item">
+                <span class="icon">⭐</span>
+                <span>Premium: 1080p, безлимит и соцсети (Instagram, X)</span>
+              </div>
+              <div class="feature-item">
+                <span class="icon">⏳</span>
+                <span>Триал и подписка за Telegram Stars — без привязки карт</span>
+              </div>
+              <div class="feature-item">
+                <span class="icon">🎁</span>
+                <span>Промокоды, акционные периоды и подарочный Premium</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ЧАТ -->
+        <div class="chat-container" id="chat-section">
+          <div class="chat-controls">
+            <button class="chat-mode-btn active" onclick="switchChatMode('assistant', this)">Ассистент</button>
+            <button class="chat-mode-btn" onclick="switchChatMode('creative', this)">Креативный</button>
+            <button class="chat-mode-btn" onclick="switchChatMode('expert', this)">Эксперт</button>
+            <button class="clear-chat-btn" onclick="clearChat()">Очистить</button>
+          </div>
+
+          <div class="chat-messages" id="chat-messages">
+            <div class="message assistant">
+              <div class="message-text">
+                <p><strong>Привет!</strong> Я AI-ассистент Hey, Reaver.</p>
+                <p>Выбирай режим сверху или просто напиши вопрос — помогу с ботом, идеями и чем угодно. 🚀</p>
+              </div>
+              <div class="message-meta">Система • только что</div>
+            </div>
+          </div>
+
+          <div class="chat-input-container">
+            <textarea
+              class="chat-input"
+              id="chat-input"
+              placeholder="Напиши сообщение… (Enter — отправить, Shift+Enter — перенос строки)"
+              maxlength="1000"
+              rows="1"
+            ></textarea>
+            <button class="send-btn" id="send-btn" onclick="sendMessage()">➤</button>
+          </div>
+        </div>
+
+        <div class="bottom-row">
+          <div class="tag">Liquid Glass UI • Groq AI</div>
+          <div class="bot-handle">@reaver_youtube_bot</div>
+        </div>
       </div>
     </div>
   </div>
@@ -620,7 +682,7 @@
     if (tg) {
       tg.ready();
       tg.expand();
-      document.body.style.backgroundColor = tg.backgroundColor || "#090018";
+      document.body.style.backgroundColor = tg.backgroundColor || "#050716";
 
       const user = tg.initDataUnsafe?.user;
       if (user) {
@@ -630,7 +692,7 @@
       }
     }
 
-    /* ===== Markdown рендерер (лайт) ===== */
+    /* ===== Markdown рендерер ===== */
 
     function escapeHtml(str) {
       return str
@@ -641,39 +703,27 @@
 
     function renderMarkdown(md) {
       if (!md) return "";
-
       let text = escapeHtml(md);
 
-      // заголовки
       text = text.replace(/^### (.+)$/gm, "<h3>$1</h3>");
       text = text.replace(/^## (.+)$/gm, "<h2>$1</h2>");
       text = text.replace(/^# (.+)$/gm, "<h1>$1</h1>");
 
-      // списки
       text = text.replace(/(^|\n)[ \t]*[-*] (.+)/g, (m, p1, item) => `${p1}<ul><li>${item}</li></ul>`);
       text = text.replace(/<\/ul>\s*<ul>/g, "</ul>");
 
-      // жирный / курсив
       text = text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
       text = text.replace(/\*(.+?)\*/g, "<em>$1</em>");
-
-      // инлайн-код
       text = text.replace(/`([^`]+)`/g, "<code>$1</code>");
-
-      // ссылки
       text = text.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noreferrer">$1</a>');
-
-      // многострочный код ``` ```
       text = text.replace(/```([\s\S]*?)```/g, "<pre><code>$1</code></pre>");
 
-      // переносы строк -> <br>, кроме уже вставленных блоков
       text = text.replace(/\n{2,}/g, "</p><p>");
       text = "<p>" + text.replace(/\n/g, "<br>") + "</p>";
-
       return text;
     }
 
-    /* ===== UI переключатели ===== */
+    /* ===== Переключатели ===== */
 
     function switchMode(mode) {
       const featuresBtn = document.getElementById("mode-features");
@@ -691,8 +741,6 @@
         chatBtn.classList.add("active");
         featuresSection.style.display = "none";
         chatSection.style.display = "flex";
-
-        // автофокус на поле ввода
         setTimeout(() => document.getElementById("chat-input").focus(), 200);
       }
     }
@@ -710,9 +758,9 @@
 
     function getModeDescription(mode) {
       const modes = {
-        "assistant": "Ассистент — помогает с ботом и общими вопросами",
-        "creative": "Креативный — идеи, тексты, творчество",
-        "expert": "Эксперт — более подробные и глубокие ответы"
+        assistant: "Ассистент — помогает с ботом и любыми вопросами",
+        creative: "Креативный — идеи, тексты, сценарии",
+        expert: "Эксперт — более подробные и структурные ответы"
       };
       return modes[mode] || "Ассистент";
     }
@@ -733,16 +781,12 @@
       const div = document.createElement("div");
       div.className = `message ${sender}`;
 
-      const ts = new Date().toLocaleTimeString("ru-RU", {
-        hour: "2-digit",
-        minute: "2-digit"
-      });
+      const ts = new Date().toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
 
       div.innerHTML = `
         <div class="message-text">${renderMarkdown(text)}</div>
         <div class="message-meta">${isSystem ? "Система" : (sender === "user" ? "Вы" : "AI")} • ${ts}</div>
       `;
-
       container.appendChild(div);
       container.scrollTop = container.scrollHeight;
     }
@@ -786,7 +830,6 @@
         const answer = await callGroqAPI(text, chatMode);
         hideTyping();
         addMessage(answer, "assistant");
-
         chatHistory.push({ role: "user", content: text });
         chatHistory.push({ role: "assistant", content: answer });
         if (chatHistory.length > 20) chatHistory = chatHistory.slice(-20);
@@ -802,11 +845,10 @@
 
     /* ===== Groq API ===== */
 
-    const GROQ_API_KEY = "YOUR_GROQ_API_KEY_HERE"; // ⚠ сюда лучше не ставить реальный ключ, делай прокси на сервере
+    const GROQ_API_KEY = "YOUR_GROQ_API_KEY_HERE"; // ⚠ лучше использовать свой сервер-прокси
     const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 
     async function callGroqAPI(userMessage, mode) {
-      // если ключ не задан — мок-режим (без реального API)
       if (!GROQ_API_KEY || GROQ_API_KEY === "YOUR_GROQ_API_KEY_HERE") {
         await new Promise(r => setTimeout(r, 600 + Math.random() * 600));
         return getMockResponse(userMessage, mode);
@@ -841,19 +883,17 @@
 
     function getSystemPrompt(mode) {
       const prompts = {
-        "assistant": `Ты полезный AI-ассистент бота Hey, Reaver.
-Ты помогаешь пользователю:
-— разобраться с функциями бота (поиск треков, скачивание видео, Premium, лимиты);
-— отвечаешь на любые вопросы в дружелюбной форме.
-Пиши компактно, но информативно. Используй Markdown: списки, выделение, код, если нужно.`,
-        "creative": `Ты креативный AI-помощник.
-Помогаешь придумывать идеи, тексты, описания, сценарии, посты.
-Пиши живо, вдохновляюще, но без лишней воды. Можно добавлять немного эмодзи.`,
-        "expert": `Ты экспертный ассистент с хорошими знаниями.
-Отвечай структурировано, по пунктам, используй списки и пояснения.
-Если есть ограничения знаний — мягко упоминай об этом.`
+        assistant: `Ты полезный AI-ассистент бота Hey, Reaver.
+Помогаешь с функциями бота и любыми общими вопросами.
+Пиши коротко, но по делу. Используй Markdown: списки, выделение, код.`,
+        creative: `Ты креативный AI-ассистент.
+Помогаешь придумывать идеи, тексты, описания, сценарии.
+Пиши живо, вдохновляюще, можно немного эмодзи, но без лишней воды.`,
+        expert: `Ты экспертный AI-ассистент.
+Давай структурированные, понятные ответы, используй списки и логичную структуру.
+Если чего-то не знаешь — честно скажи.`
       };
-      return prompts[mode] || prompts["assistant"];
+      return prompts[mode] || prompts.assistant;
     }
 
     function getTemperature(mode) {
@@ -862,17 +902,22 @@
     }
 
     function getMockResponse(userMessage, mode) {
-      const base = "Сейчас я работаю в демо-режиме без живого Groq API, но вот пример того, как я бы ответил:\n\n";
+      const base = "Сейчас я работаю в демо-режиме без живого Groq API, но вот пример того, как бы выглядел ответ:\n\n";
       if (mode === "creative") {
-        return base + `*Идея:* превратить твой запрос в мини-историю или концепт.\n\n— Ты написал: \`${userMessage}\`\n— Я могу помочь превратить это в текст, сценарий, описание трека или визуальный концепт.`;
+        return base + `*Идея*: обыграть твой запрос \`${userMessage}\` как концепт для трека, обложки или поста.\n\n— Могу расписать сюжет, атмосферу и даже пример текста.`;
       }
       if (mode === "expert") {
-        return base + `1. Разбираем запрос: \`${userMessage}\`.\n2. В реальном режиме я бы дал структурированный разбор.\n3. Сейчас можно считать это placeholder-ответом, пока не подключён ключ Groq.`;
+        return base + `1. Разбираем запрос: \`${userMessage}\`.\n2. В полноценном режиме я бы дал структурированный разбор и варианты.\n3. Сейчас это placeholder-ответ до подключения ключа Groq.`;
       }
-      return base + `— Бот Hey, Reaver умеет:\n  * скачивать MP3 по команде \`найти ...\`;\n  * отправлять видео 360p/720p;\n  * в Premium даёт 1080p + соцсети.\n\nТы спросил: \`${userMessage}\`. В боевом режиме я бы ответил точнее.`;
+      return base + `— Бот Hey, Reaver умеет:
+* скачивать MP3 по команде \`найти ...\`;
+* отправлять видео 360p/720p;
+* с Premium даёт 1080p и поддержку соцсетей.
+
+Ты спросил: \`${userMessage}\`. В боевом режиме ответ был бы точным под твой запрос.`;
     }
 
-    /* ===== textarea поведение ===== */
+    /* ===== textarea ===== */
 
     function resizeTextarea() {
       const ta = document.getElementById("chat-input");
