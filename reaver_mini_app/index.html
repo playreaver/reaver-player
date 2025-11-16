@@ -36,31 +36,20 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 18px;
+      padding: 16px;
       overflow: hidden;
     }
 
     .wrapper {
       width: 100%;
-      max-width: 480px;
+      max-width: 520px;
       position: relative;
-      perspective: 1000px;
-    }
-
-    .particle {
-      position: absolute;
-      width: 4px;
-      height: 4px;
-      border-radius: 50%;
-      background: var(--accent1);
-      pointer-events: none;
-      opacity: 0;
     }
 
     .blob {
       position: absolute;
       border-radius: 999px;
-      filter: blur(35px);
+      filter: blur(32px);
       opacity: 0.7;
       pointer-events: none;
       mix-blend-mode: screen;
@@ -72,47 +61,26 @@
       background: radial-gradient(circle, var(--accent1), transparent 70%);
       top: -40px;
       right: -40px;
-      animation: blobFloat1 8s ease-in-out infinite;
+      animation: blobFloat1 12s ease-in-out infinite;
     }
 
     .blob.two {
       width: 260px;
       height: 260px;
       background: radial-gradient(circle, var(--accent3), transparent 70%);
-      bottom: -60px;
-      left: -50px;
-      animation: blobFloat2 10s ease-in-out infinite;
-    }
-
-    .blob.three {
-      width: 180px;
-      height: 180px;
-      background: radial-gradient(circle, var(--accent2), transparent 70%);
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      animation: blobFloat3 12s ease-in-out infinite;
+      bottom: -80px;
+      left: -60px;
+      animation: blobFloat2 16s ease-in-out infinite;
     }
 
     @keyframes blobFloat1 {
-      0%, 100% { transform: translate(0, 0) rotate(0deg) scale(1); }
-      25% { transform: translate(-30px, 20px) rotate(5deg) scale(1.1); }
-      50% { transform: translate(-15px, 40px) rotate(10deg) scale(1.05); }
-      75% { transform: translate(-25px, 25px) rotate(7deg) scale(1.15); }
+      0%, 100% { transform: translate(0, 0); }
+      50% { transform: translate(-20px, 30px); }
     }
 
     @keyframes blobFloat2 {
-      0%, 100% { transform: translate(0, 0) rotate(0deg) scale(1); }
-      25% { transform: translate(20px, -30px) rotate(-8deg) scale(1.2); }
-      50% { transform: translate(40px, -15px) rotate(-15deg) scale(1.1); }
-      75% { transform: translate(25px, -25px) rotate(-10deg) scale(1.25); }
-    }
-
-    @keyframes blobFloat3 {
-      0%, 100% { transform: translate(-50%, -50%) scale(1) rotate(0deg); }
-      25% { transform: translate(-60%, -40%) scale(1.3) rotate(20deg); }
-      50% { transform: translate(-40%, -60%) scale(1.1) rotate(-15deg); }
-      75% { transform: translate(-55%, -45%) scale(1.4) rotate(25deg); }
+      0%, 100% { transform: translate(0, 0); }
+      50% { transform: translate(25px, -25px); }
     }
 
     .card {
@@ -126,117 +94,43 @@
         0 18px 45px rgba(0, 0, 0, 0.7),
         0 0 0 1px rgba(255, 255, 255, 0.02);
       backdrop-filter: blur(18px);
-      animation: 
-        cardEntrance 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) both,
-        cardGlow 6s ease-in-out infinite alternate,
-        cardFloat 8s ease-in-out infinite;
-      transform-style: preserve-3d;
+      animation: cardEntrance 0.8s ease-out both;
     }
 
     @keyframes cardEntrance {
-      0% { 
-        transform: translateY(100px) rotateX(15deg) scale(0.9);
+      0% {
+        transform: translateY(24px);
         opacity: 0;
       }
-      100% { 
-        transform: translateY(0) rotateX(0) scale(1);
+      100% {
+        transform: translateY(0);
         opacity: 1;
       }
-    }
-
-    @keyframes cardGlow {
-      0% { 
-        box-shadow: 0 18px 45px rgba(0, 0, 0, 0.7), 
-                   0 0 0 1px rgba(255, 255, 255, 0.02);
-      }
-      50% { 
-        box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), 
-                   0 0 30px rgba(0, 212, 255, 0.15),
-                   0 0 0 1px rgba(255, 255, 255, 0.05);
-      }
-      100% { 
-        box-shadow: 0 18px 45px rgba(0, 0, 0, 0.7),
-                   0 0 20px rgba(78, 107, 255, 0.1),
-                   0 0 0 1px rgba(255, 255, 255, 0.02);
-      }
-    }
-
-    @keyframes cardFloat {
-      0%, 100% { transform: translateY(0) rotateX(0) rotateY(0); }
-      25% { transform: translateY(-8px) rotateX(0.5deg) rotateY(0.5deg); }
-      50% { transform: translateY(-4px) rotateX(-0.3deg) rotateY(-0.3deg); }
-      75% { transform: translateY(-6px) rotateX(0.2deg) rotateY(0.2deg); }
     }
 
     .header-row {
       display: flex;
       align-items: center;
       gap: 12px;
-      margin-bottom: 6px;
-      animation: slideIn 1s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.3s both;
-    }
-
-    @keyframes slideIn {
-      0% { 
-        transform: translateY(-30px) scale(0.95);
-        opacity: 0;
-      }
-      100% { 
-        transform: translateY(0) scale(1);
-        opacity: 1;
-      }
+      margin-bottom: 8px;
     }
 
     .logo-chip {
-      width: 50px;
-      height: 50px;
-      border-radius: 16px;
+      width: 52px;
+      height: 52px;
+      border-radius: 18px;
       background: linear-gradient(135deg, #00c6ff, #008cff);
       display: flex;
       align-items: center;
       justify-content: center;
       overflow: hidden;
       box-shadow: 0 10px 28px rgba(0, 0, 0, 0.6);
-      animation: 
-        logoSpin 20s linear infinite,
-        logoPulse 3s ease-in-out infinite,
-        logoDepth 6s ease-in-out infinite;
-      transform-style: preserve-3d;
-    }
-
-    @keyframes logoSpin {
-      0% { transform: rotate(0deg) scale(1); }
-      50% { transform: rotate(180deg) scale(1.1); }
-      100% { transform: rotate(360deg) scale(1); }
-    }
-
-    @keyframes logoPulse {
-      0%, 100% { 
-        box-shadow: 0 10px 28px rgba(0, 0, 0, 0.6),
-                   0 0 0 0 rgba(0, 198, 255, 0.4);
-      }
-      50% { 
-        box-shadow: 0 15px 35px rgba(0, 198, 255, 0.4),
-                   0 0 0 10px rgba(0, 198, 255, 0);
-      }
-    }
-
-    @keyframes logoDepth {
-      0%, 100% { transform: translateZ(0); }
-      50% { transform: translateZ(10px); }
     }
 
     .logo-chip img {
       width: 130%;
       height: auto;
       transform: translateX(6px);
-      animation: logoImageTilt 8s ease-in-out infinite;
-    }
-
-    @keyframes logoImageTilt {
-      0%, 100% { transform: translateX(6px) rotate(0deg); }
-      25% { transform: translateX(6px) rotate(-5deg); }
-      75% { transform: translateX(6px) rotate(5deg); }
     }
 
     .title-block {
@@ -248,170 +142,83 @@
       font-weight: 700;
       letter-spacing: 0.03em;
       text-transform: uppercase;
-      background: linear-gradient(90deg, #00d4ff, #4e6bff, #ff6584, #00d4ff);
-      background-size: 300% 300%;
+      background: linear-gradient(90deg, #ffffff, #e4f4ff);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
-      animation: 
-        titleGradient 3s ease infinite,
-        titleShimmer 6s ease-in-out infinite;
-      position: relative;
-      overflow: hidden;
-    }
-
-    @keyframes titleGradient {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
-
-    @keyframes titleShimmer {
-      0%, 100% { 
-        text-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
-      }
-      50% { 
-        text-shadow: 0 0 30px rgba(0, 212, 255, 0.6),
-                     0 0 40px rgba(78, 107, 255, 0.4);
-      }
     }
 
     .subtitle {
       font-size: 12px;
       color: var(--muted);
-      margin-top: 2px;
-      animation: subtitleFade 2s ease-in-out infinite alternate;
+      margin-top: 3px;
     }
 
-    @keyframes subtitleFade {
-      0% { opacity: 0.7; transform: translateX(0); }
-      100% { opacity: 1; transform: translateX(5px); }
+    .soon-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      margin-top: 8px;
+    }
+
+    .soon-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--accent1);
+      box-shadow: 0 0 12px rgba(0, 212, 255, 0.8);
+      animation: pulse 1.4s ease-out infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 1; }
+      70% { transform: scale(1.6); opacity: 0; }
+      100% { transform: scale(1); opacity: 0; }
     }
 
     .mode-switcher {
       display: flex;
       gap: 8px;
-      margin: 12px 0;
-      animation: fadeIn 0.8s ease-out 0.5s both;
+      margin: 14px 0 10px;
     }
 
     .mode-btn {
       flex: 1;
-      padding: 10px 16px;
+      padding: 9px 12px;
       border: none;
       border-radius: 12px;
-      background: rgba(255, 255, 255, 0.05);
+      background: rgba(255, 255, 255, 0.04);
       color: var(--muted);
       font-size: 12px;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-      position: relative;
-      overflow: hidden;
+      transition: all 0.22s ease;
     }
 
     .mode-btn.active {
-      background: linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(78, 107, 255, 0.2));
+      background: linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(78, 107, 255, 0.25));
       color: var(--text);
-      box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+      box-shadow: 0 0 14px rgba(0, 212, 255, 0.35);
     }
 
-    .mode-btn::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-      transition: left 0.5s ease;
+    .mode-btn:active {
+      transform: translateY(1px) scale(0.98);
+      box-shadow: none;
     }
 
-    .mode-btn:hover::before {
-      left: 100%;
-    }
-
-    .chat-controls {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 12px;
-      animation: fadeIn 0.8s ease-out 0.6s both;
-    }
-
-    .chat-mode-btn {
-      padding: 8px 12px;
-      border: none;
-      border-radius: 10px;
-      background: rgba(255, 255, 255, 0.05);
-      color: var(--muted);
-      font-size: 11px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      flex: 1;
-    }
-
-    .chat-mode-btn.active {
-      background: linear-gradient(135deg, rgba(255, 101, 132, 0.2), rgba(255, 101, 132, 0.1));
-      color: var(--text);
-      box-shadow: 0 0 15px rgba(255, 101, 132, 0.3);
-    }
-
-    .clear-chat-btn {
-      padding: 8px 12px;
-      border: none;
-      border-radius: 10px;
-      background: rgba(255, 101, 132, 0.1);
-      color: var(--accent3);
-      font-size: 11px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-
-    .clear-chat-btn:hover {
-      background: rgba(255, 101, 132, 0.2);
-      box-shadow: 0 0 15px rgba(255, 101, 132, 0.3);
-    }
-
+    /* ===== блок «Функции» ===== */
     .features {
-      margin-top: 14px;
       border-radius: 18px;
       padding: 10px 12px;
-      background: rgba(2, 5, 22, 0.8);
+      background: rgba(2, 5, 22, 0.9);
       border: 1px solid rgba(255, 255, 255, 0.06);
       overflow: hidden;
       position: relative;
-      animation: featuresReveal 1s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.6s both;
-    }
-
-    @keyframes featuresReveal {
-      0% { 
-        transform: translateY(30px) scale(0.95);
-        opacity: 0;
-      }
-      100% { 
-        transform: translateY(0) scale(1);
-        opacity: 1;
-      }
-    }
-
-    .features::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, 
-        transparent, 
-        rgba(0, 212, 255, 0.1), 
-        transparent);
-      animation: featureShine 8s ease-in-out infinite;
-    }
-
-    @keyframes featureShine {
-      0% { left: -100%; }
-      20% { left: 100%; }
-      100% { left: 100%; }
     }
 
     .features-label {
@@ -420,12 +227,6 @@
       letter-spacing: 0.16em;
       color: var(--muted);
       margin-bottom: 6px;
-      animation: labelFlicker 3s ease-in-out infinite;
-    }
-
-    @keyframes labelFlicker {
-      0%, 100% { opacity: 0.6; }
-      50% { opacity: 1; }
     }
 
     .features-viewport {
@@ -441,166 +242,171 @@
       gap: 8px;
       font-size: 13px;
       opacity: 0;
-      transform: translateY(15px) scale(0.95);
+      transform: translateY(12px);
       animation: featureCycle 15s infinite;
-      transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     }
 
     .feature-item span.icon {
       font-size: 16px;
       width: 22px;
       text-align: center;
-      animation: iconFloat 3s ease-in-out infinite;
-      display: inline-block;
     }
 
-    @keyframes iconFloat {
-      0%, 100% { 
-        transform: translateY(0) rotate(0deg);
-      }
-      33% { 
-        transform: translateY(-5px) rotate(5deg);
-      }
-      66% { 
-        transform: translateY(-3px) rotate(-3deg);
-      }
-    }
-
-    .feature-item:nth-child(1) { 
-      animation-delay: 0s; 
-    }
-    .feature-item:nth-child(2) { 
-      animation-delay: 3s; 
-    }
-    .feature-item:nth-child(3) { 
-      animation-delay: 6s; 
-    }
-    .feature-item:nth-child(4) { 
-      animation-delay: 9s; 
-    }
-    .feature-item:nth-child(5) { 
-      animation-delay: 12s; 
-    }
+    .feature-item:nth-child(1) { animation-delay: 0s; }
+    .feature-item:nth-child(2) { animation-delay: 3s; }
+    .feature-item:nth-child(3) { animation-delay: 6s; }
+    .feature-item:nth-child(4) { animation-delay: 9s; }
+    .feature-item:nth-child(5) { animation-delay: 12s; }
 
     @keyframes featureCycle {
-      0% { 
-        opacity: 0; 
-        transform: translateY(15px) scale(0.95);
-        filter: blur(5px);
+      0% {
+        opacity: 0;
+        transform: translateY(12px);
       }
-      8% { 
-        opacity: 1; 
-        transform: translateY(0) scale(1);
-        filter: blur(0);
+      8% {
+        opacity: 1;
+        transform: translateY(0);
       }
-      20% { 
-        opacity: 1; 
-        transform: translateY(0) scale(1.02);
-        filter: blur(0);
+      22% {
+        opacity: 1;
+        transform: translateY(0);
       }
-      28% { 
-        opacity: 0; 
-        transform: translateY(-12px) scale(0.98);
-        filter: blur(5px);
+      30% {
+        opacity: 0;
+        transform: translateY(-8px);
       }
-      100% { 
-        opacity: 0; 
-        transform: translateY(-12px) scale(0.98);
-        filter: blur(5px);
+      100% {
+        opacity: 0;
+        transform: translateY(-8px);
       }
     }
 
-    /* AI Chat Styles */
+    /* ===== чат ===== */
     .chat-container {
-      margin-top: 14px;
+      margin-top: 10px;
       border-radius: 18px;
-      padding: 16px;
-      background: rgba(2, 5, 22, 0.8);
+      padding: 12px 12px 14px;
+      background: rgba(2, 5, 22, 0.9);
       border: 1px solid rgba(255, 255, 255, 0.06);
-      animation: chatReveal 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
       display: none;
       flex-direction: column;
-      height: 350px;
+      max-height: 65vh;
+      min-height: 50vh;
     }
 
-    @keyframes chatReveal {
-      0% { 
-        transform: translateY(20px) scale(0.98);
-        opacity: 0;
+    @media (max-height: 650px) {
+      .chat-container {
+        max-height: 56vh;
+        min-height: 46vh;
       }
-      100% { 
-        transform: translateY(0) scale(1);
-        opacity: 1;
-      }
+    }
+
+    .chat-controls {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+    }
+
+    .chat-mode-btn {
+      padding: 7px 10px;
+      border: none;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--muted);
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .chat-mode-btn.active {
+      background: linear-gradient(135deg, rgba(255, 101, 132, 0.2), rgba(255, 101, 132, 0.1));
+      color: var(--text);
+    }
+
+    .clear-chat-btn {
+      padding: 7px 10px;
+      border: none;
+      border-radius: 10px;
+      background: rgba(255, 101, 132, 0.12);
+      color: var(--accent3);
+      font-size: 11px;
+      cursor: pointer;
+      white-space: nowrap;
     }
 
     .chat-messages {
       flex: 1;
       overflow-y: auto;
-      margin-bottom: 16px;
-      padding-right: 8px;
+      margin-bottom: 10px;
+      padding-right: 4px;
     }
 
     .chat-messages::-webkit-scrollbar {
       width: 4px;
     }
-
     .chat-messages::-webkit-scrollbar-track {
-      background: rgba(255, 255, 255, 0.05);
+      background: rgba(255, 255, 255, 0.04);
       border-radius: 2px;
     }
-
     .chat-messages::-webkit-scrollbar-thumb {
       background: var(--accent1);
       border-radius: 2px;
     }
 
     .message {
-      margin-bottom: 12px;
-      padding: 12px;
+      margin-bottom: 10px;
+      padding: 9px 10px;
       border-radius: 12px;
-      animation: messageSlide 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
-      position: relative;
-      overflow: hidden;
+      font-size: 13px;
+      line-height: 1.4;
+      animation: messageSlide 0.22s ease-out both;
     }
 
     @keyframes messageSlide {
-      0% { 
-        transform: translateY(10px);
-        opacity: 0;
-      }
-      100% { 
-        transform: translateY(0);
-        opacity: 1;
-      }
+      0% { transform: translateY(6px); opacity: 0; }
+      100% { transform: translateY(0); opacity: 1; }
     }
 
     .message.user {
-      background: linear-gradient(135deg, rgba(0, 212, 255, 0.15), rgba(78, 107, 255, 0.1));
-      border: 1px solid rgba(0, 212, 255, 0.2);
-      margin-left: 20px;
+      background: linear-gradient(135deg, rgba(0, 212, 255, 0.18), rgba(78, 107, 255, 0.16));
+      border: 1px solid rgba(0, 212, 255, 0.3);
+      margin-left: 28px;
     }
 
     .message.assistant {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      margin-right: 20px;
-    }
-
-    .message::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, var(--accent1), transparent);
-      opacity: 0.6;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      margin-right: 28px;
     }
 
     .message-text {
-      font-size: 13px;
-      line-height: 1.4;
+      word-wrap: break-word;
+    }
+
+    .message-text code {
+      font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 12px;
+      background: rgba(0, 0, 0, 0.4);
+      padding: 1px 4px;
+      border-radius: 4px;
+    }
+
+    .message-text pre {
+      margin: 6px 0 4px;
+      padding: 8px;
+      background: rgba(0, 0, 0, 0.5);
+      border-radius: 8px;
+      overflow-x: auto;
+      font-size: 12px;
+    }
+
+    .message-text ul,
+    .message-text ol {
+      padding-left: 18px;
+      margin: 4px 0;
     }
 
     .message-meta {
@@ -613,8 +419,10 @@
     .typing-indicator {
       display: flex;
       gap: 4px;
-      padding: 12px;
+      padding: 8px 4px;
       align-items: center;
+      font-size: 12px;
+      color: var(--muted);
     }
 
     .typing-dot {
@@ -630,14 +438,8 @@
     .typing-dot:nth-child(3) { animation-delay: 0s; }
 
     @keyframes typingBounce {
-      0%, 80%, 100% { 
-        transform: scale(0.8);
-        opacity: 0.5;
-      }
-      40% { 
-        transform: scale(1);
-        opacity: 1;
-      }
+      0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
+      40% { transform: scale(1); opacity: 1; }
     }
 
     .chat-input-container {
@@ -648,17 +450,16 @@
 
     .chat-input {
       flex: 1;
-      padding: 12px 16px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 10px 12px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
       border-radius: 12px;
-      background: rgba(0, 0, 0, 0.3);
+      background: rgba(0, 0, 0, 0.35);
       color: var(--text);
       font-size: 13px;
       outline: none;
-      transition: all 0.3s ease;
       resize: none;
-      min-height: 44px;
-      max-height: 120px;
+      min-height: 40px;
+      max-height: 110px;
     }
 
     .chat-input:focus {
@@ -667,117 +468,39 @@
     }
 
     .send-btn {
-      padding: 12px 16px;
+      padding: 10px 12px;
       border: none;
       border-radius: 12px;
       background: linear-gradient(135deg, var(--accent1), var(--accent2));
       color: white;
       cursor: pointer;
-      transition: all 0.3s ease;
       font-weight: 600;
-      animation: sendBtnPulse 2s ease-in-out infinite;
+      min-width: 44px;
       display: flex;
       align-items: center;
       justify-content: center;
-      min-width: 44px;
+      transition: all 0.2s ease;
     }
 
-    @keyframes sendBtnPulse {
-      0%, 100% { 
-        transform: scale(1);
-        box-shadow: 0 4px 12px rgba(0, 212, 255, 0.3);
-      }
-      50% { 
-        transform: scale(1.05);
-        box-shadow: 0 6px 20px rgba(0, 212, 255, 0.5);
-      }
-    }
-
-    .send-btn:hover {
-      transform: scale(1.05);
-      box-shadow: 0 6px 20px rgba(0, 212, 255, 0.5);
+    .send-btn:active {
+      transform: scale(0.97);
+      box-shadow: none;
     }
 
     .send-btn:disabled {
       opacity: 0.6;
       cursor: not-allowed;
-      transform: scale(1);
-    }
-
-    .soon-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 4px 10px;
-      border-radius: 999px;
-      font-size: 11px;
-      background: rgba(0, 0, 0, 0.45);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      margin-top: 8px;
-      animation: 
-        pillPulse 2s ease-in-out infinite,
-        pillSlide 4s ease-in-out infinite;
-    }
-
-    @keyframes pillPulse {
-      0%, 100% { 
-        border-color: rgba(255, 255, 255, 0.12);
-        background: rgba(0, 0, 0, 0.45);
-      }
-      50% { 
-        border-color: rgba(0, 212, 255, 0.6);
-        background: rgba(0, 212, 255, 0.1);
-      }
-    }
-
-    @keyframes pillSlide {
-      0%, 100% { transform: translateX(0); }
-      25% { transform: translateX(-3px); }
-      75% { transform: translateX(3px); }
-    }
-
-    .soon-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 999px;
-      background: var(--accent1);
-      box-shadow: 0 0 12px rgba(0, 212, 255, 0.8);
-      animation: 
-        pulse 1.4s ease-out infinite,
-        dotColor 4s ease-in-out infinite;
-    }
-
-    @keyframes pulse {
-      0% { transform: scale(1); opacity: 1; }
-      70% { transform: scale(1.8); opacity: 0; }
-      100% { transform: scale(1); opacity: 0; }
-    }
-
-    @keyframes dotColor {
-      0%, 100% { background: var(--accent1); }
-      33% { background: var(--accent2); }
-      66% { background: var(--accent3); }
+      transform: none;
+      box-shadow: none;
     }
 
     .bottom-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-top: 14px;
+      margin-top: 12px;
       font-size: 11px;
       color: var(--muted);
-      animation: bottomReveal 1s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.9s both;
-    }
-
-    @keyframes bottomReveal {
-      0% { 
-        transform: translateY(20px);
-        opacity: 0;
-      }
-      100% { 
-        transform: translateY(0);
-        opacity: 1;
-      }
     }
 
     .tag {
@@ -785,50 +508,16 @@
       border-radius: 999px;
       background: rgba(255, 255, 255, 0.04);
       border: 1px solid rgba(255, 255, 255, 0.06);
-      animation: 
-        tagGlow 3s ease-in-out infinite,
-        tagBounce 6s ease-in-out infinite;
-    }
-
-    @keyframes tagGlow {
-      0%, 100% { 
-        box-shadow: 0 0 5px rgba(0, 212, 255, 0);
-      }
-      50% { 
-        box-shadow: 0 0 15px rgba(0, 212, 255, 0.4);
-      }
-    }
-
-    @keyframes tagBounce {
-      0%, 100% { transform: scale(1); }
-      25% { transform: scale(1.05); }
-      50% { transform: scale(0.98); }
-      75% { transform: scale(1.02); }
     }
 
     .bot-handle {
-      opacity: 0.85;
-      animation: handleSlide 5s ease-in-out infinite;
-    }
-
-    @keyframes handleSlide {
-      0%, 100% { transform: translateX(0); opacity: 0.85; }
-      25% { transform: translateX(-3px); opacity: 1; }
-      75% { transform: translateX(3px); opacity: 1; }
-    }
-
-    @keyframes fadeIn {
-      0% { opacity: 0; }
-      100% { opacity: 1; }
+      opacity: 0.9;
     }
 
     @media (max-width: 360px) {
-      .card {
-        padding: 14px;
-      }
+      .card { padding: 14px; }
       .title { font-size: 16px; }
-      .features-viewport { height: 60px; }
-      .chat-container { height: 300px; }
+      .chat-container { min-height: 48vh; }
     }
   </style>
 </head>
@@ -836,34 +525,35 @@
   <div class="wrapper">
     <div class="blob one"></div>
     <div class="blob two"></div>
-    <div class="blob three"></div>
 
     <div class="card">
       <div class="header-row">
         <div class="logo-chip">
+          <!-- Подставь сюда логотип в стиле обложки -->
           <img src="heyreaver_logo.png" alt="Hey, Reaver logo">
         </div>
         <div class="title-block">
-          <div class="title">AI Чат + Mini App</div>
-          <div class="subtitle">Hey, Reaver с искусственным интеллектом</div>
+          <div class="title">Hey, Reaver • AI чат</div>
+          <div class="subtitle">Новая айдентика в деле. Искусственный интеллект внутри бота.</div>
           <div class="soon-pill">
             <div class="soon-dot"></div>
-            <span>Groq AI • Ultra Fast</span>
+            <span>Groq AI • ultra fast ответ</span>
           </div>
         </div>
       </div>
 
       <div class="mode-switcher">
-        <button class="mode-btn active" onclick="switchMode('features')">Функции</button>
-        <button class="mode-btn" onclick="switchMode('chat')">AI Чат</button>
+        <button class="mode-btn active" id="mode-features" onclick="switchMode('features')">Функции бота</button>
+        <button class="mode-btn" id="mode-chat" onclick="switchMode('chat')">AI-чат</button>
       </div>
 
+      <!-- Блок функций -->
       <div class="features" id="features-section">
-        <div class="features-label">что уже умеет бот</div>
+        <div class="features-label">что уже умеет hey, reaver</div>
         <div class="features-viewport">
           <div class="feature-item">
             <span class="icon">🎵</span>
-            <span>Скачивает треки в MP3 по запросу `найти ...`</span>
+            <span>Скачивает треки в MP3 по запросу <code>найти&nbsp;трек</code></span>
           </div>
           <div class="feature-item">
             <span class="icon">📹</span>
@@ -875,40 +565,50 @@
           </div>
           <div class="feature-item">
             <span class="icon">⏳</span>
-            <span>Триал и подписка за Telegram Stars, без привязки карт</span>
+            <span>Триал и подписка за Telegram Stars — без карт</span>
           </div>
           <div class="feature-item">
             <span class="icon">🎁</span>
-            <span>Промокоды на Premium и праздничные акции</span>
+            <span>Промокоды, акции и подарочный Premium</span>
           </div>
         </div>
       </div>
 
+      <!-- Блок чата -->
       <div class="chat-container" id="chat-section">
         <div class="chat-controls">
-          <button class="chat-mode-btn active" onclick="switchChatMode('assistant')">Ассистент</button>
-          <button class="chat-mode-btn" onclick="switchChatMode('creative')">Креативный</button>
-          <button class="chat-mode-btn" onclick="switchChatMode('expert')">Эксперт</button>
+          <button class="chat-mode-btn active" onclick="switchChatMode('assistant', this)">Ассистент</button>
+          <button class="chat-mode-btn" onclick="switchChatMode('creative', this)">Креативный</button>
+          <button class="chat-mode-btn" onclick="switchChatMode('expert', this)">Эксперт</button>
           <button class="clear-chat-btn" onclick="clearChat()">Очистить</button>
         </div>
-        
+
         <div class="chat-messages" id="chat-messages">
           <div class="message assistant">
-            <div class="message-text">Привет! Я AI-ассистент Hey, Reaver. Выберите режим общения или просто задайте любой вопрос - я помогу с функциями бота или поддержу беседу на любую тему! 🚀</div>
-            <div class="message-meta">Система • Только что</div>
+            <div class="message-text">
+              <p><strong>Привет!</strong> Я AI-ассистент Hey, Reaver.</p>
+              <p>Выбери режим общения или просто задай вопрос — помогу с функциями бота, идеями и чем угодно. 🚀</p>
+            </div>
+            <div class="message-meta">Система • только что</div>
           </div>
         </div>
-        
+
         <div class="chat-input-container">
-          <textarea class="chat-input" id="chat-input" placeholder="Задайте любой вопрос..." maxlength="1000" rows="1"></textarea>
+          <textarea
+            class="chat-input"
+            id="chat-input"
+            placeholder="Напиши сообщение… (Enter — отправить, Shift+Enter — новая строка)"
+            maxlength="1000"
+            rows="1"
+          ></textarea>
           <button class="send-btn" id="send-btn" onclick="sendMessage()">
-            <span>➤</span>
+            ➤
           </button>
         </div>
       </div>
 
       <div class="bottom-row">
-        <div class="tag">Groq AI • Free Chat</div>
+        <div class="tag">Groq AI • Markdown-ответы</div>
         <div class="bot-handle">@reaver_youtube_bot</div>
       </div>
     </div>
@@ -920,349 +620,276 @@
     if (tg) {
       tg.ready();
       tg.expand();
-
       document.body.style.backgroundColor = tg.backgroundColor || "#090018";
 
       const user = tg.initDataUnsafe?.user;
       if (user) {
         const subtitle = document.querySelector(".subtitle");
-        const name = user.username
-          ? "@" + user.username
-          : (user.first_name || "друг");
-        subtitle.textContent = `Привет, ${name}. Управляй ботом и общайся с AI!`;
+        const name = user.username ? "@" + user.username : (user.first_name || "друг");
+        subtitle.textContent = `Привет, ${name}. Управляй ботом и общайся с AI прямо здесь.`;
       }
     }
 
-    function createParticles() {
-      const wrapper = document.querySelector('.wrapper');
-      for (let i = 0; i < 15; i++) {
-        const particle = document.createElement('div');
-        particle.className = 'particle';
-        particle.style.left = Math.random() * 100 + '%';
-        particle.style.top = Math.random() * 100 + '%';
-        particle.style.animation = `particleFloat ${3 + Math.random() * 4}s ease-in-out infinite ${Math.random() * 5}s`;
-        particle.style.background = Math.random() > 0.5 ? 'var(--accent1)' : 
-                                  Math.random() > 0.5 ? 'var(--accent2)' : 'var(--accent3)';
-        wrapper.appendChild(particle);
-      }
+    /* ===== Markdown рендерер (лайт) ===== */
+
+    function escapeHtml(str) {
+      return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
     }
 
-    const style = document.createElement('style');
-    style.textContent = `
-      @keyframes particleFloat {
-        0%, 100% {
-          transform: translate(0, 0) scale(0);
-          opacity: 0;
-        }
-        10% {
-          transform: translate(${Math.random() * 100 - 50}px, ${Math.random() * 100 - 50}px) scale(1);
-          opacity: 0.8;
-        }
-        90% {
-          transform: translate(${Math.random() * 100 - 50}px, ${Math.random() * 100 - 50}px) scale(0.5);
-          opacity: 0;
-        }
-      }
-    `;
-    document.head.appendChild(style);
+    function renderMarkdown(md) {
+      if (!md) return "";
 
-    createParticles();
+      let text = escapeHtml(md);
 
-    let isWaitingForResponse = false;
-    let chatMode = 'assistant';
-    let chatHistory = [];
+      // заголовки
+      text = text.replace(/^### (.+)$/gm, "<h3>$1</h3>");
+      text = text.replace(/^## (.+)$/gm, "<h2>$1</h2>");
+      text = text.replace(/^# (.+)$/gm, "<h1>$1</h1>");
+
+      // списки
+      text = text.replace(/(^|\n)[ \t]*[-*] (.+)/g, (m, p1, item) => `${p1}<ul><li>${item}</li></ul>`);
+      text = text.replace(/<\/ul>\s*<ul>/g, "</ul>");
+
+      // жирный / курсив
+      text = text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+      text = text.replace(/\*(.+?)\*/g, "<em>$1</em>");
+
+      // инлайн-код
+      text = text.replace(/`([^`]+)`/g, "<code>$1</code>");
+
+      // ссылки
+      text = text.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noreferrer">$1</a>');
+
+      // многострочный код ``` ```
+      text = text.replace(/```([\s\S]*?)```/g, "<pre><code>$1</code></pre>");
+
+      // переносы строк -> <br>, кроме уже вставленных блоков
+      text = text.replace(/\n{2,}/g, "</p><p>");
+      text = "<p>" + text.replace(/\n/g, "<br>") + "</p>";
+
+      return text;
+    }
+
+    /* ===== UI переключатели ===== */
 
     function switchMode(mode) {
-      const featuresBtn = document.querySelector('.mode-btn:nth-child(1)');
-      const chatBtn = document.querySelector('.mode-btn:nth-child(2)');
-      const featuresSection = document.getElementById('features-section');
-      const chatSection = document.getElementById('chat-section');
+      const featuresBtn = document.getElementById("mode-features");
+      const chatBtn = document.getElementById("mode-chat");
+      const featuresSection = document.getElementById("features-section");
+      const chatSection = document.getElementById("chat-section");
 
-      if (mode === 'features') {
-        featuresBtn.classList.add('active');
-        chatBtn.classList.remove('active');
-        featuresSection.style.display = 'block';
-        chatSection.style.display = 'none';
+      if (mode === "features") {
+        featuresBtn.classList.add("active");
+        chatBtn.classList.remove("active");
+        featuresSection.style.display = "block";
+        chatSection.style.display = "none";
       } else {
-        featuresBtn.classList.remove('active');
-        chatBtn.classList.add('active');
-        featuresSection.style.display = 'none';
-        chatSection.style.display = 'flex';
+        featuresBtn.classList.remove("active");
+        chatBtn.classList.add("active");
+        featuresSection.style.display = "none";
+        chatSection.style.display = "flex";
+
+        // автофокус на поле ввода
+        setTimeout(() => document.getElementById("chat-input").focus(), 200);
       }
     }
 
-    function switchChatMode(mode) {
+    let chatMode = "assistant";
+    let chatHistory = [];
+    let isWaitingForResponse = false;
+
+    function switchChatMode(mode, btn) {
       chatMode = mode;
-      const buttons = document.querySelectorAll('.chat-mode-btn');
-      buttons.forEach(btn => btn.classList.remove('active'));
-      event.target.classList.add('active');
-      
-      addSystemMessage(`Режим изменен на: ${getModeDescription(mode)}`);
+      document.querySelectorAll(".chat-mode-btn").forEach(b => b.classList.remove("active"));
+      if (btn) btn.classList.add("active");
+      addSystemMessage(`Режим: ${getModeDescription(mode)}`);
     }
 
     function getModeDescription(mode) {
       const modes = {
-        'assistant': 'Ассистент - помощь с ботом и общие вопросы',
-        'creative': 'Креативный - творческие беседы и идеи', 
-        'expert': 'Эксперт - глубокий анализ и знания'
+        "assistant": "Ассистент — помогает с ботом и общими вопросами",
+        "creative": "Креативный — идеи, тексты, творчество",
+        "expert": "Эксперт — более подробные и глубокие ответы"
       };
-      return modes[mode] || 'Ассистент';
+      return modes[mode] || "Ассистент";
     }
 
     function clearChat() {
-      const messagesContainer = document.getElementById('chat-messages');
-      messagesContainer.innerHTML = '';
+      const container = document.getElementById("chat-messages");
+      container.innerHTML = "";
       chatHistory = [];
-      
-      addSystemMessage('Чат очищен. Чем могу помочь? 🎯');
+      addSystemMessage("Чат очищен. О чём поговорим? 🎧");
     }
 
     function addSystemMessage(text) {
-      const messagesContainer = document.getElementById('chat-messages');
-      const messageDiv = document.createElement('div');
-      messageDiv.className = 'message assistant';
-      messageDiv.innerHTML = `
-        <div class="message-text">${text}</div>
-        <div class="message-meta">Система • Только что</div>
+      addMessage(text, "assistant", true);
+    }
+
+    function addMessage(text, sender, isSystem = false) {
+      const container = document.getElementById("chat-messages");
+      const div = document.createElement("div");
+      div.className = `message ${sender}`;
+
+      const ts = new Date().toLocaleTimeString("ru-RU", {
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+
+      div.innerHTML = `
+        <div class="message-text">${renderMarkdown(text)}</div>
+        <div class="message-meta">${isSystem ? "Система" : (sender === "user" ? "Вы" : "AI")} • ${ts}</div>
       `;
-      messagesContainer.appendChild(messageDiv);
-      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function showTyping() {
+      const container = document.getElementById("chat-messages");
+      const div = document.createElement("div");
+      div.className = "typing-indicator";
+      div.id = "typing-indicator";
+      div.innerHTML = `
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+        <span style="margin-left: 6px;">AI печатает…</span>
+      `;
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function hideTyping() {
+      const el = document.getElementById("typing-indicator");
+      if (el) el.remove();
     }
 
     async function sendMessage() {
       if (isWaitingForResponse) return;
 
-      const input = document.getElementById('chat-input');
-      const message = input.value.trim();
-      
-      if (!message) return;
+      const input = document.getElementById("chat-input");
+      const text = input.value.trim();
+      if (!text) return;
 
-      addMessage(message, 'user');
-      input.value = '';
-      resetTextareaHeight();
-      
-      showTypingIndicator();
+      addMessage(text, "user");
+      input.value = "";
+      resizeTextarea();
+
+      showTyping();
       isWaitingForResponse = true;
+      document.getElementById("send-btn").disabled = true;
 
       try {
-        const response = await callGroqAPI(message, chatMode);
-        hideTypingIndicator();
-        addMessage(response, 'assistant');
-        
-        chatHistory.push({ role: 'user', content: message });
-        chatHistory.push({ role: 'assistant', content: response });
-        
-        if (chatHistory.length > 20) {
-          chatHistory = chatHistory.slice(-20);
-        }
-      } catch (error) {
-        hideTypingIndicator();
-        addMessage('Извините, произошла ошибка. Попробуйте еще раз.', 'assistant');
-        console.error('API Error:', error);
+        const answer = await callGroqAPI(text, chatMode);
+        hideTyping();
+        addMessage(answer, "assistant");
+
+        chatHistory.push({ role: "user", content: text });
+        chatHistory.push({ role: "assistant", content: answer });
+        if (chatHistory.length > 20) chatHistory = chatHistory.slice(-20);
+      } catch (e) {
+        console.error(e);
+        hideTyping();
+        addMessage("Извини, что-то пошло не так. Попробуй ещё раз чуть позже.", "assistant");
       }
 
       isWaitingForResponse = false;
+      document.getElementById("send-btn").disabled = false;
     }
 
-    function addMessage(text, sender) {
-      const messagesContainer = document.getElementById('chat-messages');
-      const messageDiv = document.createElement('div');
-      messageDiv.className = `message ${sender}`;
-      
-      const timestamp = new Date().toLocaleTimeString('ru-RU', { 
-        hour: '2-digit', 
-        minute: '2-digit' 
-      });
-      
-      messageDiv.innerHTML = `
-        <div class="message-text">${text}</div>
-        <div class="message-meta">${sender === 'user' ? 'Вы' : 'AI'} • ${timestamp}</div>
-      `;
-      messagesContainer.appendChild(messageDiv);
-      messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    }
+    /* ===== Groq API ===== */
 
-    function showTypingIndicator() {
-      const messagesContainer = document.getElementById('chat-messages');
-      const typingDiv = document.createElement('div');
-      typingDiv.className = 'typing-indicator';
-      typingDiv.id = 'typing-indicator';
-      typingDiv.innerHTML = `
-        <div class="typing-dot"></div>
-        <div class="typing-dot"></div>
-        <div class="typing-dot"></div>
-        <span style="margin-left: 8px; font-size: 12px; color: var(--muted);">AI печатает...</span>
-      `;
-      messagesContainer.appendChild(typingDiv);
-      messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    }
-
-    function hideTypingIndicator() {
-      const typingIndicator = document.getElementById('typing-indicator');
-      if (typingIndicator) {
-        typingIndicator.remove();
-      }
-    }
+    const GROQ_API_KEY = "YOUR_GROQ_API_KEY_HERE"; // ⚠ сюда лучше не ставить реальный ключ, делай прокси на сервере
+    const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 
     async function callGroqAPI(userMessage, mode) {
-      const GROQ_API_KEY = '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';
-      const API_URL = 'https://api.groq.com/openai/v1/chat/completions';
-      
-      if (GROQ_API_KEY === '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') {
-        await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 1200));
+      // если ключ не задан — мок-режим (без реального API)
+      if (!GROQ_API_KEY || GROQ_API_KEY === "YOUR_GROQ_API_KEY_HERE") {
+        await new Promise(r => setTimeout(r, 600 + Math.random() * 600));
         return getMockResponse(userMessage, mode);
       }
 
       const systemPrompt = getSystemPrompt(mode);
-      
       const messages = [
-        { role: 'system', content: systemPrompt },
+        { role: "system", content: systemPrompt },
         ...chatHistory,
-        { role: 'user', content: userMessage }
+        { role: "user", content: userMessage }
       ];
 
-      const response = await fetch(API_URL, {
-        method: 'POST',
+      const res = await fetch(GROQ_API_URL, {
+        method: "POST",
         headers: {
-          'Authorization': `Bearer ${GROQ_API_KEY}`,
-          'Content-Type': 'application/json',
+          "Authorization": `Bearer ${GROQ_API_KEY}`,
+          "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          messages: messages,
-          model: 'llama3-8b-8192',
+          model: "llama3-8b-8192",
+          messages,
           temperature: getTemperature(mode),
           max_tokens: 1024,
           stream: false
         })
       });
 
-      if (!response.ok) {
-        throw new Error(`API Error: ${response.status}`);
-      }
-
-      const data = await response.json();
-      return data.choices[0].message.content;
+      if (!res.ok) throw new Error("Groq API error: " + res.status);
+      const data = await res.json();
+      return data.choices?.[0]?.message?.content || "Пустой ответ от модели 😔";
     }
 
     function getSystemPrompt(mode) {
       const prompts = {
-        'assistant': `Ты полезный AI-ассистент бота Hey, Reaver. 
-        Ты помогаешь пользователям с вопросами о функциях бота, но также можешь общаться на любые темы.
-        Будь дружелюбным, полезным и отвечай кратко по делу. 
-        О боте: скачивание музыки в MP3, видео с YouTube (360p/720p), Premium подписка дает 1080p и доступ к соцсетям.`,
-
-        'creative': `Ты креативный AI-помощник с богатым воображением. 
-        Можешь помогать с творческими задачами, генерировать идеи, писать тексты, придумывать решения.
-        Будь вдохновляющим, оригинальным и поддерживающим. Не бойся быть креативным!`,
-
-        'expert': `Ты экспертный AI-ассистент с глубокими знаниями в различных областях.
-        Отвечай подробно, аргументированно, с ссылками на факты когда это уместно.
-        Будь точным, информативным и помогай пользователю глубже понять тему.`
+        "assistant": `Ты полезный AI-ассистент бота Hey, Reaver.
+Ты помогаешь пользователю:
+— разобраться с функциями бота (поиск треков, скачивание видео, Premium, лимиты);
+— отвечаешь на любые вопросы в дружелюбной форме.
+Пиши компактно, но информативно. Используй Markdown: списки, выделение, код, если нужно.`,
+        "creative": `Ты креативный AI-помощник.
+Помогаешь придумывать идеи, тексты, описания, сценарии, посты.
+Пиши живо, вдохновляюще, но без лишней воды. Можно добавлять немного эмодзи.`,
+        "expert": `Ты экспертный ассистент с хорошими знаниями.
+Отвечай структурировано, по пунктам, используй списки и пояснения.
+Если есть ограничения знаний — мягко упоминай об этом.`
       };
-      
-      return prompts[mode] || prompts['assistant'];
+      return prompts[mode] || prompts["assistant"];
     }
 
     function getTemperature(mode) {
-      const temperatures = {
-        'assistant': 0.7,
-        'creative': 0.9,
-        'expert': 0.5
-      };
-      return temperatures[mode] || 0.7;
+      const t = { assistant: 0.7, creative: 0.9, expert: 0.5 };
+      return t[mode] ?? 0.7;
     }
 
     function getMockResponse(userMessage, mode) {
-
-      const creativeResponses = [
-        "О, это интересная тема! Давай взглянем на это под новым углом... Что если представить, что возможности безграничны? 🎨",
-        
-        "Вот креативная идея: представь себе мир, где каждый твой вопрос открывает новые горизонты! Давай исследовать это вместе! ✨",
-        
-        "Мне нравится твой запрос! Это напоминает мне о бесконечных возможностях человеческого воображения. Давай создадим что-то удивительное! 🌟",
-        
-        "Окей, погружаемся в творческий поток! Твой вопрос - как семя, из которого может вырасти целый сад идей. Куда направимся? 🌱",
-        
-        "Замечательно! Это прекрасный повод для творческого полета. Давай развернем твою идею как красочный свиток возможностей! 🎭"
-      ];
-
-      const expertResponses = [
-        "Проанализировав ваш запрос, я могу предоставить детальный ответ с учетом нескольких аспектов... 📊",
-        
-        "Исходя из доступных данных и логического анализа, можно сделать следующие выводы... 🔍",
-        
-        "Этот вопрос требует многоуровневого рассмотрения. Давайте разберем основные компоненты... 🧩",
-        
-        "С технической точки зрения, здесь важно учитывать несколько факторов... ⚙️",
-        
-        "На основе системного подхода и анализа паттернов, я рекомендую рассмотреть следующие варианты... 📈"
-      ];
-
-      const assistantResponses = [
-        "Отличный вопрос! Бот Hey, Reaver может скачивать музыку в MP3 по команде `найти [название трека]`. Также могу помочь с другими вопросами! 🎵",
-        
-        "Для скачивания видео с YouTube отправь боту ссылку. Бесплатно доступно 360p и 720p, для 1080p нужна Premium подписка! 📹",
-        
-        "Premium подписка открывает доступ к 1080p качеству, безлимитным скачиваниям и поддержке соцсетей. Оплачивается через Telegram Stars! ⭐",
-        
-        "Попробуй Premium бесплатно! Напиши `/trial` в чате с @reaver_youtube_bot чтобы активировать тестовый период 🎁",
-        
-        "Чем еще могу помочь? Могу рассказать о функциях бота или поддержать беседу на любую тему! 💫"
-      ];
-
-      let responses;
-      switch(mode) {
-        case 'creative':
-          responses = creativeResponses;
-          break;
-        case 'expert':
-          responses = expertResponses;
-          break;
-        default:
-          responses = assistantResponses;
+      const base = "Сейчас я работаю в демо-режиме без живого Groq API, но вот пример того, как я бы ответил:\n\n";
+      if (mode === "creative") {
+        return base + `*Идея:* превратить твой запрос в мини-историю или концепт.\n\n— Ты написал: \`${userMessage}\`\n— Я могу помочь превратить это в текст, сценарий, описание трека или визуальный концепт.`;
       }
-      
-      const message = userMessage.toLowerCase();
-      
-      if (mode === 'assistant') {
-        if (message.includes('музык') || message.includes('mp3') || message.includes('трек')) {
-          return responses[0];
-        } else if (message.includes('видео') || message.includes('youtube') || message.includes('качеств')) {
-          return responses[1];
-        } else if (message.includes('premium') || message.includes('подписк') || message.includes('1080')) {
-          return responses[2];
-        } else if (message.includes('пробн') || message.includes('тест') || message.includes('trial')) {
-          return responses[3];
-        }
+      if (mode === "expert") {
+        return base + `1. Разбираем запрос: \`${userMessage}\`.\n2. В реальном режиме я бы дал структурированный разбор.\n3. Сейчас можно считать это placeholder-ответом, пока не подключён ключ Groq.`;
       }
-
-      return responses[Math.floor(Math.random() * responses.length)];
+      return base + `— Бот Hey, Reaver умеет:\n  * скачивать MP3 по команде \`найти ...\`;\n  * отправлять видео 360p/720p;\n  * в Premium даёт 1080p + соцсети.\n\nТы спросил: \`${userMessage}\`. В боевом режиме я бы ответил точнее.`;
     }
 
-    function resetTextareaHeight() {
-      const textarea = document.getElementById('chat-input');
-      textarea.style.height = 'auto';
-      textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+    /* ===== textarea поведение ===== */
+
+    function resizeTextarea() {
+      const ta = document.getElementById("chat-input");
+      ta.style.height = "auto";
+      ta.style.height = Math.min(ta.scrollHeight, 110) + "px";
     }
 
-    document.getElementById('chat-input').addEventListener('input', function() {
-      resetTextareaHeight();
-    });
-
-    document.getElementById('chat-input').addEventListener('keydown', function(e) {
-      if (e.key === 'Enter' && !e.shiftKey) {
+    const ta = document.getElementById("chat-input");
+    ta.addEventListener("input", resizeTextarea);
+    ta.addEventListener("keydown", e => {
+      if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
         sendMessage();
       }
     });
 
-    document.querySelector('.mode-btn:nth-child(2)').addEventListener('click', function() {
-      setTimeout(() => {
-        document.getElementById('chat-input').focus();
-      }, 300);
-    });
-
-    resetTextareaHeight();
+    resizeTextarea();
   </script>
 </body>
 </html>
