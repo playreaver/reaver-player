@@ -1,265 +1,332 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <title>Hey-Reaver • Premium Panel</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8">
+  <title>Hey, Reaver • Mini App скоро</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Telegram WebApp SDK (на будущее, чтобы не править разметку) -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    :root {
+      --bg1: #090018;
+      --bg2: #041226;
+      --accent1: #00d4ff;
+      --accent2: #4e6bff;
+      --accent3: #ff6584;
+      --text: #f5f5ff;
+      --muted: #a9b0d9;
+      --glass: rgba(7, 13, 32, 0.76);
+      --border: rgba(255, 255, 255, 0.12);
+    }
 
-    <!-- Telegram WebApp SDK -->
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    * {
+      box-sizing: border-box;
+    }
 
-    <style>
-        :root {
-            --bg: #050513;
-            --card: rgba(255,255,255,0.06);
-            --text: #f5f5ff;
-            --accent: #8c7aff;
-            --accent-soft: rgba(140,122,255,0.18);
-            --danger: #ff6584;
-        }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 0 0, #3b0066 0, transparent 55%),
+        radial-gradient(circle at 100% 100%, #004b8b 0, transparent 55%),
+        radial-gradient(circle at 0 100%, #20004b 0, transparent 55%),
+        radial-gradient(circle at 100% 0, #00748b 0, transparent 55%),
+        linear-gradient(135deg, var(--bg1), var(--bg2));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      overflow: hidden;
+    }
 
-        body {
-            margin: 0;
-            padding: 16px;
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-            background: var(--bg);
-            color: var(--text);
-        }
+    .wrapper {
+      width: 100%;
+      max-width: 480px;
+      position: relative;
+    }
 
-        .wrapper {
-            max-width: 480px;
-            margin: 0 auto;
-        }
+    /* мягкие “блики” на фоне */
+    .blob {
+      position: absolute;
+      border-radius: 999px;
+      filter: blur(35px);
+      opacity: 0.7;
+      pointer-events: none;
+      mix-blend-mode: screen;
+    }
 
-        .card {
-            background: var(--card);
-            border-radius: 18px;
-            padding: 16px 18px;
-            backdrop-filter: blur(16px);
-            box-shadow: 0 18px 40px rgba(0,0,0,0.45);
-            border: 1px solid rgba(255,255,255,0.06);
-        }
+    .blob.one {
+      width: 220px;
+      height: 220px;
+      background: radial-gradient(circle, var(--accent1), transparent 70%);
+      top: -40px;
+      right: -40px;
+      animation: blobMove1 16s ease-in-out infinite alternate;
+    }
 
-        .title {
-            font-size: 20px;
-            font-weight: 700;
-            margin-bottom: 4px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
+    .blob.two {
+      width: 260px;
+      height: 260px;
+      background: radial-gradient(circle, var(--accent3), transparent 70%);
+      bottom: -60px;
+      left: -50px;
+      animation: blobMove2 18s ease-in-out infinite alternate;
+    }
 
-        .title span.logo {
-            width: 26px;
-            height: 26px;
-            border-radius: 9px;
-            background: radial-gradient(circle at 0 0, #ff6584, #8c7aff);
-        }
+    @keyframes blobMove1 {
+      0% { transform: translate(0, 0) rotate(0deg); }
+      100% { transform: translate(-30px, 40px) rotate(8deg); }
+    }
 
-        .subtitle {
-            font-size: 13px;
-            opacity: .7;
-            margin-bottom: 14px;
-        }
+    @keyframes blobMove2 {
+      0% { transform: translate(0, 0) rotate(0deg); }
+      100% { transform: translate(40px, -20px) rotate(-10deg); }
+    }
 
-        .badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 4px 10px;
-            border-radius: 999px;
-            font-size: 11px;
-            background: var(--accent-soft);
-            color: var(--accent);
-            margin-bottom: 10px;
-        }
+    .card {
+      position: relative;
+      z-index: 2;
+      background: var(--glass);
+      border-radius: 24px;
+      padding: 18px 18px 20px;
+      border: 1px solid var(--border);
+      box-shadow:
+        0 18px 45px rgba(0, 0, 0, 0.7),
+        0 0 0 1px rgba(255, 255, 255, 0.02);
+      backdrop-filter: blur(18px);
+    }
 
-        .user-line {
-            font-size: 13px;
-            opacity: .8;
-            margin-bottom: 10px;
-        }
+    .header-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 6px;
+    }
 
-        .status {
-            margin: 10px 0 14px;
-            padding: 10px 12px;
-            border-radius: 14px;
-            background: rgba(255,255,255,0.03);
-            font-size: 13px;
-        }
+    .logo-chip {
+      width: 50px;
+      height: 50px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #00c6ff, #008cff);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.6);
+    }
 
-        .status strong {
-            color: var(--accent);
-        }
+    .logo-chip img {
+      width: 130%;
+      height: auto;
+      transform: translateX(6px); /* чуть как на твоём баннере */
+    }
 
-        .btn-row {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            margin-top: 8px;
-        }
+    .title-block {
+      flex: 1;
+    }
 
-        .btn {
-            border: none;
-            border-radius: 999px;
-            padding: 10px 14px;
-            font-size: 14px;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            cursor: pointer;
-            transition: transform .12s ease-out, box-shadow .12s ease-out, opacity .12s;
-        }
+    .title {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
 
-        .btn-primary {
-            background: linear-gradient(135deg, #ff6584, #8c7aff);
-            color: #fff;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-        }
+    .subtitle {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
 
-        .btn-ghost {
-            background: transparent;
-            border: 1px solid rgba(255,255,255,0.12);
-            color: var(--text);
-        }
+    .soon-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      background: rgba(0, 0, 0, 0.45);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      margin-top: 8px;
+    }
 
-        .btn:active {
-            transform: translateY(1px) scale(0.98);
-            box-shadow: none;
-            opacity: .85;
-        }
+    .soon-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--accent1);
+      box-shadow: 0 0 12px rgba(0, 212, 255, 0.8);
+      animation: pulse 1.4s ease-out infinite;
+    }
 
-        .small {
-            font-size: 11px;
-            opacity: .7;
-            margin-top: 10px;
-        }
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 1; }
+      70% { transform: scale(1.4); opacity: 0; }
+      100% { transform: scale(1); opacity: 0; }
+    }
 
-        .pill-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-            margin-top: 6px;
-        }
+    /* лента преимуществ */
+    .features {
+      margin-top: 14px;
+      border-radius: 18px;
+      padding: 10px 12px;
+      background: rgba(2, 5, 22, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      overflow: hidden;
+      position: relative;
+    }
 
-        .pill {
-            font-size: 11px;
-            padding: 3px 8px;
-            border-radius: 999px;
-            background: rgba(255,255,255,0.05);
-            opacity: .8;
-        }
-    </style>
+    .features-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .features-viewport {
+      position: relative;
+      height: 52px;
+    }
+
+    .feature-item {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      opacity: 0;
+      transform: translateY(10px);
+      animation: featureCycle 20s infinite;
+    }
+
+    .feature-item span.icon {
+      font-size: 16px;
+      width: 22px;
+      text-align: center;
+    }
+
+    .feature-item:nth-child(1) { animation-delay: 0s; }
+    .feature-item:nth-child(2) { animation-delay: 4s; }
+    .feature-item:nth-child(3) { animation-delay: 8s; }
+    .feature-item:nth-child(4) { animation-delay: 12s; }
+    .feature-item:nth-child(5) { animation-delay: 16s; }
+
+    @keyframes featureCycle {
+      0%   { opacity: 0; transform: translateY(12px); }
+      5%   { opacity: 1; transform: translateY(0); }
+      20%  { opacity: 1; transform: translateY(0); }
+      25%  { opacity: 0; transform: translateY(-8px); }
+      100% { opacity: 0; transform: translateY(-8px); }
+    }
+
+    .bottom-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 14px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .tag {
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .bot-handle {
+      opacity: 0.85;
+    }
+
+    @media (max-width: 360px) {
+      .card {
+        padding: 14px;
+      }
+      .title { font-size: 16px; }
+      .features-viewport { height: 60px; }
+    }
+  </style>
 </head>
 <body>
-<div class="wrapper">
+  <div class="wrapper">
+    <div class="blob one"></div>
+    <div class="blob two"></div>
+
     <div class="card">
-        <div class="title">
-            <span class="logo"></span>
-            Hey-Reaver • Premium
+      <div class="header-row">
+        <div class="logo-chip">
+          <!-- сюда положи свой логотип, как на баннере -->
+          <img src="heyreaver_logo.png" alt="Hey, Reaver logo">
         </div>
-        <div class="subtitle">
-            Мини-панель для управления подпиской, триалом и промокодами (через бота).
+        <div class="title-block">
+          <div class="title">Новая айдентика в деле</div>
+          <div class="subtitle">Mini App для Hey, Reaver скоро заработает.</div>
+          <div class="soon-pill">
+            <div class="soon-dot"></div>
+            <span>Подключаем панель управления ботом…</span>
+          </div>
         </div>
+      </div>
 
-        <div class="badge" id="user-badge">
-            Загрузка профиля…
+      <div class="features">
+        <div class="features-label">что уже умеет бот</div>
+        <div class="features-viewport">
+          <div class="feature-item">
+            <span class="icon">🎵</span>
+            <span>Скачивает треки в MP3 по запросу `найти ...`</span>
+          </div>
+          <div class="feature-item">
+            <span class="icon">📹</span>
+            <span>Отправляет видео 360p / 720p с YouTube</span>
+          </div>
+          <div class="feature-item">
+            <span class="icon">⭐</span>
+            <span>Premium: 1080p, безлимит и соцсети (Instagram, X)</span>
+          </div>
+          <div class="feature-item">
+            <span class="icon">⏳</span>
+            <span>Триал и подписка за Telegram Stars, без привязки карт</span>
+          </div>
+          <div class="feature-item">
+            <span class="icon">🎁</span>
+            <span>Промокоды на Premium и праздничные акции</span>
+          </div>
         </div>
+      </div>
 
-        <div class="status" id="status-block">
-            Статус подписки: <strong>обрабатывается ботом</strong><br>
-            Нажми кнопку ниже — бот пришлёт актуальную информацию в чат.
-        </div>
-
-        <div class="btn-row">
-            <button class="btn btn-primary" id="btn-open-status">
-                📊 Показать статус /status
-            </button>
-            <button class="btn btn-ghost" id="btn-open-premium">
-                ⭐ Оформить / продлить Premium
-            </button>
-            <button class="btn btn-ghost" id="btn-open-promo">
-                🎁 Активировать промокод
-            </button>
-        </div>
-
-        <div class="small">
-            Что делает панель сейчас:
-            <div class="pill-row">
-                <div class="pill">• вызывает /status через бота</div>
-                <div class="pill">• вызывает /premium через бота</div>
-                <div class="pill">• отправляет запрос на активацию промокода</div>
-            </div>
-        </div>
+      <div class="bottom-row">
+        <div class="tag">Mini App • скоро</div>
+        <div class="bot-handle">@reaver_youtube_bot</div>
+      </div>
     </div>
-</div>
+  </div>
 
-<script>
+  <script>
+    // лёгкая интеграция с Telegram (только фон и, при желании, имя пользователя)
     const tg = window.Telegram?.WebApp;
 
-    function initThemeFromTelegram() {
-        if (!tg) return;
-        document.body.style.backgroundColor = tg.backgroundColor || "#050513";
-    }
-
-    function initUserInfo() {
-        const badge = document.getElementById("user-badge");
-        if (!tg || !tg.initDataUnsafe || !tg.initDataUnsafe.user) {
-            badge.textContent = "Открыто вне Telegram • режим предпросмотра";
-            return;
-        }
-
-        const user = tg.initDataUnsafe.user;
-        const name = user.username
-            ? "@" + user.username
-            : (user.first_name || "Пользователь");
-
-        badge.textContent = `Вы вошли как ${name} (id: ${user.id})`;
-    }
-
-    function initButtons() {
-        const btnStatus = document.getElementById("btn-open-status");
-        const btnPremium = document.getElementById("btn-open-premium");
-        const btnPromo = document.getElementById("btn-open-promo");
-
-        btnStatus.addEventListener("click", () => {
-            if (tg) {
-                tg.sendData(JSON.stringify({ action: "open_status" }));
-            } else {
-                alert("Эта кнопка сработает, когда страница открыта как Mini App в Telegram.");
-            }
-        });
-
-        btnPremium.addEventListener("click", () => {
-            if (tg) {
-                tg.sendData(JSON.stringify({ action: "open_premium" }));
-            } else {
-                alert("Эта кнопка сработает, когда страница открыта как Mini App в Telegram.");
-            }
-        });
-
-        btnPromo.addEventListener("click", () => {
-            if (tg) {
-                // Можно позже сделать ввод кода прямо в мини-аппе,
-                // а пока просто сигнал боту, чтобы он прислал инструкцию / промо-меню.
-                tg.sendData(JSON.stringify({ action: "open_promo" }));
-            } else {
-                alert("Эта кнопка сработает, когда страница открыта как Mini App в Telegram.");
-            }
-        });
-    }
-
     if (tg) {
-        tg.ready();
-        tg.expand(); // растянуть на весь экран
-    }
+      tg.ready();
+      tg.expand();
 
-    initThemeFromTelegram();
-    initUserInfo();
-    initButtons();
-</script>
+      // можно подстроить фон под тему Telegram
+      document.body.style.backgroundColor = tg.backgroundColor || "#090018";
+
+      const user = tg.initDataUnsafe?.user;
+      if (user) {
+        const subtitle = document.querySelector(".subtitle");
+        const name = user.username
+          ? "@" + user.username
+          : (user.first_name || "друг");
+        subtitle.textContent = `Привет, ${name}. Сoon: управление ботом прямо отсюда.`;
+      }
+    }
+  </script>
 </body>
 </html>
 
