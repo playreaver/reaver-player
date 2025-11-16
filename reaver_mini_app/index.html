@@ -2,10 +2,12 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Hey-Reaver • Mini Panel</title>
+    <title>Hey-Reaver • Premium Panel</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <!-- Telegram WebApp SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
     <style>
         :root {
             --bg: #050513;
@@ -159,7 +161,7 @@
             Hey-Reaver • Premium
         </div>
         <div class="subtitle">
-            Мини-панель для управления подпиской и тестовым периодом.
+            Мини-панель для управления подпиской, триалом и промокодами (через бота).
         </div>
 
         <div class="badge" id="user-badge">
@@ -167,26 +169,28 @@
         </div>
 
         <div class="status" id="status-block">
-            Статус подписки: <strong>неизвестно</strong><br>
-            Подключение к боту пока не настроено.
+            Статус подписки: <strong>обрабатывается ботом</strong><br>
+            Нажми кнопку ниже — бот пришлёт актуальную информацию в чат.
         </div>
 
         <div class="btn-row">
-            <button class="btn btn-primary" id="btn-open-premium">
-                ⭐ Открыть /premium в боте
+            <button class="btn btn-primary" id="btn-open-status">
+                📊 Показать статус /status
             </button>
-            <button class="btn btn-ghost" id="btn-open-status">
-                📊 Открыть /status в боте
+            <button class="btn btn-ghost" id="btn-open-premium">
+                ⭐ Оформить / продлить Premium
+            </button>
+            <button class="btn btn-ghost" id="btn-open-promo">
+                🎁 Активировать промокод
             </button>
         </div>
 
         <div class="small">
-            В ближайших планах:
+            Что делает панель сейчас:
             <div class="pill-row">
-                <div class="pill">• просмотр статуса Premium</div>
-                <div class="pill">• активация промокода</div>
-                <div class="pill">• история скачиваний</div>
-                <div class="pill">• управление авто-продлением</div>
+                <div class="pill">• вызывает /status через бота</div>
+                <div class="pill">• вызывает /premium через бота</div>
+                <div class="pill">• отправляет запрос на активацию промокода</div>
             </div>
         </div>
     </div>
@@ -216,24 +220,33 @@
     }
 
     function initButtons() {
-        const btnPremium = document.getElementById("btn-open-premium");
         const btnStatus = document.getElementById("btn-open-status");
-
-        btnPremium.addEventListener("click", () => {
-            if (tg) {
-                tg.openTelegramLink(`https://t.me/${tg.initDataUnsafe?.user?.username || ""}?start=premium`);
-            } else {
-                alert("Эта кнопка сработает внутри Telegram Mini App.");
-            }
-        });
+        const btnPremium = document.getElementById("btn-open-premium");
+        const btnPromo = document.getElementById("btn-open-promo");
 
         btnStatus.addEventListener("click", () => {
             if (tg) {
-                // Можно отправлять данные боту через sendData,
-                // а бот по web_app_data сделать /status.
                 tg.sendData(JSON.stringify({ action: "open_status" }));
             } else {
-                alert("Эта кнопка сработает внутри Telegram Mini App.");
+                alert("Эта кнопка сработает, когда страница открыта как Mini App в Telegram.");
+            }
+        });
+
+        btnPremium.addEventListener("click", () => {
+            if (tg) {
+                tg.sendData(JSON.stringify({ action: "open_premium" }));
+            } else {
+                alert("Эта кнопка сработает, когда страница открыта как Mini App в Telegram.");
+            }
+        });
+
+        btnPromo.addEventListener("click", () => {
+            if (tg) {
+                // Можно позже сделать ввод кода прямо в мини-аппе,
+                // а пока просто сигнал боту, чтобы он прислал инструкцию / промо-меню.
+                tg.sendData(JSON.stringify({ action: "open_promo" }));
+            } else {
+                alert("Эта кнопка сработает, когда страница открыта как Mini App в Telegram.");
             }
         });
     }
@@ -249,3 +262,4 @@
 </script>
 </body>
 </html>
+
