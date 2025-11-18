@@ -562,7 +562,7 @@
           </div>
 
           <div class="wws-menu-items">
-            <a class="wws-menu-item" href="https://wws.com" target="_blank" rel="noopener">
+            <a class="wws-menu-item" href="https://reaver.is-a.dev/" target="_blank" rel="noopener">
               <div class="wws-menu-icon">
                 <i class="fas fa-rocket"></i>
               </div>
@@ -570,62 +570,17 @@
                 <div class="wws-menu-title">Main WWS Website</div>
                 <div class="wws-menu-desc">Primary portal for the studio</div>
               </div>
-              <div class="wws-menu-badge new">NEW</div>
             </a>
 
-            <a class="wws-menu-item" href="https://reaver-gradient.example" target="_blank" rel="noopener">
+            <a class="wws-menu-item" href="https://reaver.is-a.dev/gradient" target="_blank" rel="noopener">
               <div class="wws-menu-icon">
                 <i class="fas fa-palette"></i>
               </div>
               <div class="wws-menu-content">
-                <div class="wws-menu-title">Reaver Gradient</div>
+                <div class="wws-menu-title">Reaver.Gradient V2</div>
                 <div class="wws-menu-desc">Advanced CSS gradient generator</div>
               </div>
               <div class="wws-menu-badge beta">BETA</div>
-            </a>
-
-            <a class="wws-menu-item" href="https://reaver-markdown.example" target="_blank" rel="noopener">
-              <div class="wws-menu-icon">
-                <i class="fas fa-file-alt"></i>
-              </div>
-              <div class="wws-menu-content">
-                <div class="wws-menu-title">Reaver Markdown</div>
-                <div class="wws-menu-desc">Clean markdown writing environment</div>
-              </div>
-              <div class="wws-menu-badge pro">PRO</div>
-            </a>
-
-            <a class="wws-menu-item" href="https://reaver-table.example" target="_blank" rel="noopener">
-              <div class="wws-menu-icon">
-                <i class="fas fa-table"></i>
-              </div>
-              <div class="wws-menu-content">
-                <div class="wws-menu-title">Reaver Table</div>
-                <div class="wws-menu-desc">Tables and structured data tools</div>
-              </div>
-              <div class="wws-menu-badge free">FREE</div>
-            </a>
-
-            <a class="wws-menu-item" href="https://reaver-ai.example" target="_blank" rel="noopener">
-              <div class="wws-menu-icon">
-                <i class="fas fa-robot"></i>
-              </div>
-              <div class="wws-menu-content">
-                <div class="wws-menu-title">Reaver AI</div>
-                <div class="wws-menu-desc">AI-powered assistants and tools</div>
-              </div>
-              <div class="wws-menu-badge coming">SOON</div>
-            </a>
-
-            <a class="wws-menu-item" href="https://reaver-cloud.example" target="_blank" rel="noopener">
-              <div class="wws-menu-icon">
-                <i class="fas fa-cloud"></i>
-              </div>
-              <div class="wws-menu-content">
-                <div class="wws-menu-title">Reaver Cloud</div>
-                <div class="wws-menu-desc">Cloud storage and sync</div>
-              </div>
-              <div class="wws-menu-badge new">NEW</div>
             </a>
           </div>
 
