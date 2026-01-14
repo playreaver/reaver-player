@@ -7,6 +7,13 @@
 (function() {
   'use strict';
   
+  // ==================== ANTI-DOUBLE-LOAD GUARD ====================
+  if (window.wwsGatewayInitialized) {
+    console.log('🛡️ WWS Gateway already initialized, skipping duplicate load');
+    return;
+  }
+  window.wwsGatewayInitialized = true;
+  
   // ==================== FONT AWESOME INJECTION ====================
   (function loadFontAwesome() {
     if (!document.getElementById('wws-fontawesome')) {
@@ -373,6 +380,15 @@
   
   class WWSRiskAnalyzer {
     constructor() {
+      // Bind all methods to instance
+      this.generateUserId = this.generateUserId.bind(this);
+      this.generateSessionId = this.generateSessionId.bind(this);
+      this.generateDeviceFingerprint = this.generateDeviceFingerprint.bind(this);
+      this.createWidget = this.createWidget.bind(this);
+      this.updateWidget = this.updateWidget.bind(this);
+      this.showDetailedReport = this.showDetailedReport.bind(this);
+      this.log = this.log.bind(this);
+      
       this.userId = this.generateUserId();
       this.sessionId = this.generateSessionId();
       this.riskScore = 0;
@@ -1645,11 +1661,21 @@
     
     if (sessionStorage.getItem('wws_session_passed') === 'true') {
       console.log('🛡️ Premium session already verified');
-      const analyzer = new WWSRiskAnalyzer();
-      analyzer.verdict = 'allow';
-      analyzer.riskScore = 0;
-      analyzer.createWidget();
-      analyzer.updateWidget();
+      // Reuse existing analyzer if available
+      if (!window.wwsAnalyzer) {
+        window.wwsAnalyzer = new WWSRiskAnalyzer();
+        // Skip analysis for pre-verified session
+        window.wwsAnalyzer.verdict = 'allow';
+        window.wwsAnalyzer.riskScore = 0;
+        window.wwsAnalyzer.createWidget();
+        window.wwsAnalyzer.updateWidget();
+      } else {
+        // Just ensure widget exists
+        if (!document.getElementById('wws-widget')) {
+          window.wwsAnalyzer.createWidget();
+          window.wwsAnalyzer.updateWidget();
+        }
+      }
       PROTTECTION_LAYER.hide();
       return;
     }
@@ -1660,7 +1686,11 @@
   // API
   window.WWS = {
     version: CONFIG.version,
-    forceCheck: () => new WWSRiskAnalyzer(),
+    forceCheck: () => {
+      // Ensure fresh analyzer instance
+      window.wwsAnalyzer = new WWSRiskAnalyzer();
+      return window.wwsAnalyzer;
+    },
     markAsTrusted: () => {
       const userId = localStorage.getItem('wws_user_id');
       if (userId) {
@@ -1677,6 +1707,10 @@
     onAccessGranted: (callback) => window.addEventListener('wws:access-granted', callback)
   };
   
-  initializeWWS();
+  // Initialize only once
+  if (!window.wwsInitialized) {
+    initializeWWS();
+    window.wwsInitialized = true;
+  }
   
 })();
