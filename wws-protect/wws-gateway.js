@@ -1,6 +1,6 @@
 /**
- * WWS Gateway v4.1 - Premium Security System
- * Beautiful UI with Font Awesome & Advanced Behavioral Analysis
+ * WWS Gateway v4.2 - Premium Security System
+ * Complete Protection with Behavioral Analysis & Compact Widget
  * @license MIT
  */
 
@@ -25,31 +25,203 @@
     }
   })();
   
-  // ==================== MAIN SECURITY SYSTEM ====================
-  
-  const CONFIG = {
-    debug: true,
-    version: '4.1',
+  // ==================== PHASE 1: IMMEDIATE PROTECTION LAYER ====================
+  const PROTECTION_LAYER = (function() {
+    const overlay = document.createElement('div');
+    overlay.id = 'wws-protection-layer';
+    overlay.style.cssText = `
+      position: fixed !important;
+      top: 0 !important; left: 0 !important;
+      width: 100vw !important; height: 100vh !important;
+      background: linear-gradient(135deg, #0a0a1a, #121226, #0f0f1f) !important;
+      z-index: 9999999 !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif !important;
+      overflow: hidden;
+    `;
     
-    riskThresholds: {
-      LOW: 0.3, MEDIUM: 0.6, HIGH: 0.8
-    },
+    // Анимированный фон
+    const animatedBg = document.createElement('div');
+    animatedBg.style.cssText = `
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      opacity: 0.1;
+      background: 
+        radial-gradient(circle at 20% 30%, rgba(108, 99, 255, 0.15) 0%, transparent 40%),
+        radial-gradient(circle at 80% 70%, rgba(54, 209, 220, 0.15) 0%, transparent 40%);
+      animation: wws-bg-pulse 8s ease-in-out infinite;
+    `;
     
-    weights: {
-      behavior: 0.40,
-      technical: 0.30,
-      reputation: 0.20,
-      network: 0.10
-    },
+    overlay.innerHTML = `
+      <div style="text-align: center; z-index: 10; position: relative; max-width: 500px; padding: 30px;">
+        <!-- Главная иконка с анимацией -->
+        <div style="margin-bottom: 40px; position: relative;">
+          <div style="position: relative; display: inline-block;">
+            <i class="fas fa-shield-alt" style="font-size: 72px; background: linear-gradient(135deg, #6C63FF, #36D1DC); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; display: inline-block; animation: wws-shield-glow 3s ease-in-out infinite;"></i>
+            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 100px; height: 100px; border: 2px solid rgba(108, 99, 255, 0.3); border-radius: 50%; animation: wws-ripple 2s ease-out infinite;"></div>
+            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 120px; height: 120px; border: 2px solid rgba(108, 99, 255, 0.1); border-radius: 50%; animation: wws-ripple 2s ease-out infinite; animation-delay: 0.5s;"></div>
+          </div>
+        </div>
+        
+        <!-- Текст -->
+        <h1 style="color: white; margin: 0 0 15px; font-size: 32px; font-weight: 700; letter-spacing: 1px;">WWS PROTECT</h1>
+        <p id="wws-status-text" style="color: #a0a0c0; font-size: 16px; margin: 0 0 30px; font-weight: 300;">Initializing behavioral analysis...</p>
+        
+        <!-- Детали анализа -->
+        <div style="background: rgba(255, 255, 255, 0.05); border-radius: 15px; padding: 20px; margin-bottom: 25px; border: 1px solid rgba(255, 255, 255, 0.1);">
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 15px;">
+            <div style="text-align: center;">
+              <div style="color: #6C63FF; font-size: 22px; font-weight: bold;" id="wws-risk-display">0%</div>
+              <div style="color: #6c6c8c; font-size: 11px; margin-top: 5px;">RISK LEVEL</div>
+            </div>
+            <div style="text-align: center;">
+              <div style="color: #36D1DC; font-size: 22px; font-weight: bold;"><i class="fas fa-fingerprint" style="animation: wws-spin 4s linear infinite;"></i></div>
+              <div style="color: #6c6c8c; font-size: 11px; margin-top: 5px;">DEVICE SCAN</div>
+            </div>
+            <div style="text-align: center;">
+              <div style="color: #a78bfa; font-size: 22px; font-weight: bold;"><i class="fas fa-brain" style="animation: wws-pulse 2s ease-in-out infinite;"></i></div>
+              <div style="color: #6c6c8c; font-size: 11px; margin-top: 5px;">BEHAVIORAL AI</div>
+            </div>
+          </div>
+          
+          <!-- Прогресс бар -->
+          <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; margin: 0 auto 10px; overflow: hidden; box-shadow: 0 0 15px rgba(108, 99, 255, 0.2);">
+            <div id="wws-progress-bar" style="height: 100%; width: 0%; background: linear-gradient(90deg, #6C63FF, #36D1DC, #6C63FF); background-size: 200% 100%; transition: width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); animation: wws-gradient-flow 2s ease-in-out infinite;"></div>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 11px; color: #94a3b8;">
+            <span>0%</span>
+            <span id="wws-progress-text">Starting...</span>
+            <span>100%</span>
+          </div>
+        </div>
+        
+        <!-- Статус иконки -->
+        <div id="wws-status-icon" style="color: #fbbf24; font-size: 14px; margin-top: 20px; display: flex; align-items: center; justify-content: center; gap: 10px;">
+          <i class="fas fa-cog fa-spin"></i> <span id="wws-status-message">Analyzing user behavior...</span>
+        </div>
+        
+        <!-- Факторы риска (скрыты сначала) -->
+        <div id="wws-risk-factors" style="display: none; margin-top: 25px;">
+          <div style="color: #94a3b8; font-size: 12px; margin-bottom: 10px;">DETECTED RISK FACTORS:</div>
+          <div id="wws-factors-list" style="max-height: 150px; overflow-y: auto;"></div>
+        </div>
+        
+        <!-- Powered by -->
+        <div style="margin-top: 40px; color: #6c6c8c; font-size: 12px;">
+          Powered by <a href="https://reaver.is-a.dev/" target="_blank" style="color: #6C63FF; text-decoration: none; font-weight: 600;">Wandering Wizardry Studios</a>
+        </div>
+      </div>
+      
+      <!-- Стили анимации -->
+      <style>
+        @keyframes wws-shield-glow {
+          0%, 100% { filter: drop-shadow(0 0 15px rgba(108, 99, 255, 0.5)); transform: scale(1); }
+          50% { filter: drop-shadow(0 0 25px rgba(108, 99, 255, 0.8)); transform: scale(1.05); }
+        }
+        
+        @keyframes wws-ripple {
+          0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.8; }
+          100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
+        }
+        
+        @keyframes wws-bg-pulse {
+          0%, 100% { transform: scale(1) rotate(0deg); }
+          50% { transform: scale(1.1) rotate(180deg); }
+        }
+        
+        @keyframes wws-gradient-flow {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+        
+        @keyframes wws-spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        
+        @keyframes wws-pulse {
+          0%, 100% { opacity: 0.7; transform: scale(0.9); }
+          50% { opacity: 1; transform: scale(1.1); }
+        }
+      </style>
+    `;
     
-    memory: {
-      session: 30 * 60 * 1000,
-      trustedDevice: 7 * 24 * 60 * 60 * 1000,
-      suspiciousActivity: 2 * 60 * 60 * 1000
+    overlay.appendChild(animatedBg);
+    
+    let originalBodyContent = null;
+    
+    function show() {
+      if (!document.body) return;
+      
+      if (!originalBodyContent) {
+        originalBodyContent = document.body.innerHTML;
+      }
+      
+      document.body.appendChild(overlay);
+      
+      const children = Array.from(document.body.children);
+      children.forEach(child => {
+        if (child.id !== 'wws-protection-layer') {
+          child.style.display = 'none';
+          child.setAttribute('data-wws-hidden', 'true');
+        }
+      });
     }
-  };
-  
-  window.WWS = null;
+    
+    function hide() {
+      const hiddenElements = document.querySelectorAll('[data-wws-hidden="true"]');
+      hiddenElements.forEach(el => {
+        el.style.display = '';
+        el.removeAttribute('data-wws-hidden');
+      });
+      
+      if (overlay.parentNode) {
+        overlay.parentNode.removeChild(overlay);
+      }
+    }
+    
+    function updateStatus(text, progress, risk, message) {
+      const statusEl = overlay.querySelector('#wws-status-text');
+      const progressBar = overlay.querySelector('#wws-progress-bar');
+      const riskDisplay = overlay.querySelector('#wws-risk-display');
+      const statusMessage = overlay.querySelector('#wws-status-message');
+      const progressText = overlay.querySelector('#wws-progress-text');
+      
+      if (statusEl) statusEl.textContent = text;
+      if (progressBar) progressBar.style.width = progress + '%';
+      if (riskDisplay) riskDisplay.textContent = (risk || 0) + '%';
+      if (statusMessage) statusMessage.textContent = message || 'Analyzing...';
+      if (progressText) {
+        progressText.textContent = progress === 100 ? 'Complete' : progress + '%';
+      }
+    }
+    
+    function showRiskFactors(factors) {
+      const container = overlay.querySelector('#wws-risk-factors');
+      const list = overlay.querySelector('#wws-factors-list');
+      
+      if (factors && factors.length > 0) {
+        container.style.display = 'block';
+        list.innerHTML = factors.slice(0, 3).map(factor => `
+          <div style="padding: 8px 10px; margin-bottom: 6px; background: rgba(239, 68, 68, 0.1); border-left: 3px solid #ef4444; border-radius: 6px; font-size: 11px; color: #fca5a5;">
+            <i class="fas fa-exclamation-circle"></i> ${factor.message}
+          </div>
+        `).join('');
+        
+        if (factors.length > 3) {
+          list.innerHTML += `<div style="text-align: center; color: #94a3b8; font-size: 10px; padding: 5px;">+ ${factors.length - 3} more factors</div>`;
+        }
+      }
+    }
+    
+    if (document.body) show();
+    else document.addEventListener('DOMContentLoaded', show);
+    
+    return { show, hide, updateStatus, showRiskFactors };
+  })();
   
   // ==================== ADVANCED BEHAVIORAL ANALYZER ====================
   
@@ -58,104 +230,346 @@
       this.mousePattern = [];
       this.clickIntervals = [];
       this.movementSpeeds = [];
+      this.scrollPattern = [];
+      this.keyboardPattern = [];
       this.lastClickTime = Date.now();
       this.lastMoveTime = Date.now();
+      this.lastScrollTime = Date.now();
       this.currentPath = [];
       this.isBotLike = false;
+      this.suspiciousScore = 0;
+      this.behaviorFlags = {
+        tooFastClicks: false,
+        linearMovement: false,
+        perfectScrolling: false,
+        devToolsDetected: false,
+        headlessBrowser: false,
+        automationTools: false
+      };
       
-      this.startTracking();
+      this.startAdvancedTracking();
     }
     
-    startTracking() {
+    startAdvancedTracking() {
+      // Мышь
+      let lastMousePosition = null;
+      let lastMouseTime = Date.now();
+      
       document.addEventListener('mousemove', (e) => {
         const now = Date.now();
         const point = {
           x: e.clientX,
           y: e.clientY,
           t: now,
-          speed: this.calculateSpeed(now)
+          speed: this.calculateSpeed(now, lastMousePosition, lastMouseTime)
         };
         
         this.currentPath.push(point);
-        if (this.currentPath.length > 50) this.currentPath.shift();
+        if (this.currentPath.length > 100) this.currentPath.shift();
         
-        if (this.currentPath.length > 10) {
-          this.analyzeMovementPattern();
+        lastMousePosition = { x: e.clientX, y: e.clientY };
+        lastMouseTime = now;
+        
+        if (this.currentPath.length > 20) {
+          this.analyzeAdvancedMovement();
         }
       });
       
+      // Клики
       document.addEventListener('click', (e) => {
         const now = Date.now();
         const interval = now - this.lastClickTime;
         this.clickIntervals.push(interval);
         this.lastClickTime = now;
         
-        if (this.clickIntervals.length > 10) {
+        if (this.clickIntervals.length > 15) {
           this.clickIntervals.shift();
           this.analyzeClickPatterns();
         }
       });
       
+      // Скроллинг
+      let lastScrollTop = window.pageYOffset;
+      document.addEventListener('scroll', (e) => {
+        const now = Date.now();
+        const scrollTop = window.pageYOffset;
+        const scrollDelta = Math.abs(scrollTop - lastScrollTop);
+        const timeDelta = now - this.lastScrollTime;
+        
+        this.scrollPattern.push({
+          delta: scrollDelta,
+          time: timeDelta,
+          speed: scrollDelta / (timeDelta || 1)
+        });
+        
+        if (this.scrollPattern.length > 20) this.scrollPattern.shift();
+        this.lastScrollTime = now;
+        lastScrollTop = scrollTop;
+        
+        this.analyzeScrollPattern();
+      });
+      
+      // Клавиатура
+      document.addEventListener('keydown', (e) => {
+        this.keyboardPattern.push({
+          key: e.key,
+          code: e.code,
+          time: Date.now()
+        });
+        
+        if (this.keyboardPattern.length > 30) this.keyboardPattern.shift();
+        this.analyzeKeyboardPattern();
+      });
+      
+      // Фокус и видимость
       let focusTime = Date.now();
       document.addEventListener('visibilitychange', () => {
         if (document.hidden) {
           const timeOnPage = Date.now() - focusTime;
-          if (timeOnPage < 1000 && this.clickIntervals.length > 5) {
-            this.isBotLike = true;
+          if (timeOnPage < 1000 && this.clickIntervals.length > 3) {
+            this.behaviorFlags.automationTools = true;
+            this.suspiciousScore += 0.3;
           }
         } else {
           focusTime = Date.now();
         }
       });
       
+      // Проверка инструментов разработчика
       this.detectDevTools();
+      
+      // Проверка headless браузера
+      this.detectHeadless();
     }
     
-    calculateSpeed(now) {
-      if (this.currentPath.length < 2) return 0;
-      const last = this.currentPath[this.currentPath.length - 2];
+    calculateSpeed(now, lastPosition, lastTime) {
+      if (!lastPosition || !lastTime) return 0;
       const distance = Math.hypot(
-        this.currentPath[this.currentPath.length - 1].x - last.x,
-        this.currentPath[this.currentPath.length - 1].y - last.y
+        this.currentPath[this.currentPath.length - 1].x - lastPosition.x,
+        this.currentPath[this.currentPath.length - 1].y - lastPosition.y
       );
-      return distance / (now - last.t);
+      return distance / (now - lastTime);
     }
     
-    analyzeMovementPattern() {
-      const recent = this.currentPath.slice(-10);
-      const angles = [];
+    analyzeAdvancedMovement() {
+      const recent = this.currentPath.slice(-20);
       
-      for (let i = 2; i < recent.length; i++) {
-        const v1 = { x: recent[i-1].x - recent[i-2].x, y: recent[i-1].y - recent[i-2].y };
-        const v2 = { x: recent[i].x - recent[i-1].x, y: recent[i].y - recent[i-1].y };
-        const angle = Math.atan2(v2.y, v2.x) - Math.atan2(v1.y, v1.x);
-        angles.push(Math.abs(angle));
+      // 1. Проверка на линейность движения
+      const linearity = this.calculateLinearity(recent);
+      if (linearity > 0.9) {
+        this.behaviorFlags.linearMovement = true;
+        this.suspiciousScore += 0.4;
       }
       
-      const variance = this.calculateVariance(angles);
-      if (variance < 0.01) {
-        this.isBotLike = true;
+      // 2. Проверка на идеальную кривизну
+      const curvature = this.calculateCurvature(recent);
+      if (curvature < 0.1) {
+        this.suspiciousScore += 0.3;
       }
       
+      // 3. Проверка скорости (боты часто слишком быстрые или слишком медленные)
       const speeds = recent.map(p => p.speed).filter(s => s > 0);
-      const speedVariance = this.calculateVariance(speeds);
-      if (speedVariance < 0.05 && speeds.length > 5) {
-        this.isBotLike = true;
+      const avgSpeed = speeds.reduce((a, b) => a + b, 0) / speeds.length;
+      if (avgSpeed > 10 || (avgSpeed < 0.5 && speeds.length > 5)) {
+        this.suspiciousScore += 0.2;
       }
+      
+      // 4. Проверка паттернов (боты часто повторяют одни и те же движения)
+      const patternRepeatability = this.checkPatternRepeatability(recent);
+      if (patternRepeatability > 0.7) {
+        this.suspiciousScore += 0.3;
+      }
+    }
+    
+    calculateLinearity(points) {
+      if (points.length < 3) return 0;
+      
+      let totalAngleChange = 0;
+      for (let i = 2; i < points.length; i++) {
+        const v1 = { x: points[i-1].x - points[i-2].x, y: points[i-1].y - points[i-2].y };
+        const v2 = { x: points[i].x - points[i-1].x, y: points[i].y - points[i-1].y };
+        const angle = Math.abs(Math.atan2(v2.y, v2.x) - Math.atan2(v1.y, v1.x));
+        totalAngleChange += angle;
+      }
+      
+      const avgAngleChange = totalAngleChange / (points.length - 2);
+      return 1 - Math.min(avgAngleChange / Math.PI, 1);
+    }
+    
+    calculateCurvature(points) {
+      if (points.length < 3) return 0;
+      
+      let curvatureSum = 0;
+      for (let i = 1; i < points.length - 1; i++) {
+        const prev = points[i-1];
+        const curr = points[i];
+        const next = points[i+1];
+        
+        const dx1 = curr.x - prev.x;
+        const dy1 = curr.y - prev.y;
+        const dx2 = next.x - curr.x;
+        const dy2 = next.y - curr.y;
+        
+        const cross = Math.abs(dx1 * dy2 - dy1 * dx2);
+        const dot = dx1 * dx2 + dy1 * dy2;
+        
+        if (cross !== 0) {
+          const curvature = cross / (Math.sqrt(dx1*dx1 + dy1*dy1) * Math.sqrt(dx2*dx2 + dy2*dy2));
+          curvatureSum += curvature;
+        }
+      }
+      
+      return curvatureSum / (points.length - 2);
+    }
+    
+    checkPatternRepeatability(points) {
+      if (points.length < 10) return 0;
+      
+      const segmentSize = 5;
+      let matches = 0;
+      
+      for (let i = 0; i <= points.length - segmentSize * 2; i++) {
+        const segment1 = points.slice(i, i + segmentSize);
+        const segment2 = points.slice(i + segmentSize, i + segmentSize * 2);
+        
+        if (this.segmentsSimilar(segment1, segment2)) {
+          matches++;
+        }
+      }
+      
+      return matches / (points.length - segmentSize * 2);
+    }
+    
+    segmentsSimilar(seg1, seg2) {
+      if (seg1.length !== seg2.length) return false;
+      
+      let totalDiff = 0;
+      for (let i = 0; i < seg1.length; i++) {
+        const dx = seg2[i].x - seg1[i].x;
+        const dy = seg2[i].y - seg1[i].y;
+        totalDiff += Math.sqrt(dx * dx + dy * dy);
+      }
+      
+      const avgDiff = totalDiff / seg1.length;
+      return avgDiff < 10; // Пикселей
     }
     
     analyzeClickPatterns() {
       if (this.clickIntervals.length < 5) return;
       
-      const variance = this.calculateVariance(this.clickIntervals);
-      if (variance < 50 && this.clickIntervals.length > 5) {
-        this.isBotLike = true;
-      }
-      
+      // 1. Слишком быстрые клики
       const avgInterval = this.clickIntervals.reduce((a, b) => a + b) / this.clickIntervals.length;
       if (avgInterval < 100) {
-        this.isBotLike = true;
+        this.behaviorFlags.tooFastClicks = true;
+        this.suspiciousScore += 0.5;
       }
+      
+      // 2. Слишком идеальные интервалы (робот)
+      const variance = this.calculateVariance(this.clickIntervals);
+      if (variance < 20 && this.clickIntervals.length > 8) {
+        this.suspiciousScore += 0.4;
+      }
+      
+      // 3. Экспоненциальное распределение (человек) vs равномерное (бот)
+      const distributionScore = this.analyzeClickDistribution();
+      if (distributionScore > 0.7) {
+        this.suspiciousScore += 0.3;
+      }
+    }
+    
+    analyzeClickDistribution() {
+      if (this.clickIntervals.length < 10) return 0;
+      
+      const sorted = [...this.clickIntervals].sort((a, b) => a - b);
+      const q1 = sorted[Math.floor(sorted.length * 0.25)];
+      const q3 = sorted[Math.floor(sorted.length * 0.75)];
+      const iqr = q3 - q1;
+      
+      // Боты часто имеют меньший IQR
+      return 1 - Math.min(iqr / 100, 1);
+    }
+    
+    analyzeScrollPattern() {
+      if (this.scrollPattern.length < 10) return;
+      
+      // Проверка на слишком идеальный скроллинг
+      const speeds = this.scrollPattern.map(p => p.speed).filter(s => s > 0);
+      const speedVariance = this.calculateVariance(speeds);
+      
+      if (speedVariance < 5 && speeds.length > 8) {
+        this.behaviorFlags.perfectScrolling = true;
+        this.suspiciousScore += 0.3;
+      }
+      
+      // Проверка на линейный скроллинг (без ускорения/замедления)
+      const accelerationPattern = this.analyzeScrollAcceleration();
+      if (accelerationPattern < 0.2) {
+        this.suspiciousScore += 0.2;
+      }
+    }
+    
+    analyzeScrollAcceleration() {
+      if (this.scrollPattern.length < 5) return 1;
+      
+      let changes = 0;
+      for (let i = 1; i < this.scrollPattern.length; i++) {
+        if (Math.abs(this.scrollPattern[i].speed - this.scrollPattern[i-1].speed) > 10) {
+          changes++;
+        }
+      }
+      
+      return changes / (this.scrollPattern.length - 1);
+    }
+    
+    analyzeKeyboardPattern() {
+      if (this.keyboardPattern.length < 5) return;
+      
+      // Проверка на слишком быстрый ввод
+      const intervals = [];
+      for (let i = 1; i < this.keyboardPattern.length; i++) {
+        intervals.push(this.keyboardPattern[i].time - this.keyboardPattern[i-1].time);
+      }
+      
+      const avgKeyInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+      if (avgKeyInterval < 50) {
+        this.suspiciousScore += 0.3;
+      }
+    }
+    
+    detectDevTools() {
+      const element = new Image();
+      Object.defineProperty(element, 'id', {
+        get: () => {
+          this.behaviorFlags.devToolsDetected = true;
+          this.suspiciousScore += 0.4;
+        }
+      });
+      
+      console.log(element);
+      console.clear();
+    }
+    
+    detectHeadless() {
+      // Проверка различных признаков headless браузеров
+      const tests = [
+        () => navigator.webdriver === true,
+        () => navigator.plugins.length === 0,
+        () => navigator.languages === undefined,
+        () => !window.chrome,
+        () => window.outerWidth === 0 && window.outerHeight === 0,
+        () => window.callPhantom || window._phantom || window.phantom,
+        () => window.__nightmare,
+        () => window.Cypress
+      ];
+      
+      tests.forEach(test => {
+        try {
+          if (test()) {
+            this.behaviorFlags.headlessBrowser = true;
+            this.suspiciousScore += 0.6;
+          }
+        } catch (e) {}
+      });
     }
     
     calculateVariance(arr) {
@@ -164,41 +578,26 @@
       return arr.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / arr.length;
     }
     
-    detectDevTools() {
-      let devToolsOpen = false;
-      const threshold = 160;
-      
-      const check = () => {
-        const widthThreshold = window.outerWidth - window.innerWidth > threshold;
-        const heightThreshold = window.outerHeight - window.innerHeight > threshold;
-        
-        if (widthThreshold || heightThreshold) {
-          devToolsOpen = true;
-          this.isBotLike = true;
-        }
-      };
-      
-      setInterval(check, 1000);
-      check();
-    }
-    
     getRiskScore() {
-      let score = 0;
-      
-      if (this.isBotLike) score += 0.5;
-      if (this.currentPath.length < 5) score += 0.3;
-      if (this.clickIntervals.length < 3) score += 0.2;
-      
-      return Math.min(score, 0.8);
+      return Math.min(this.suspiciousScore, 1);
     }
     
     getBehaviorReport() {
+      const riskScore = this.getRiskScore();
+      
       return {
         mouseMovements: this.currentPath.length,
+        clickCount: this.clickIntervals.length,
         avgClickInterval: this.clickIntervals.length > 0 ? 
           this.clickIntervals.reduce((a, b) => a + b) / this.clickIntervals.length : 0,
-        isBotLike: this.isBotLike,
-        pathComplexity: this.calculatePathComplexity()
+        scrollEvents: this.scrollPattern.length,
+        keyPresses: this.keyboardPattern.length,
+        isBotLike: riskScore > 0.6,
+        riskScore: riskScore,
+        flags: this.behaviorFlags,
+        pathComplexity: this.calculatePathComplexity(),
+        linearityScore: this.calculateLinearity(this.currentPath.slice(-20)),
+        humanProbability: Math.max(0, 1 - riskScore) * 100
       };
     }
     
@@ -217,7 +616,124 @@
       
       return complexity / this.currentPath.length;
     }
+    
+    getRiskFactors() {
+      const factors = [];
+      const report = this.getBehaviorReport();
+      
+      if (report.flags.tooFastClicks) {
+        factors.push({
+          type: 'behavior',
+          level: 'high',
+          message: 'Unnaturally fast clicking detected',
+          score: 0.5
+        });
+      }
+      
+      if (report.flags.linearMovement) {
+        factors.push({
+          type: 'behavior',
+          level: 'high',
+          message: 'Robotic linear mouse movement patterns',
+          score: 0.4
+        });
+      }
+      
+      if (report.flags.perfectScrolling) {
+        factors.push({
+          type: 'behavior',
+          level: 'medium',
+          message: 'Mechanical scrolling patterns detected',
+          score: 0.3
+        });
+      }
+      
+      if (report.flags.devToolsDetected) {
+        factors.push({
+          type: 'technical',
+          level: 'critical',
+          message: 'Browser DevTools detection triggered',
+          score: 0.4
+        });
+      }
+      
+      if (report.flags.headlessBrowser) {
+        factors.push({
+          type: 'technical',
+          level: 'critical',
+          message: 'Headless browser indicators detected',
+          score: 0.6
+        });
+      }
+      
+      if (report.flags.automationTools) {
+        factors.push({
+          type: 'behavior',
+          level: 'high',
+          message: 'Automation tool patterns detected',
+          score: 0.3
+        });
+      }
+      
+      if (report.avgClickInterval < 150 && report.clickCount > 5) {
+        factors.push({
+          type: 'behavior',
+          level: 'medium',
+          message: 'Suspiciously consistent click timing',
+          score: 0.3
+        });
+      }
+      
+      if (report.mouseMovements < 15) {
+        factors.push({
+          type: 'behavior',
+          level: 'low',
+          message: 'Low mouse activity for session duration',
+          score: 0.2
+        });
+      }
+      
+      return factors;
+    }
   }
+  
+  // ==================== MAIN SECURITY SYSTEM ====================
+  
+  const CONFIG = {
+    debug: true,
+    version: '4.2',
+    
+    riskThresholds: {
+      LOW: 0.3,    // Мониторинг
+      MEDIUM: 0.6,  // Простая проверка
+      HIGH: 0.8    // Полная проверка или блокировка
+    },
+    
+    weights: {
+      behavior: 0.50,    // Поведенческий анализ - самый важный
+      technical: 0.30,   // Технические данные
+      reputation: 0.15,  // История и репутация
+      network: 0.05      // Сетевая информация
+    },
+    
+    analysisSteps: [
+      { name: 'Behavior Tracking', duration: 2000 },
+      { name: 'Device Fingerprint', duration: 1500 },
+      { name: 'Technical Analysis', duration: 1500 },
+      { name: 'Network Scan', duration: 1000 },
+      { name: 'Reputation Check', duration: 1000 },
+      { name: 'AI Evaluation', duration: 2000 }
+    ],
+    
+    accessRules: {
+      ALLOW: 'allow',
+      MONITOR: 'allow_with_logging',
+      VERIFY: 'simple_captcha',
+      BLOCK: 'block'
+    }
+  };
+  
+  window.WWS = null;
   
   class WWSRiskAnalyzer {
     constructor() {
@@ -234,7 +750,8 @@
       this.widget = null;
       this.isRunning = false;
       this.userHistory = null;
-      this.currentPanel = 'overview'; // 'overview', 'behavior', 'technical', 'risks'
+      this.currentPanel = 'overview';
+      this.accessGranted = false;
       
       this.loadUserHistory();
       this.log('System initialized v' + CONFIG.version);
@@ -246,37 +763,92 @@
         this.riskScore = 0;
         this.behaviorAnalyzer = new AdvancedBehaviorAnalyzer();
         this.createWidget();
-        this.analyzeRisk(); // Запускаем анализ в фоне
+        this.analyzeRisk(); // Запускаем анализ в фоне для обновления виджета
+        this.accessGranted = true;
         return;
       }
       
-      // Если сессия новая - запускаем анализ в фоне
-      this.startAnalysis();
-      this.createWidget();
+      // Если сессия новая - запускаем полный анализ
+      this.startFullAnalysis();
     }
     
-    async startAnalysis() {
+    async startFullAnalysis() {
       if (this.isRunning) return;
       this.isRunning = true;
       
+      let currentStep = 0;
+      
+      const executeStep = async () => {
+        if (currentStep >= CONFIG.analysisSteps.length) {
+          this.completeAnalysis();
+          return;
+        }
+        
+        const step = CONFIG.analysisSteps[currentStep];
+        const progress = ((currentStep + 1) / CONFIG.analysisSteps.length) * 100;
+        
+        switch(currentStep) {
+          case 0:
+            PROTECTION_LAYER.updateStatus('Tracking user behavior...', 20, 10, 'Analyzing mouse movements and clicks');
+            this.behaviorAnalyzer = new AdvancedBehaviorAnalyzer();
+            break;
+          case 1:
+            PROTECTION_LAYER.updateStatus('Creating device fingerprint...', 40, 25, 'Scanning browser and device characteristics');
+            this.collectTechnicalData();
+            break;
+          case 2:
+            PROTECTION_LAYER.updateStatus('Technical analysis...', 60, 40, 'Checking for bots and automation tools');
+            this.analyzeTechnical();
+            break;
+          case 3:
+            PROTECTION_LAYER.updateStatus('Network analysis...', 75, 55, 'Scanning network patterns and latency');
+            this.collectNetworkData();
+            break;
+          case 4:
+            PROTECTION_LAYER.updateStatus('Reputation check...', 85, 70, 'Checking user history and trust profile');
+            this.loadUserHistory();
+            break;
+          case 5:
+            PROTECTION_LAYER.updateStatus('Final AI evaluation...', 95, 85, 'Computing final risk assessment');
+            this.collectBehaviorData();
+            this.analyzeRisk();
+            break;
+        }
+        
+        // Показываем факторы риска если есть
+        if (this.behaviorAnalyzer && currentStep >= 2) {
+          const factors = this.behaviorAnalyzer.getRiskFactors();
+          if (factors.length > 0) {
+            PROTECTION_LAYER.showRiskFactors(factors);
+          }
+        }
+        
+        currentStep++;
+        
+        // Имитация времени выполнения шага
+        await new Promise(resolve => setTimeout(resolve, step.duration));
+        await executeStep();
+      };
+      
       try {
-        this.behaviorAnalyzer = new AdvancedBehaviorAnalyzer();
-        
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        this.collectTechnicalData();
-        this.collectNetworkData();
-        this.collectBehaviorData();
-        this.analyzeRisk();
-        
-        this.executeVerdict();
-        
+        await executeStep();
       } catch (error) {
         this.log('Analysis error:', error);
         this.verdict = 'allow_with_logging';
         this.riskScore = 0.5;
-        this.updateWidget();
+        this.completeAnalysis();
       }
+    }
+    
+    completeAnalysis() {
+      PROTECTION_LAYER.updateStatus('Applying security policy...', 100, Math.round(this.riskScore * 100), 'Finalizing protection');
+      
+      setTimeout(() => {
+        PROTECTION_LAYER.hide();
+        this.createWidget();
+        this.executeVerdict();
+        this.accessGranted = true;
+      }, 1000);
     }
     
     checkFirstVisit() {
@@ -313,7 +885,9 @@
           navigator.platform,
           new Date().getTimezoneOffset(),
           navigator.hardwareConcurrency || 'unknown',
-          navigator.deviceMemory || 'unknown'
+          navigator.deviceMemory || 'unknown',
+          this.getCanvasFingerprint(),
+          this.getWebGLFingerprint()
         ].join('|');
         
         let hash = 0;
@@ -325,6 +899,49 @@
         return 'dev_' + Math.abs(hash).toString(36);
       } catch (e) {
         return 'dev_unknown';
+      }
+    }
+    
+    getCanvasFingerprint() {
+      try {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        canvas.width = 200;
+        canvas.height = 30;
+        
+        ctx.textBaseline = 'top';
+        ctx.font = '14px Arial';
+        ctx.textBaseline = 'alphabetic';
+        ctx.fillStyle = '#f60';
+        ctx.fillRect(125, 1, 62, 20);
+        ctx.fillStyle = '#069';
+        ctx.fillText('WWS Security', 2, 15);
+        ctx.fillStyle = 'rgba(102, 204, 0, 0.7)';
+        ctx.fillText('WWS Security', 4, 17);
+        
+        return canvas.toDataURL().substring(22, 50);
+      } catch (e) {
+        return 'error';
+      }
+    }
+    
+    getWebGLFingerprint() {
+      try {
+        const canvas = document.createElement('canvas');
+        const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+        
+        if (!gl) return 'no_webgl';
+        
+        const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+        if (debugInfo) {
+          const vendor = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL);
+          const renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+          return vendor + '|' + renderer;
+        }
+        return 'webgl_no_debug';
+      } catch (e) {
+        return 'webgl_error';
       }
     }
     
@@ -390,6 +1007,7 @@
       this.addWidgetStyles();
       this.initWidgetHandlers();
       this.updatePanelContent();
+      this.updateWidget();
     }
     
     addWidgetStyles() {
@@ -586,7 +1204,6 @@
           max-height: 380px;
         }
         
-        /* Scrollbar styling */
         .wws-panel-content::-webkit-scrollbar {
           width: 4px;
         }
@@ -854,26 +1471,18 @@
           background: #ef4444;
         }
         
-        .wws-loader {
-          text-align: center;
-          padding: 30px 0;
+        .wws-verdict-badge.blocked {
+          background: #dc2626;
         }
         
-        .wws-loader i {
-          font-size: 24px;
-          color: #6C63FF;
-          animation: wws-spin 1s linear infinite;
-        }
-        
-        .wws-loader-text {
-          color: #94a3b8;
-          font-size: 12px;
-          margin-top: 10px;
-        }
-        
-        @keyframes wws-spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
+        .wws-human-score {
+          display: inline-block;
+          padding: 4px 10px;
+          background: linear-gradient(135deg, #10b981, #34d399);
+          color: white;
+          font-size: 10px;
+          font-weight: 700;
+          border-radius: 12px;
         }
         
         @media (max-width: 768px) {
@@ -892,7 +1501,6 @@
       const closeBtn = document.getElementById('wws-close-panel');
       const tabs = document.querySelectorAll('.wws-tab');
       
-      // Открытие/закрытие панели
       icon.addEventListener('click', (e) => {
         e.stopPropagation();
         panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
@@ -903,14 +1511,12 @@
         panel.style.display = 'none';
       });
       
-      // Закрытие при клике вне панели
       document.addEventListener('click', (e) => {
         if (panel.style.display === 'block' && !panel.contains(e.target) && !icon.contains(e.target)) {
           panel.style.display = 'none';
         }
       });
       
-      // Переключение вкладок
       tabs.forEach(tab => {
         tab.addEventListener('click', () => {
           tabs.forEach(t => t.classList.remove('active'));
@@ -920,13 +1526,12 @@
         });
       });
       
-      // Обновление данных каждые 5 секунд
       setInterval(() => {
         if (panel.style.display === 'block') {
           this.updatePanelContent();
         }
         this.updateWidget();
-      }, 5000);
+      }, 3000);
     }
     
     updateWidget() {
@@ -967,7 +1572,21 @@
     
     renderOverviewPanel(container) {
       const report = this.behaviorAnalyzer ? this.behaviorAnalyzer.getBehaviorReport() : {};
-      const verdictClass = this.verdict === 'allow' ? '' : this.verdict.includes('captcha') ? 'warning' : 'danger';
+      const humanProbability = report.humanProbability || 0;
+      
+      let verdictClass = '';
+      let verdictText = this.verdict.toUpperCase().replace(/_/g, ' ');
+      
+      if (this.verdict === 'allow') {
+        verdictClass = '';
+      } else if (this.verdict === 'block') {
+        verdictClass = 'blocked';
+        verdictText = 'ACCESS BLOCKED';
+      } else if (this.verdict.includes('captcha') || this.verdict === 'allow_with_logging') {
+        verdictClass = 'warning';
+      } else {
+        verdictClass = 'danger';
+      }
       
       container.innerHTML = `
         <div class="wws-section">
@@ -975,10 +1594,20 @@
             <div class="wws-status-row">
               <div class="wws-status-label">
                 <i class="fas fa-shield-alt"></i>
-                Status
+                Security Status
               </div>
               <div class="wws-status-value">
-                <span class="wws-verdict-badge ${verdictClass}">${this.verdict.toUpperCase().replace(/_/g, ' ')}</span>
+                <span class="wws-verdict-badge ${verdictClass}">${verdictText}</span>
+              </div>
+            </div>
+            
+            <div class="wws-status-row">
+              <div class="wws-status-label">
+                <i class="fas fa-user-check"></i>
+                Human Probability
+              </div>
+              <div class="wws-status-value">
+                <span class="wws-human-score">${Math.round(humanProbability)}%</span>
               </div>
             </div>
             
@@ -999,7 +1628,7 @@
         <div class="wws-section">
           <div class="wws-section-title">
             <i class="fas fa-brain"></i>
-            Behavioral Stats
+            Behavioral AI Analysis
           </div>
           
           <div class="wws-stats-grid">
@@ -1009,7 +1638,7 @@
             </div>
             
             <div class="wws-stat-card">
-              <div class="wws-stat-value">${this.behaviorAnalyzer?.clickIntervals.length || 0}</div>
+              <div class="wws-stat-value">${report.clickCount || 0}</div>
               <div class="wws-stat-label">Clicks</div>
             </div>
             
@@ -1020,7 +1649,7 @@
             
             <div class="wws-stat-card">
               <div class="wws-stat-value">${report.avgClickInterval ? Math.round(report.avgClickInterval) : 0}ms</div>
-              <div class="wws-stat-label">Avg Speed</div>
+              <div class="wws-stat-label">Click Speed</div>
             </div>
           </div>
         </div>
@@ -1064,14 +1693,10 @@
         </button>
       `;
       
-      // Добавляем обработчик кнопки обновления
       const refreshBtn = container.querySelector('#wws-refresh-btn');
       if (refreshBtn) {
         refreshBtn.addEventListener('click', () => {
-          this.collectAllData();
-          this.analyzeRisk();
-          this.updateWidget();
-          this.updatePanelContent();
+          this.forceReanalysis();
         });
       }
     }
@@ -1083,7 +1708,7 @@
         <div class="wws-section">
           <div class="wws-section-title">
             <i class="fas fa-mouse"></i>
-            Mouse Activity
+            Advanced Mouse Analysis
           </div>
           
           <div class="wws-stats-grid">
@@ -1094,7 +1719,17 @@
             
             <div class="wws-stat-card">
               <div class="wws-stat-value">${report.pathComplexity ? (report.pathComplexity * 100).toFixed(0) : 0}%</div>
-              <div class="wws-stat-label">Complexity</div>
+              <div class="wws-stat-label">Path Complexity</div>
+            </div>
+            
+            <div class="wws-stat-card">
+              <div class="wws-stat-value">${report.linearityScore ? (report.linearityScore * 100).toFixed(0) : 0}%</div>
+              <div class="wws-stat-label">Linearity Score</div>
+            </div>
+            
+            <div class="wws-stat-card">
+              <div class="wws-stat-value">${report.flags?.linearMovement ? 'YES' : 'NO'}</div>
+              <div class="wws-stat-label">Robotic Pattern</div>
             </div>
           </div>
         </div>
@@ -1102,12 +1737,12 @@
         <div class="wws-section">
           <div class="wws-section-title">
             <i class="fas fa-hand-pointer"></i>
-            Click Analysis
+            Click & Interaction Analysis
           </div>
           
           <div class="wws-stats-grid">
             <div class="wws-stat-card">
-              <div class="wws-stat-value">${this.behaviorAnalyzer?.clickIntervals.length || 0}</div>
+              <div class="wws-stat-value">${report.clickCount || 0}</div>
               <div class="wws-stat-label">Total Clicks</div>
             </div>
             
@@ -1115,32 +1750,42 @@
               <div class="wws-stat-value">${report.avgClickInterval ? Math.round(report.avgClickInterval) : 0}ms</div>
               <div class="wws-stat-label">Avg Interval</div>
             </div>
+            
+            <div class="wws-stat-card">
+              <div class="wws-stat-value">${report.flags?.tooFastClicks ? 'YES' : 'NO'}</div>
+              <div class="wws-stat-label">Fast Clicks</div>
+            </div>
+            
+            <div class="wws-stat-card">
+              <div class="wws-stat-value">${report.keyPresses || 0}</div>
+              <div class="wws-stat-label">Key Presses</div>
+            </div>
           </div>
         </div>
         
         <div class="wws-section">
           <div class="wws-section-title">
-            <i class="fas fa-robot"></i>
-            Bot Detection
+            <i class="fas fa-scroll"></i>
+            Scroll Analysis
           </div>
           
           <div class="wws-status-card">
             <div class="wws-status-row">
               <div class="wws-status-label">
-                <i class="fas ${report.isBotLike ? 'fa-times-circle' : 'fa-check-circle'}"></i>
-                Bot Pattern
+                <i class="fas fa-tachometer-alt"></i>
+                Scroll Events
               </div>
-              <div class="wws-status-value" style="color: ${report.isBotLike ? '#ef4444' : '#10b981'}">
-                ${report.isBotLike ? 'DETECTED' : 'CLEAN'}
-              </div>
+              <div class="wws-status-value">${report.scrollEvents || 0}</div>
             </div>
             
             <div class="wws-status-row">
               <div class="wws-status-label">
-                <i class="fas fa-tachometer-alt"></i>
-                Pattern Variance
+                <i class="fas fa-robot"></i>
+                Perfect Scrolling
               </div>
-              <div class="wws-status-value">${report.avgClickInterval ? Math.round(report.avgClickInterval) : 0}ms</div>
+              <div class="wws-status-value" style="color: ${report.flags?.perfectScrolling ? '#ef4444' : '#10b981'}">
+                ${report.flags?.perfectScrolling ? 'DETECTED' : 'NORMAL'}
+              </div>
             </div>
           </div>
         </div>
@@ -1152,12 +1797,12 @@
         <div class="wws-section">
           <div class="wws-section-title">
             <i class="fas fa-desktop"></i>
-            Device Info
+            Device & Browser Info
           </div>
           
           <div class="wws-tech-item">
             <div class="wws-tech-label">Browser</div>
-            <div class="wws-tech-value">${navigator.userAgent.substring(0, 40)}...</div>
+            <div class="wws-tech-value">${navigator.userAgent.substring(0, 50)}...</div>
           </div>
           
           <div class="wws-tech-item">
@@ -1174,32 +1819,19 @@
             <div class="wws-tech-label">Color Depth</div>
             <div class="wws-tech-value">${screen.colorDepth} bit</div>
           </div>
-        </div>
-        
-        <div class="wws-section">
-          <div class="wws-section-title">
-            <i class="fas fa-network-wired"></i>
-            Network
-          </div>
-          
-          <div class="wws-tech-item">
-            <div class="wws-tech-label">Connection</div>
-            <div class="wws-tech-value">${navigator.connection ? navigator.connection.effectiveType : 'Unknown'}</div>
-          </div>
-          
-          <div class="wws-tech-item">
-            <div class="wws-tech-label">Language</div>
-            <div class="wws-tech-value">${navigator.language}</div>
-          </div>
           
           <div class="wws-tech-item">
             <div class="wws-tech-label">WebDriver</div>
-            <div class="wws-tech-value">${navigator.webdriver ? 'Detected' : 'Not detected'}</div>
+            <div class="wws-tech-value" style="color: ${navigator.webdriver ? '#ef4444' : '#10b981'}">
+              ${navigator.webdriver ? 'DETECTED (Bot)' : 'Not detected'}
+            </div>
           </div>
           
           <div class="wws-tech-item">
-            <div class="wws-tech-label">WebGL</div>
-            <div class="wws-tech-value">${this.detectWebGL() ? 'Supported' : 'Not supported'}</div>
+            <div class="wws-tech-label">Headless Detection</div>
+            <div class="wws-tech-value" style="color: ${this.behaviorAnalyzer?.behaviorFlags?.headlessBrowser ? '#ef4444' : '#10b981'}">
+              ${this.behaviorAnalyzer?.behaviorFlags?.headlessBrowser ? 'SUSPICIOUS' : 'CLEAN'}
+            </div>
           </div>
         </div>
       `;
@@ -1212,7 +1844,7 @@
             <i class="fas fa-check-circle"></i>
             No risk factors detected
             <div style="margin-top: 8px; font-size: 10px; color: #6c6c8c;">
-              Your session appears to be clean
+              Your session appears to be clean and human-like
             </div>
           </div>
         `;
@@ -1221,13 +1853,15 @@
       
       let factorsHTML = '';
       this.riskFactors.slice(0, 6).forEach(factor => {
+        const levelClass = factor.level || 'medium';
         factorsHTML += `
-          <div class="wws-factor-item ${factor.level}">
+          <div class="wws-factor-item ${levelClass}">
             <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
               <strong>${factor.type.toUpperCase()}</strong>
-              <span style="font-size: 9px; background: ${factor.level === 'high' ? '#ef4444' : factor.level === 'medium' ? '#f59e0b' : '#10b981'}; color: white; padding: 2px 6px; border-radius: 8px;">${factor.level}</span>
+              <span style="font-size: 9px; background: ${factor.level === 'high' || factor.level === 'critical' ? '#ef4444' : factor.level === 'medium' ? '#f59e0b' : '#10b981'}; color: white; padding: 2px 6px; border-radius: 8px;">${factor.level}</span>
             </div>
             <div style="font-size: 10px;">${factor.message}</div>
+            <div style="font-size: 9px; color: #94a3b8; margin-top: 4px;">Impact: ${Math.round((factor.score || 0) * 100)}%</div>
           </div>
         `;
       });
@@ -1247,13 +1881,6 @@
           </div>
         ` : ''}
       `;
-    }
-    
-    collectAllData() {
-      this.collectBehaviorData();
-      this.collectTechnicalData();
-      this.collectNetworkData();
-      this.loadUserHistory();
     }
     
     collectBehaviorData() {
@@ -1291,6 +1918,16 @@
         webdriver: navigator.webdriver,
         hasChrome: typeof window.chrome !== 'undefined'
       };
+    }
+    
+    detectWebGL() {
+      try {
+        const canvas = document.createElement('canvas');
+        return !!(window.WebGLRenderingContext && 
+                 (canvas.getContext('webgl') || canvas.getContext('experimental-webgl')));
+      } catch (e) {
+        return false;
+      }
     }
     
     collectNetworkData() {
@@ -1347,29 +1984,35 @@
       let totalRisk = 0;
       this.riskFactors = [];
       
+      // 1. Поведенческий анализ (самый важный)
       const behaviorRisk = this.analyzeAdvancedBehavior();
       totalRisk += behaviorRisk.score * CONFIG.weights.behavior;
       this.riskFactors.push(...behaviorRisk.factors);
       
+      // 2. Технический анализ
       const technicalRisk = this.analyzeTechnical();
       totalRisk += technicalRisk.score * CONFIG.weights.technical;
       this.riskFactors.push(...technicalRisk.factors);
       
+      // 3. Репутация
       const reputationRisk = this.analyzeReputation();
       totalRisk += reputationRisk.score * CONFIG.weights.reputation;
       this.riskFactors.push(...reputationRisk.factors);
       
+      // 4. Сеть
       const networkRisk = this.analyzeNetwork();
       totalRisk += networkRisk.score * CONFIG.weights.network;
       this.riskFactors.push(...networkRisk.factors);
       
+      // 5. Первый визит
       if (this.isFirstVisit) {
         totalRisk = Math.max(totalRisk, 0.4);
         this.riskFactors.push({
           type: 'system',
           level: 'medium',
           message: 'First visit to domain - establishing trust profile',
-          details: { firstVisit: true }
+          details: { firstVisit: true },
+          score: 0.4
         });
       }
       
@@ -1385,46 +2028,10 @@
       if (!this.behaviorAnalyzer) return { score, factors };
       
       const report = this.behaviorAnalyzer.getBehaviorReport();
+      const behaviorFactors = this.behaviorAnalyzer.getRiskFactors();
       
-      if (report.isBotLike) {
-        score += 0.6;
-        factors.push({
-          type: 'behavior',
-          level: 'critical',
-          message: 'BOT-LIKE behavior detected: robotic movement patterns',
-          details: report
-        });
-      }
-      
-      if (report.mouseMovements < 10) {
-        score += 0.3;
-        factors.push({
-          type: 'behavior',
-          level: 'high',
-          message: 'Suspiciously low mouse activity',
-          details: { mouseMovements: report.mouseMovements }
-        });
-      }
-      
-      if (report.avgClickInterval < 150 && report.avgClickInterval > 0) {
-        score += 0.25;
-        factors.push({
-          type: 'behavior',
-          level: 'high',
-          message: 'Unnaturally fast clicking detected',
-          details: { avgClickInterval: report.avgClickInterval }
-        });
-      }
-      
-      if (report.pathComplexity < 0.1) {
-        score += 0.2;
-        factors.push({
-          type: 'behavior',
-          level: 'medium',
-          message: 'Linear mouse movement patterns (bot indicator)',
-          details: { complexity: report.pathComplexity }
-        });
-      }
+      score = report.riskScore || 0;
+      factors.push(...behaviorFactors);
       
       return { score: Math.min(1, score), factors };
     }
@@ -1437,17 +2044,20 @@
       const botPatterns = [
         /bot/i, /crawl/i, /spider/i, /scrape/i,
         /headless/i, /phantom/i, /selenium/i,
-        /puppeteer/i, /playwright/i, /cheerio/i
+        /puppeteer/i, /playwright/i, /cheerio/i,
+        /scrapy/i, /curl/i, /wget/i, /python/i,
+        /node/i, /axios/i, /request/i
       ];
       
       for (const pattern of botPatterns) {
         if (pattern.test(ua)) {
-          score += 0.6;
+          score += 0.7;
           factors.push({
             type: 'technical',
-            level: 'high',
-            message: 'Bot User-Agent detected: ' + ua.match(pattern)[0],
-            details: { userAgent: ua }
+            level: 'critical',
+            message: 'Bot/Scraper User-Agent detected',
+            details: { userAgent: ua.substring(0, 100) },
+            score: 0.7
           });
           break;
         }
@@ -1458,8 +2068,9 @@
         factors.push({
           type: 'technical',
           level: 'critical',
-          message: 'WebDriver detected (headless browser)',
-          details: { webdriver: true }
+          message: 'WebDriver detected (automation browser)',
+          details: { webdriver: true },
+          score: 0.8
         });
       }
       
@@ -1468,8 +2079,20 @@
         factors.push({
           type: 'technical',
           level: 'medium',
-          message: 'No browser plugins detected',
-          details: { plugins: 0 }
+          message: 'No browser plugins detected (headless indicator)',
+          details: { plugins: 0 },
+          score: 0.3
+        });
+      }
+      
+      if (!window.chrome && !ua.includes('firefox') && !ua.includes('safari')) {
+        score += 0.2;
+        factors.push({
+          type: 'technical',
+          level: 'low',
+          message: 'Uncommon or custom browser detected',
+          details: { hasChrome: false },
+          score: 0.2
         });
       }
       
@@ -1489,28 +2112,31 @@
         factors.push({
           type: 'reputation',
           level: 'low',
-          message: 'New or infrequent user',
-          details: { sessions: this.userHistory.sessions?.length || 0 }
+          message: 'New or infrequent user (low trust score)',
+          details: { sessions: this.userHistory.sessions?.length || 0 },
+          score: 0.2
         });
       }
       
       if (this.userHistory.incidents > 0) {
-        score += Math.min(0.5, this.userHistory.incidents * 0.1);
+        score += Math.min(0.5, this.userHistory.incidents * 0.2);
         factors.push({
           type: 'reputation',
           level: 'medium',
           message: `Previous security incidents: ${this.userHistory.incidents}`,
-          details: { incidents: this.userHistory.incidents }
+          details: { incidents: this.userHistory.incidents },
+          score: Math.min(0.5, this.userHistory.incidents * 0.2)
         });
       }
       
       if (this.userHistory.trusted) {
-        score -= 0.3;
+        score -= 0.4;
         factors.push({
           type: 'reputation',
           level: 'trusted',
-          message: 'Trusted device verified',
-          details: { trusted: true }
+          message: 'Trusted device verified (risk reduced)',
+          details: { trusted: true },
+          score: -0.4
         });
       }
       
@@ -1521,67 +2147,32 @@
       let score = 0;
       const factors = [];
       
-      if (this.networkData.connection && this.networkData.connection.rtt > 500) {
-        score += 0.2;
-        factors.push({
-          type: 'network',
-          level: 'medium',
-          message: 'High network latency (possible proxy/VPN)',
-          details: { rtt: this.networkData.connection.rtt + 'ms' }
-        });
+      if (this.networkData.connection) {
+        if (this.networkData.connection.rtt > 500) {
+          score += 0.3;
+          factors.push({
+            type: 'network',
+            level: 'medium',
+            message: 'High network latency (possible proxy/VPN)',
+            details: { rtt: this.networkData.connection.rtt + 'ms' },
+            score: 0.3
+          });
+        }
+        
+        if (this.networkData.connection.effectiveType === 'slow-2g' || 
+            this.networkData.connection.effectiveType === '2g') {
+          score += 0.1;
+        }
       }
       
       return { score: Math.min(1, score), factors };
     }
     
-    detectWebGL() {
-      try {
-        const canvas = document.createElement('canvas');
-        return !!(window.WebGLRenderingContext && 
-                 (canvas.getContext('webgl') || canvas.getContext('experimental-webgl')));
-      } catch (e) {
-        return false;
-      }
-    }
-    
-    getCanvasFingerprint() {
-      try {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        
-        canvas.width = 200;
-        canvas.height = 30;
-        
-        ctx.textBaseline = 'top';
-        ctx.font = '14px Arial';
-        ctx.textBaseline = 'alphabetic';
-        ctx.fillStyle = '#f60';
-        ctx.fillRect(125, 1, 62, 20);
-        ctx.fillStyle = '#069';
-        ctx.fillText('WWS Security', 2, 15);
-        ctx.fillStyle = 'rgba(102, 204, 0, 0.7)';
-        ctx.fillText('WWS Security', 4, 17);
-        
-        return canvas.toDataURL().substring(22, 50);
-      } catch (e) {
-        return 'error';
-      }
-    }
-    
     determineVerdict() {
       let verdict = 'allow';
       
-      if (this.isFirstVisit) {
-        if (this.riskScore >= CONFIG.riskThresholds.HIGH) {
-          verdict = 'full_captcha';
-        } else if (this.riskScore >= CONFIG.riskThresholds.LOW) {
-          verdict = 'simple_captcha';
-        } else {
-          verdict = 'allow_with_logging';
-        }
-      } 
-      else if (this.riskScore >= CONFIG.riskThresholds.HIGH) {
-        verdict = 'full_captcha';
+      if (this.riskScore >= CONFIG.riskThresholds.HIGH) {
+        verdict = Math.random() > 0.3 ? 'block' : 'full_captcha';
       } 
       else if (this.riskScore >= CONFIG.riskThresholds.MEDIUM) {
         verdict = 'simple_captcha';
@@ -1593,19 +2184,30 @@
         verdict = 'allow';
       }
       
+      // Для первого визита ужесточаем проверку
+      if (this.isFirstVisit && this.riskScore > 0.4) {
+        verdict = 'simple_captcha';
+      }
+      
       this.verdict = verdict;
-      this.log(`Verdict: ${verdict} (risk: ${(this.riskScore * 100).toFixed(1)}%)`);
+      this.log(`Security verdict: ${verdict} (risk: ${(this.riskScore * 100).toFixed(1)}%)`);
     }
     
     executeVerdict() {
       this.updateWidget();
       
       switch (this.verdict) {
+        case 'block':
+          this.blockAccess();
+          break;
         case 'full_captcha':
           this.showFullCaptcha();
           break;
         case 'simple_captcha':
           this.showSimpleCaptcha();
+          break;
+        case 'allow_with_logging':
+          this.allowAccessWithLogging();
           break;
         default:
           this.allowAccess();
@@ -1613,14 +2215,146 @@
       }
     }
     
+    blockAccess() {
+      const overlay = document.createElement('div');
+      overlay.id = 'wws-block-overlay';
+      overlay.style.cssText = `
+        position: fixed !important;
+        top: 0 !important; left: 0 !important;
+        width: 100vw !important; height: 100vh !important;
+        background: linear-gradient(135deg, #1a0a0a, #261212, #1f0f0f) !important;
+        z-index: 9999999 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif !important;
+      `;
+      
+      overlay.innerHTML = `
+        <div style="text-align: center; max-width: 500px; padding: 40px;">
+          <div style="margin-bottom: 30px;">
+            <i class="fas fa-ban" style="font-size: 72px; color: #ef4444; animation: wws-shield-glow 3s ease-in-out infinite;"></i>
+          </div>
+          
+          <h1 style="color: white; margin: 0 0 15px; font-size: 32px; font-weight: 700;">ACCESS BLOCKED</h1>
+          <p style="color: #fca5a5; font-size: 16px; margin: 0 0 25px;">
+            High-risk activity detected. Access to this resource has been restricted.
+          </p>
+          
+          <div style="background: rgba(239, 68, 68, 0.1); border-radius: 15px; padding: 20px; margin-bottom: 30px; border: 1px solid rgba(239, 68, 68, 0.3);">
+            <div style="color: #fca5a5; margin-bottom: 15px; font-size: 14px;">BLOCK REASONS:</div>
+            <div id="wws-block-reasons" style="text-align: left; color: #fca5a5; font-size: 12px;"></div>
+          </div>
+          
+          <div style="color: #94a3b8; font-size: 12px; margin-top: 30px;">
+            If you believe this is an error, contact the site administrator.
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(overlay);
+      
+      const reasonsList = overlay.querySelector('#wws-block-reasons');
+      if (reasonsList && this.riskFactors.length > 0) {
+        const criticalFactors = this.riskFactors.filter(f => f.level === 'critical' || f.level === 'high');
+        reasonsList.innerHTML = criticalFactors.slice(0, 5).map(factor => `
+          <div style="padding: 8px 0; border-bottom: 1px solid rgba(239, 68, 68, 0.2);">
+            <i class="fas fa-exclamation-circle"></i> ${factor.message}
+          </div>
+        `).join('');
+      }
+      
+      this.log('Access blocked due to high risk');
+    }
+    
     showSimpleCaptcha() {
-      // В фоновом режиме просто логируем
-      this.log('Captcha required but running in background mode');
-      this.allowAccess();
+      const overlay = this.createOverlay('captcha');
+      
+      const a = Math.floor(Math.random() * 9) + 1;
+      const b = Math.floor(Math.random() * 9) + 1;
+      const answer = a + b;
+      
+      overlay.innerHTML = `
+        <div style="max-width: 400px; width: 90%; padding: 30px; background: rgba(18, 18, 26, 0.95); border-radius: 20px; border: 1px solid rgba(108, 99, 255, 0.3); box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5); text-align: center; backdrop-filter: blur(10px);">
+          <div style="margin-bottom: 20px;">
+            <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #6C63FF, #36D1DC); border-radius: 15px; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px;">🤖</div>
+            <h3 style="color: white; margin: 0 0 10px;">Security Verification Required</h3>
+            <p style="color: #94a3b8; font-size: 14px; margin: 0;">Complete this check to continue</p>
+          </div>
+          <div style="background: rgba(255, 255, 255, 0.05); border-radius: 15px; padding: 25px; margin-bottom: 20px;">
+            <div style="color: #94a3b8; margin-bottom: 10px; font-size: 14px;">Solve this simple math problem:</div>
+            <div style="font-size: 36px; font-weight: bold; color: white; font-family: 'Courier New', monospace; margin: 15px 0;">${a} + ${b} = ?</div>
+            <input type="text" id="captcha-answer" placeholder="Enter answer" style="width: 100%; padding: 15px; font-size: 18px; background: rgba(255, 255, 255, 0.1); border: 2px solid rgba(255, 255, 255, 0.2); border-radius: 10px; color: white; text-align: center; outline: none;" autocomplete="off">
+          </div>
+          <button id="captcha-submit" style="width: 100%; padding: 16px; background: linear-gradient(135deg, #6C63FF, #36D1DC); color: white; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; font-size: 16px;">Verify & Continue</button>
+          <div style="margin-top: 20px; color: #94a3b8; font-size: 11px;">
+            <i class="fas fa-info-circle"></i> This helps prevent automated access
+          </div>
+        </div>
+      `;
+      
+      const answerInput = overlay.querySelector('#captcha-answer');
+      const submitBtn = overlay.querySelector('#captcha-submit');
+      answerInput.focus();
+      
+      const checkAnswer = () => {
+        const userAnswer = parseInt(answerInput.value.trim());
+        if (userAnswer === answer) {
+          this.log('Captcha passed');
+          this.removeOverlay();
+          this.allowAccess();
+        } else {
+          answerInput.value = '';
+          answerInput.placeholder = 'Incorrect, try again';
+          answerInput.style.borderColor = '#ef4444';
+          setTimeout(() => {
+            answerInput.placeholder = 'Enter answer';
+            answerInput.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+          }, 2000);
+        }
+      };
+      
+      submitBtn.addEventListener('click', checkAnswer);
+      answerInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') checkAnswer();
+      });
     }
     
     showFullCaptcha() {
-      this.showSimpleCaptcha();
+      this.showSimpleCaptcha(); // В реальной системе здесь была бы сложная капча
+    }
+    
+    createOverlay(type) {
+      const oldOverlay = document.getElementById(`wws-${type}-overlay`);
+      if (oldOverlay) oldOverlay.remove();
+      
+      const overlay = document.createElement('div');
+      overlay.id = `wws-${type}-overlay`;
+      overlay.style.cssText = `
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        background: rgba(5, 5, 15, 0.98) !important;
+        backdrop-filter: blur(5px) !important;
+        z-index: 9999999 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 20px !important;
+      `;
+      
+      document.body.appendChild(overlay);
+      document.body.style.overflow = 'hidden';
+      
+      return overlay;
+    }
+    
+    removeOverlay() {
+      const overlays = document.querySelectorAll('[id^="wws-"][id$="-overlay"]');
+      overlays.forEach(overlay => overlay.remove());
+      document.body.style.overflow = '';
     }
     
     allowAccess() {
@@ -1643,6 +2377,24 @@
       window.dispatchEvent(event);
     }
     
+    allowAccessWithLogging() {
+      this.log('Access granted with enhanced logging');
+      this.saveSession();
+      this.updateWidget();
+      
+      // Здесь можно добавить дополнительное логирование
+      setInterval(() => {
+        if (this.behaviorAnalyzer) {
+          const report = this.behaviorAnalyzer.getBehaviorReport();
+          if (report.riskScore > 0.5) {
+            this.log('Suspicious behavior detected during session', report);
+          }
+        }
+      }, 10000);
+      
+      this.allowAccess();
+    }
+    
     saveSession() {
       const session = {
         sessionId: this.sessionId,
@@ -1657,6 +2409,11 @@
       
       if (this.userHistory.sessions.length > 50) {
         this.userHistory.sessions = this.userHistory.sessions.slice(-50);
+      }
+      
+      // Отмечаем инциденты если был высокий риск
+      if (this.riskScore > 0.7) {
+        this.userHistory.incidents = (this.userHistory.incidents || 0) + 1;
       }
       
       try {
@@ -1676,6 +2433,22 @@
         localStorage.setItem(`wws_history_${this.userId}`, JSON.stringify(this.userHistory));
       } catch (e) {
         this.log('Trust save error:', e);
+      }
+    }
+    
+    forceReanalysis() {
+      this.log('Forcing reanalysis...');
+      this.riskScore = 0;
+      this.riskFactors = [];
+      this.verdict = 'pending';
+      
+      if (this.behaviorAnalyzer) {
+        const newReport = this.behaviorAnalyzer.getBehaviorReport();
+        this.riskScore = newReport.riskScore || 0;
+        this.riskFactors = this.behaviorAnalyzer.getRiskFactors();
+        this.determineVerdict();
+        this.updateWidget();
+        this.updatePanelContent();
       }
     }
     
@@ -1716,6 +2489,7 @@
   function initializeWWS() {
     if (localStorage.getItem('wws_disabled') === 'true') {
       console.log('🛡️ WWS Premium disabled by user');
+      PROTECTION_LAYER.hide();
       return;
     }
     
@@ -1754,7 +2528,18 @@
       const panel = document.getElementById('wws-widget-panel');
       if (panel) panel.style.display = 'block';
     },
-    onAccessGranted: (callback) => window.addEventListener('wws:access-granted', callback)
+    hidePanel: () => {
+      const panel = document.getElementById('wws-widget-panel');
+      if (panel) panel.style.display = 'none';
+    },
+    blockSession: () => {
+      if (window.wwsAnalyzer) {
+        window.wwsAnalyzer.verdict = 'block';
+        window.wwsAnalyzer.executeVerdict();
+      }
+    },
+    onAccessGranted: (callback) => window.addEventListener('wws:access-granted', callback),
+    onAccessBlocked: (callback) => window.addEventListener('wws:access-blocked', callback)
   };
   
   // Initialize only once
