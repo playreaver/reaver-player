@@ -25,169 +25,31 @@
     }
   })();
   
-  // ==================== PHASE 1: IMMEDIATE PROTECTION LAYER ====================
-  const PROTECTION_LAYER = (function() {
-    const overlay = document.createElement('div');
-    overlay.id = 'wws-protection-layer';
-    overlay.style.cssText = `
-      position: fixed !important;
-      top: 0 !important; left: 0 !important;
-      width: 100vw !important; height: 100vh !important;
-      background: linear-gradient(135deg, #0a0a1a, #121226, #0f0f1f) !important;
-      z-index: 9999999 !important;
-      display: flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-      font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif !important;
-      overflow: hidden;
-    `;
+  // ==================== MAIN SECURITY SYSTEM ====================
+  
+  const CONFIG = {
+    debug: true,
+    version: '4.1',
     
-    // Анимированный фон
-    const animatedBg = document.createElement('div');
-    animatedBg.style.cssText = `
-      position: absolute;
-      top: 0; left: 0; width: 100%; height: 100%;
-      opacity: 0.1;
-      background: 
-        radial-gradient(circle at 20% 30%, rgba(108, 99, 255, 0.15) 0%, transparent 40%),
-        radial-gradient(circle at 80% 70%, rgba(54, 209, 220, 0.15) 0%, transparent 40%);
-      animation: wws-bg-pulse 8s ease-in-out infinite;
-    `;
+    riskThresholds: {
+      LOW: 0.3, MEDIUM: 0.6, HIGH: 0.8
+    },
     
-    overlay.innerHTML = `
-      <div style="text-align: center; z-index: 10; position: relative;">
-        <!-- Главная иконка с анимацией -->
-        <div style="margin-bottom: 40px; position: relative;">
-          <i class="fas fa-shield-alt" style="font-size: 72px; background: linear-gradient(135deg, #6C63FF, #36D1DC); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; display: inline-block; animation: wws-shield-glow 3s ease-in-out infinite;"></i>
-          <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 100px; height: 100px; border: 2px solid rgba(108, 99, 255, 0.3); border-radius: 50%; animation: wws-ripple 2s ease-out infinite;"></div>
-          <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 120px; height: 120px; border: 2px solid rgba(108, 99, 255, 0.1); border-radius: 50%; animation: wws-ripple 2s ease-out infinite; animation-delay: 0.5s;"></div>
-        </div>
-        
-        <!-- Текст -->
-        <h1 style="color: white; margin: 0 0 20px; font-size: 32px; font-weight: 700; letter-spacing: 1px;">WWS PROTECT</h1>
-        <p id="wws-status-text" style="color: #a0a0c0; font-size: 18px; margin: 0 0 40px; font-weight: 300;">Initializing protection system...</p>
-        
-        <!-- Прогресс бар -->
-        <div style="width: 320px; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; margin: 0 auto 30px; overflow: hidden; box-shadow: 0 0 20px rgba(108, 99, 255, 0.2);">
-          <div id="wws-progress-bar" style="height: 100%; width: 0%; background: linear-gradient(90deg, #6C63FF, #36D1DC, #6C63FF); background-size: 200% 100%; transition: width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); animation: wws-gradient-flow 2s ease-in-out infinite;"></div>
-        </div>
-        
-        <!-- Информация -->
-        <div style="display: flex; justify-content: center; gap: 40px; margin-bottom: 40px;">
-          <div style="text-align: center;">
-            <div style="color: #6C63FF; font-size: 24px; font-weight: bold;" id="wws-risk-display">0%</div>
-            <div style="color: #6c6c8c; font-size: 12px;">RISK LEVEL</div>
-          </div>
-          <div style="text-align: center;">
-            <div style="color: #36D1DC; font-size: 24px; font-weight: bold;"><i class="fas fa-fingerprint" style="animation: wws-spin 4s linear infinite;"></i></div>
-            <div style="color: #6c6c8c; font-size: 12px;">DEVICE SCAN</div>
-          </div>
-          <div style="text-align: center;">
-            <div style="color: #a78bfa; font-size: 24px; font-weight: bold;"><i class="fas fa-brain" style="animation: wws-pulse 2s ease-in-out infinite;"></i></div>
-            <div style="color: #6c6c8c; font-size: 12px;">BEHAVIORAL AI</div>
-          </div>
-        </div>
-        
-        <!-- Статус иконки -->
-        <div id="wws-status-icon" style="color: #fbbf24; font-size: 14px; margin-top: 20px;">
-          <i class="fas fa-cog fa-spin"></i> Analyzing...
-        </div>
-        
-        <!-- Powered by -->
-        <div style="margin-top: 60px; color: #6c6c8c; font-size: 12px;">
-          Powered by <a href="https://reaver.is-a.dev/" target="_blank" style="color: #6C63FF; text-decoration: none; font-weight: 600;">Wandering Wizardry Studios</a>
-        </div>
-      </div>
-      
-      <!-- Стили анимации -->
-      <style>
-        @keyframes wws-shield-glow {
-          0%, 100% { filter: drop-shadow(0 0 15px rgba(108, 99, 255, 0.5)); transform: scale(1); }
-          50% { filter: drop-shadow(0 0 25px rgba(108, 99, 255, 0.8)); transform: scale(1.05); }
-        }
-        
-        @keyframes wws-ripple {
-          0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.8; }
-          100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
-        }
-        
-        @keyframes wws-bg-pulse {
-          0%, 100% { transform: scale(1) rotate(0deg); }
-          50% { transform: scale(1.1) rotate(180deg); }
-        }
-        
-        @keyframes wws-gradient-flow {
-          0% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-          100% { background-position: 0% 50%; }
-        }
-        
-        @keyframes wws-spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-        
-        @keyframes wws-pulse {
-          0%, 100% { opacity: 0.7; transform: scale(0.9); }
-          50% { opacity: 1; transform: scale(1.1); }
-        }
-      </style>
-    `;
+    weights: {
+      behavior: 0.40,
+      technical: 0.30,
+      reputation: 0.20,
+      network: 0.10
+    },
     
-    overlay.appendChild(animatedBg);
-    
-    let originalBodyContent = null;
-    
-    function show() {
-      if (!document.body) return;
-      
-      if (!originalBodyContent) {
-        originalBodyContent = document.body.innerHTML;
-      }
-      
-      document.body.appendChild(overlay);
-      
-      const children = Array.from(document.body.children);
-      children.forEach(child => {
-        if (child.id !== 'wws-protection-layer') {
-          child.style.display = 'none';
-          child.setAttribute('data-wws-hidden', 'true');
-        }
-      });
+    memory: {
+      session: 30 * 60 * 1000,
+      trustedDevice: 7 * 24 * 60 * 60 * 1000,
+      suspiciousActivity: 2 * 60 * 60 * 1000
     }
-    
-    function hide() {
-      const hiddenElements = document.querySelectorAll('[data-wws-hidden="true"]');
-      hiddenElements.forEach(el => {
-        el.style.display = '';
-        el.removeAttribute('data-wws-hidden');
-      });
-      
-      if (overlay.parentNode) {
-        overlay.parentNode.removeChild(overlay);
-      }
-    }
-    
-    function updateStatus(text, progress, risk) {
-      const statusEl = overlay.querySelector('#wws-status-text');
-      const progressBar = overlay.querySelector('#wws-progress-bar');
-      const riskDisplay = overlay.querySelector('#wws-risk-display');
-      const statusIcon = overlay.querySelector('#wws-status-icon');
-      
-      if (statusEl) statusEl.textContent = text;
-      if (progressBar) progressBar.style.width = progress + '%';
-      if (riskDisplay) riskDisplay.textContent = (risk || 0) + '%';
-      
-      if (progress === 100) {
-        statusIcon.innerHTML = '<i class="fas fa-check-circle" style="color: #10b981;"></i> Complete';
-      }
-    }
-    
-    if (document.body) show();
-    else document.addEventListener('DOMContentLoaded', show);
-    
-    return { show, hide, updateStatus };
-  })();
+  };
+  
+  window.WWS = null;
   
   // ==================== ADVANCED BEHAVIORAL ANALYZER ====================
   
@@ -357,35 +219,8 @@
     }
   }
   
-  // ==================== MAIN SECURITY SYSTEM ====================
-  
-  const CONFIG = {
-    debug: true,
-    version: '4.1',
-    
-    riskThresholds: {
-      LOW: 0.3, MEDIUM: 0.6, HIGH: 0.8
-    },
-    
-    weights: {
-      behavior: 0.40,
-      technical: 0.30,
-      reputation: 0.20,
-      network: 0.10
-    },
-    
-    memory: {
-      session: 30 * 60 * 1000,
-      trustedDevice: 7 * 24 * 60 * 60 * 1000,
-      suspiciousActivity: 2 * 60 * 60 * 1000
-    }
-  };
-  
-  window.WWS = null;
-  
   class WWSRiskAnalyzer {
     constructor() {
-      // Инициализация свойств
       this.userId = this.generateUserId();
       this.sessionId = this.generateSessionId();
       this.riskScore = 0;
@@ -399,7 +234,9 @@
       this.widget = null;
       this.isRunning = false;
       this.userHistory = null;
+      this.currentPanel = 'overview'; // 'overview', 'behavior', 'technical', 'risks'
       
+      this.loadUserHistory();
       this.log('System initialized v' + CONFIG.version);
       
       // Проверяем, не верифицирована ли уже сессия
@@ -409,50 +246,36 @@
         this.riskScore = 0;
         this.behaviorAnalyzer = new AdvancedBehaviorAnalyzer();
         this.createWidget();
-        PROTECTION_LAYER.hide();
+        this.analyzeRisk(); // Запускаем анализ в фоне
         return;
       }
       
-      // Если сессия новая - запускаем анализ
+      // Если сессия новая - запускаем анализ в фоне
       this.startAnalysis();
+      this.createWidget();
     }
     
     async startAnalysis() {
       if (this.isRunning) return;
       this.isRunning = true;
       
-      PROTECTION_LAYER.updateStatus('Collecting behavioral data...', 20, 0);
-      
       try {
         this.behaviorAnalyzer = new AdvancedBehaviorAnalyzer();
         
-        await new Promise(resolve => setTimeout(resolve, 800));
+        await new Promise(resolve => setTimeout(resolve, 1000));
         
-        PROTECTION_LAYER.updateStatus('Analyzing device fingerprint...', 40, 15);
         this.collectTechnicalData();
-        
-        PROTECTION_LAYER.updateStatus('Scanning network patterns...', 60, 25);
         this.collectNetworkData();
-        
-        PROTECTION_LAYER.updateStatus('Running behavioral AI...', 80, 35);
         this.collectBehaviorData();
-        
-        PROTECTION_LAYER.updateStatus('Calculating risk score...', 90, 45);
         this.analyzeRisk();
         
-        PROTECTION_LAYER.updateStatus('Applying security policy...', 95, this.riskScore * 100);
-        
-        setTimeout(() => {
-          PROTECTION_LAYER.hide();
-          this.executeVerdict();
-        }, 600);
+        this.executeVerdict();
         
       } catch (error) {
         this.log('Analysis error:', error);
         this.verdict = 'allow_with_logging';
         this.riskScore = 0.5;
-        PROTECTION_LAYER.hide();
-        this.createWidget();
+        this.updateWidget();
       }
     }
     
@@ -512,18 +335,61 @@
       this.widget = document.createElement('div');
       this.widget.id = 'wws-widget';
       this.widget.innerHTML = `
-        <div class="wws-widget-icon" id="wws-widget-icon" title="Click to show protection screen">
+        <div class="wws-widget-icon" id="wws-widget-icon" title="WWS Protection">
           <i class="fas fa-shield-alt"></i>
           <div class="wws-risk-badge" id="wws-risk-badge">0%</div>
+        </div>
+        <div class="wws-widget-panel" id="wws-widget-panel">
+          <div class="wws-panel-header">
+            <div class="wws-header-content">
+              <div class="wws-shield-icon">
+                <i class="fas fa-shield-alt"></i>
+              </div>
+              <div class="wws-header-text">
+                <div class="wws-title">WWS PROTECT</div>
+                <div class="wws-subtitle">v${CONFIG.version} • ${this.sessionId.substring(0, 8)}...</div>
+              </div>
+            </div>
+            <button class="wws-close-panel" id="wws-close-panel">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          
+          <div class="wws-panel-tabs" id="wws-panel-tabs">
+            <button class="wws-tab active" data-tab="overview">
+              <i class="fas fa-home"></i>
+              <span>Overview</span>
+            </button>
+            <button class="wws-tab" data-tab="behavior">
+              <i class="fas fa-brain"></i>
+              <span>Behavior</span>
+            </button>
+            <button class="wws-tab" data-tab="technical">
+              <i class="fas fa-microchip"></i>
+              <span>Technical</span>
+            </button>
+            <button class="wws-tab" data-tab="risks">
+              <i class="fas fa-exclamation-triangle"></i>
+              <span>Risks</span>
+            </button>
+          </div>
+          
+          <div class="wws-panel-content" id="wws-panel-content">
+            <!-- Content will be filled dynamically -->
+          </div>
+          
+          <div class="wws-panel-footer">
+            <a href="https://reaver.is-a.dev/" target="_blank" class="wws-powered-by">
+              <i class="fas fa-wand-sparkles"></i> Wandering Wizardry Studios
+            </a>
+          </div>
         </div>
       `;
       
       document.body.appendChild(this.widget);
       this.addWidgetStyles();
       this.initWidgetHandlers();
-      
-      // Обновляем виджет после создания
-      this.updateWidget();
+      this.updatePanelContent();
     }
     
     addWidgetStyles() {
@@ -534,35 +400,34 @@
           bottom: 20px;
           left: 20px;
           z-index: 999998;
-          font-family: 'Segoe UI', Roboto, sans-serif;
-          cursor: pointer;
+          font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
         }
         
         .wws-widget-icon {
-          width: 65px;
-          height: 65px;
+          width: 50px;
+          height: 50px;
           background: linear-gradient(135deg, #6C63FF, #36D1DC);
-          border-radius: 50%;
+          border-radius: 12px;
           display: flex;
           align-items: center;
           justify-content: center;
           cursor: pointer;
-          box-shadow: 0 4px 25px rgba(108, 99, 255, 0.4);
-          transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+          box-shadow: 0 4px 20px rgba(108, 99, 255, 0.3);
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
           position: relative;
           border: 2px solid rgba(255, 255, 255, 0.3);
           backdrop-filter: blur(10px);
         }
         
         .wws-widget-icon:hover {
-          transform: scale(1.1) rotate(5deg);
-          box-shadow: 0 8px 35px rgba(108, 99, 255, 0.6);
+          transform: scale(1.05) rotate(5deg);
+          box-shadow: 0 6px 25px rgba(108, 99, 255, 0.5);
         }
         
         .wws-widget-icon i {
-          font-size: 28px;
+          font-size: 22px;
           color: white;
-          filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+          filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
         }
         
         .wws-risk-badge {
@@ -571,14 +436,14 @@
           right: -8px;
           background: linear-gradient(135deg, #ef4444, #dc2626);
           color: white;
-          font-size: 11px;
-          font-weight: 800;
-          padding: 4px 8px;
-          border-radius: 12px;
-          min-width: 24px;
+          font-size: 10px;
+          font-weight: 700;
+          padding: 3px 6px;
+          border-radius: 10px;
+          min-width: 20px;
           text-align: center;
-          border: 2px solid #1a1a2e;
-          box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+          border: 2px solid rgba(255, 255, 255, 0.9);
+          box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);
           pointer-events: none;
           animation: wws-badge-pulse 2s ease-in-out infinite;
         }
@@ -587,6 +452,435 @@
           0%, 100% { transform: scale(1); }
           50% { transform: scale(1.1); }
         }
+        
+        .wws-widget-panel {
+          position: absolute;
+          bottom: 60px;
+          left: 0;
+          width: 320px;
+          background: rgba(18, 18, 26, 0.98);
+          backdrop-filter: blur(15px);
+          border-radius: 16px;
+          border: 1px solid rgba(108, 99, 255, 0.3);
+          box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
+          display: none;
+          overflow: hidden;
+          z-index: 999999;
+          max-height: 500px;
+          transition: all 0.3s ease;
+        }
+        
+        .wws-panel-header {
+          padding: 16px;
+          background: linear-gradient(135deg, rgba(108, 99, 255, 0.15), rgba(54, 209, 220, 0.15));
+          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+        
+        .wws-header-content {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+        
+        .wws-shield-icon {
+          width: 40px;
+          height: 40px;
+          background: linear-gradient(135deg, #6C63FF, #36D1DC);
+          border-radius: 10px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        
+        .wws-shield-icon i {
+          font-size: 20px;
+          color: white;
+        }
+        
+        .wws-header-text {
+          flex: 1;
+        }
+        
+        .wws-title {
+          color: white;
+          font-size: 16px;
+          font-weight: 700;
+          line-height: 1.2;
+        }
+        
+        .wws-subtitle {
+          color: #94a3b8;
+          font-size: 11px;
+          margin-top: 2px;
+        }
+        
+        .wws-close-panel {
+          width: 28px;
+          height: 28px;
+          background: rgba(255, 255, 255, 0.1);
+          border: none;
+          border-radius: 8px;
+          color: #94a3b8;
+          font-size: 14px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.2s;
+        }
+        
+        .wws-close-panel:hover {
+          background: rgba(239, 68, 68, 0.2);
+          color: #ef4444;
+          transform: rotate(90deg);
+        }
+        
+        .wws-panel-tabs {
+          display: flex;
+          padding: 8px;
+          background: rgba(255, 255, 255, 0.05);
+          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .wws-tab {
+          flex: 1;
+          padding: 10px 8px;
+          background: none;
+          border: none;
+          color: #94a3b8;
+          font-size: 11px;
+          font-weight: 600;
+          cursor: pointer;
+          border-radius: 8px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 4px;
+          transition: all 0.2s;
+        }
+        
+        .wws-tab i {
+          font-size: 14px;
+        }
+        
+        .wws-tab span {
+          font-size: 10px;
+        }
+        
+        .wws-tab:hover {
+          color: white;
+          background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .wws-tab.active {
+          color: #6C63FF;
+          background: rgba(108, 99, 255, 0.15);
+        }
+        
+        .wws-panel-content {
+          padding: 16px;
+          overflow-y: auto;
+          max-height: 380px;
+        }
+        
+        /* Scrollbar styling */
+        .wws-panel-content::-webkit-scrollbar {
+          width: 4px;
+        }
+        
+        .wws-panel-content::-webkit-scrollbar-track {
+          background: rgba(255, 255, 255, 0.05);
+          border-radius: 2px;
+        }
+        
+        .wws-panel-content::-webkit-scrollbar-thumb {
+          background: #6C63FF;
+          border-radius: 2px;
+        }
+        
+        .wws-panel-footer {
+          padding: 12px 16px;
+          border-top: 1px solid rgba(255, 255, 255, 0.1);
+          text-align: center;
+        }
+        
+        .wws-powered-by {
+          color: #94a3b8;
+          font-size: 11px;
+          text-decoration: none;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          transition: color 0.2s;
+        }
+        
+        .wws-powered-by:hover {
+          color: #6C63FF;
+        }
+        
+        .wws-powered-by i {
+          font-size: 12px;
+        }
+        
+        /* Content styles */
+        .wws-section {
+          margin-bottom: 20px;
+        }
+        
+        .wws-section:last-child {
+          margin-bottom: 0;
+        }
+        
+        .wws-section-title {
+          color: white;
+          font-size: 13px;
+          font-weight: 600;
+          margin-bottom: 12px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+        
+        .wws-section-title i {
+          color: #6C63FF;
+          font-size: 12px;
+        }
+        
+        .wws-status-card {
+          background: rgba(255, 255, 255, 0.05);
+          border-radius: 12px;
+          padding: 16px;
+          margin-bottom: 12px;
+        }
+        
+        .wws-status-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 10px;
+        }
+        
+        .wws-status-row:last-child {
+          margin-bottom: 0;
+        }
+        
+        .wws-status-label {
+          color: #94a3b8;
+          font-size: 12px;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+        
+        .wws-status-label i {
+          font-size: 11px;
+          width: 14px;
+        }
+        
+        .wws-status-value {
+          color: white;
+          font-size: 12px;
+          font-weight: 600;
+        }
+        
+        .wws-risk-meter {
+          width: 100%;
+          height: 6px;
+          background: rgba(255, 255, 255, 0.1);
+          border-radius: 3px;
+          margin-top: 8px;
+          overflow: hidden;
+        }
+        
+        .wws-risk-fill {
+          height: 100%;
+          background: #10b981;
+          width: 0%;
+          transition: width 0.5s ease;
+          border-radius: 3px;
+        }
+        
+        .wws-stats-grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 10px;
+          margin-bottom: 12px;
+        }
+        
+        .wws-stat-card {
+          background: rgba(255, 255, 255, 0.05);
+          border-radius: 10px;
+          padding: 12px;
+          text-align: center;
+          border-left: 3px solid #6C63FF;
+        }
+        
+        .wws-stat-card:nth-child(2) {
+          border-left-color: #36D1DC;
+        }
+        
+        .wws-stat-card:nth-child(3) {
+          border-left-color: #10b981;
+        }
+        
+        .wws-stat-card:nth-child(4) {
+          border-left-color: #f59e0b;
+        }
+        
+        .wws-stat-value {
+          color: white;
+          font-size: 18px;
+          font-weight: 700;
+          margin-bottom: 4px;
+        }
+        
+        .wws-stat-label {
+          color: #94a3b8;
+          font-size: 10px;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+        
+        .wws-factor-item {
+          padding: 10px 12px;
+          margin-bottom: 8px;
+          background: rgba(239, 68, 68, 0.1);
+          border-left: 3px solid #ef4444;
+          border-radius: 8px;
+          font-size: 11px;
+          color: #fca5a5;
+        }
+        
+        .wws-factor-item.low {
+          background: rgba(245, 158, 11, 0.1);
+          border-left-color: #f59e0b;
+          color: #fbbf24;
+        }
+        
+        .wws-factor-item.medium {
+          background: rgba(245, 158, 11, 0.1);
+          border-left-color: #f59e0b;
+          color: #fbbf24;
+        }
+        
+        .wws-factor-item.high {
+          background: rgba(239, 68, 68, 0.15);
+          border-left-color: #ef4444;
+          color: #fca5a5;
+        }
+        
+        .wws-no-risks {
+          text-align: center;
+          color: #94a3b8;
+          font-size: 11px;
+          padding: 20px;
+          background: rgba(255, 255, 255, 0.05);
+          border-radius: 8px;
+        }
+        
+        .wws-no-risks i {
+          font-size: 14px;
+          margin-bottom: 6px;
+          display: block;
+          color: #10b981;
+        }
+        
+        .wws-tech-item {
+          padding: 10px 0;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .wws-tech-item:last-child {
+          border-bottom: none;
+        }
+        
+        .wws-tech-label {
+          color: #94a3b8;
+          font-size: 11px;
+          margin-bottom: 4px;
+        }
+        
+        .wws-tech-value {
+          color: white;
+          font-size: 11px;
+          font-weight: 500;
+          word-break: break-all;
+        }
+        
+        .wws-action-btn {
+          width: 100%;
+          padding: 12px;
+          background: linear-gradient(135deg, #6C63FF, #36D1DC);
+          color: white;
+          border: none;
+          border-radius: 10px;
+          font-size: 12px;
+          font-weight: 600;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          transition: all 0.3s;
+          margin-top: 12px;
+        }
+        
+        .wws-action-btn:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 15px rgba(108, 99, 255, 0.4);
+        }
+        
+        .wws-verdict-badge {
+          display: inline-block;
+          padding: 4px 10px;
+          background: #10b981;
+          color: white;
+          font-size: 10px;
+          font-weight: 700;
+          border-radius: 12px;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+        
+        .wws-verdict-badge.warning {
+          background: #f59e0b;
+        }
+        
+        .wws-verdict-badge.danger {
+          background: #ef4444;
+        }
+        
+        .wws-loader {
+          text-align: center;
+          padding: 30px 0;
+        }
+        
+        .wws-loader i {
+          font-size: 24px;
+          color: #6C63FF;
+          animation: wws-spin 1s linear infinite;
+        }
+        
+        .wws-loader-text {
+          color: #94a3b8;
+          font-size: 12px;
+          margin-top: 10px;
+        }
+        
+        @keyframes wws-spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        
+        @media (max-width: 768px) {
+          .wws-widget-panel {
+            width: 300px;
+          }
+        }
       `;
       
       document.head.appendChild(style);
@@ -594,22 +888,49 @@
     
     initWidgetHandlers() {
       const icon = document.getElementById('wws-widget-icon');
+      const panel = document.getElementById('wws-widget-panel');
+      const closeBtn = document.getElementById('wws-close-panel');
+      const tabs = document.querySelectorAll('.wws-tab');
       
+      // Открытие/закрытие панели
       icon.addEventListener('click', (e) => {
-        e.stopImmediatePropagation();
-        this.showProtectionScreen();
+        e.stopPropagation();
+        panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
       });
       
-      // Обновление виджета каждые 3 секунды
-      setInterval(() => {
-        if (this.behaviorAnalyzer) {
-          this.updateWidget();
+      closeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        panel.style.display = 'none';
+      });
+      
+      // Закрытие при клике вне панели
+      document.addEventListener('click', (e) => {
+        if (panel.style.display === 'block' && !panel.contains(e.target) && !icon.contains(e.target)) {
+          panel.style.display = 'none';
         }
-      }, 3000);
+      });
+      
+      // Переключение вкладок
+      tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          tabs.forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          this.currentPanel = tab.dataset.tab;
+          this.updatePanelContent();
+        });
+      });
+      
+      // Обновление данных каждые 5 секунд
+      setInterval(() => {
+        if (panel.style.display === 'block') {
+          this.updatePanelContent();
+        }
+        this.updateWidget();
+      }, 5000);
     }
     
     updateWidget() {
-      if (!this.widget || !this.behaviorAnalyzer) return;
+      if (!this.widget) return;
       
       const riskValue = Math.round(this.riskScore * 100);
       const riskBadge = document.getElementById('wws-risk-badge');
@@ -624,184 +945,308 @@
       }
     }
     
-    showProtectionScreen() {
-      const overlay = document.createElement('div');
-      overlay.id = 'wws-protection-screen';
-      overlay.style.cssText = `
-        position: fixed !important;
-        top: 0 !important; left: 0 !important;
-        width: 100vw !important; height: 100vh !important;
-        background: linear-gradient(135deg, #0a0a1a, #121226, #0f0f1f) !important;
-        z-index: 9999999 !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif !important;
-        overflow: hidden;
+    updatePanelContent() {
+      const content = document.getElementById('wws-panel-content');
+      if (!content) return;
+      
+      switch (this.currentPanel) {
+        case 'overview':
+          this.renderOverviewPanel(content);
+          break;
+        case 'behavior':
+          this.renderBehaviorPanel(content);
+          break;
+        case 'technical':
+          this.renderTechnicalPanel(content);
+          break;
+        case 'risks':
+          this.renderRisksPanel(content);
+          break;
+      }
+    }
+    
+    renderOverviewPanel(container) {
+      const report = this.behaviorAnalyzer ? this.behaviorAnalyzer.getBehaviorReport() : {};
+      const verdictClass = this.verdict === 'allow' ? '' : this.verdict.includes('captcha') ? 'warning' : 'danger';
+      
+      container.innerHTML = `
+        <div class="wws-section">
+          <div class="wws-status-card">
+            <div class="wws-status-row">
+              <div class="wws-status-label">
+                <i class="fas fa-shield-alt"></i>
+                Status
+              </div>
+              <div class="wws-status-value">
+                <span class="wws-verdict-badge ${verdictClass}">${this.verdict.toUpperCase().replace(/_/g, ' ')}</span>
+              </div>
+            </div>
+            
+            <div class="wws-status-row">
+              <div class="wws-status-label">
+                <i class="fas fa-chart-line"></i>
+                Risk Level
+              </div>
+              <div class="wws-status-value">${Math.round(this.riskScore * 100)}%</div>
+            </div>
+            
+            <div class="wws-risk-meter">
+              <div class="wws-risk-fill" style="width: ${Math.round(this.riskScore * 100)}%; background: ${this.riskScore > 0.6 ? '#ef4444' : this.riskScore > 0.3 ? '#f59e0b' : '#10b981'}"></div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="wws-section">
+          <div class="wws-section-title">
+            <i class="fas fa-brain"></i>
+            Behavioral Stats
+          </div>
+          
+          <div class="wws-stats-grid">
+            <div class="wws-stat-card">
+              <div class="wws-stat-value">${report.mouseMovements || 0}</div>
+              <div class="wws-stat-label">Movements</div>
+            </div>
+            
+            <div class="wws-stat-card">
+              <div class="wws-stat-value">${this.behaviorAnalyzer?.clickIntervals.length || 0}</div>
+              <div class="wws-stat-label">Clicks</div>
+            </div>
+            
+            <div class="wws-stat-card">
+              <div class="wws-stat-value">${report.isBotLike ? 'YES' : 'NO'}</div>
+              <div class="wws-stat-label">Bot Detected</div>
+            </div>
+            
+            <div class="wws-stat-card">
+              <div class="wws-stat-value">${report.avgClickInterval ? Math.round(report.avgClickInterval) : 0}ms</div>
+              <div class="wws-stat-label">Avg Speed</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="wws-section">
+          <div class="wws-section-title">
+            <i class="fas fa-info-circle"></i>
+            Session Info
+          </div>
+          
+          <div class="wws-status-card">
+            <div class="wws-status-row">
+              <div class="wws-status-label">
+                <i class="fas fa-user"></i>
+                User ID
+              </div>
+              <div class="wws-status-value">${this.userId.substring(0, 10)}...</div>
+            </div>
+            
+            <div class="wws-status-row">
+              <div class="wws-status-label">
+                <i class="fas fa-id-card"></i>
+                Session
+              </div>
+              <div class="wws-status-value">${this.sessionId.substring(0, 10)}...</div>
+            </div>
+            
+            <div class="wws-status-row">
+              <div class="wws-status-label">
+                <i class="fas fa-fingerprint"></i>
+                Device
+              </div>
+              <div class="wws-status-value">${this.generateDeviceFingerprint().substring(0, 10)}...</div>
+            </div>
+          </div>
+        </div>
+        
+        <button class="wws-action-btn" id="wws-refresh-btn">
+          <i class="fas fa-sync-alt"></i>
+          Refresh Analysis
+        </button>
       `;
       
-      const animatedBg = document.createElement('div');
-      animatedBg.style.cssText = `
-        position: absolute;
-        top: 0; left: 0; width: 100%; height: 100%;
-        opacity: 0.1;
-        background: 
-          radial-gradient(circle at 20% 30%, rgba(108, 99, 255, 0.15) 0%, transparent 40%),
-          radial-gradient(circle at 80% 70%, rgba(54, 209, 220, 0.15) 0%, transparent 40%);
-        animation: wws-bg-pulse 8s ease-in-out infinite;
-      `;
-      
+      // Добавляем обработчик кнопки обновления
+      const refreshBtn = container.querySelector('#wws-refresh-btn');
+      if (refreshBtn) {
+        refreshBtn.addEventListener('click', () => {
+          this.collectAllData();
+          this.analyzeRisk();
+          this.updateWidget();
+          this.updatePanelContent();
+        });
+      }
+    }
+    
+    renderBehaviorPanel(container) {
       const report = this.behaviorAnalyzer ? this.behaviorAnalyzer.getBehaviorReport() : {};
       
-      overlay.innerHTML = `
-        <div style="text-align: center; z-index: 10; position: relative; max-width: 600px; padding: 40px;">
-          <!-- Заголовок -->
-          <div style="display: flex; align-items: center; justify-content: center; gap: 20px; margin-bottom: 30px;">
-            <div style="position: relative;">
-              <i class="fas fa-shield-alt" style="font-size: 72px; background: linear-gradient(135deg, #6C63FF, #36D1DC); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;"></i>
-              <div class="wws-risk-badge" style="position: absolute; top: -15px; right: -15px; background: ${this.riskScore > 0.6 ? '#ef4444' : this.riskScore > 0.3 ? '#f59e0b' : '#10b981'};">${Math.round(this.riskScore * 100)}%</div>
-            </div>
-            <div style="text-align: left;">
-              <h1 style="color: white; margin: 0 0 10px; font-size: 32px; font-weight: 700;">WWS PROTECT</h1>
-              <p style="color: #a0a0c0; margin: 0; font-size: 16px;">WWS Gateway v${CONFIG.version} • Session: ${this.sessionId.substring(0, 12)}...</p>
-            </div>
+      container.innerHTML = `
+        <div class="wws-section">
+          <div class="wws-section-title">
+            <i class="fas fa-mouse"></i>
+            Mouse Activity
           </div>
           
-          <!-- Статус -->
-          <div style="background: rgba(255, 255, 255, 0.05); border-radius: 15px; padding: 25px; margin-bottom: 30px; border: 1px solid rgba(255, 255, 255, 0.1);">
-            <h3 style="color: white; margin-top: 0; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
-              <i class="fas fa-chart-line"></i> Security Status
-            </h3>
-            
-            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 20px;">
-              <div style="text-align: center; padding: 15px; background: rgba(0, 0, 0, 0.3); border-radius: 10px;">
-                <div style="color: #94a3b8; font-size: 12px; margin-bottom: 5px;">VERDICT</div>
-                <div style="color: ${this.verdict === 'allow' ? '#10b981' : this.verdict === 'simple_captcha' ? '#f59e0b' : '#ef4444'}; font-weight: bold; font-size: 18px;">
-                  ${this.verdict.toUpperCase().replace(/_/g, ' ')}
-                </div>
-              </div>
-              
-              <div style="text-align: center; padding: 15px; background: rgba(0, 0, 0, 0.3); border-radius: 10px;">
-                <div style="color: #94a3b8; font-size: 12px; margin-bottom: 5px;">USER ID</div>
-                <div style="color: white; font-weight: bold; font-size: 14px; font-family: monospace;">${this.userId.substring(0, 12)}...</div>
-              </div>
+          <div class="wws-stats-grid">
+            <div class="wws-stat-card">
+              <div class="wws-stat-value">${report.mouseMovements || 0}</div>
+              <div class="wws-stat-label">Total Moves</div>
             </div>
             
-            <!-- Прогресс бар риска -->
-            <div style="margin-bottom: 15px;">
-              <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                <span style="color: #94a3b8; font-size: 14px;">Risk Level</span>
-                <span style="color: white; font-weight: bold;">${Math.round(this.riskScore * 100)}%</span>
-              </div>
-              <div style="height: 8px; background: rgba(255, 255, 255, 0.1); border-radius: 4px; overflow: hidden;">
-                <div style="height: 100%; width: ${Math.round(this.riskScore * 100)}%; background: linear-gradient(90deg, ${this.riskScore > 0.6 ? '#ef4444' : this.riskScore > 0.3 ? '#f59e0b' : '#10b981'}, ${this.riskScore > 0.6 ? '#dc2626' : this.riskScore > 0.3 ? '#fbbf24' : '#34d399'});"></div>
-              </div>
+            <div class="wws-stat-card">
+              <div class="wws-stat-value">${report.pathComplexity ? (report.pathComplexity * 100).toFixed(0) : 0}%</div>
+              <div class="wws-stat-label">Complexity</div>
             </div>
           </div>
+        </div>
+        
+        <div class="wws-section">
+          <div class="wws-section-title">
+            <i class="fas fa-hand-pointer"></i>
+            Click Analysis
+          </div>
           
-          <!-- Behavioral Data -->
-          <div style="background: rgba(255, 255, 255, 0.05); border-radius: 15px; padding: 25px; margin-bottom: 30px; border: 1px solid rgba(255, 255, 255, 0.1);">
-            <h3 style="color: white; margin-top: 0; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
-              <i class="fas fa-brain"></i> Behavioral Analysis
-            </h3>
+          <div class="wws-stats-grid">
+            <div class="wws-stat-card">
+              <div class="wws-stat-value">${this.behaviorAnalyzer?.clickIntervals.length || 0}</div>
+              <div class="wws-stat-label">Total Clicks</div>
+            </div>
             
-            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
-              <div style="text-align: center; padding: 15px; background: rgba(108, 99, 255, 0.1); border-radius: 10px; border-left: 4px solid #6C63FF;">
-                <div style="color: #6C63FF; font-size: 24px; font-weight: bold;">${report.mouseMovements || 0}</div>
-                <div style="color: #94a3b8; font-size: 12px;">Mouse Movements</div>
-              </div>
-              
-              <div style="text-align: center; padding: 15px; background: rgba(54, 209, 220, 0.1); border-radius: 10px; border-left: 4px solid #36D1DC;">
-                <div style="color: #36D1DC; font-size: 24px; font-weight: bold;">${report.avgClickInterval ? Math.round(report.avgClickInterval) : 0}</div>
-                <div style="color: #94a3b8; font-size: 12px;">Avg Click Speed</div>
-              </div>
-              
-              <div style="text-align: center; padding: 15px; background: rgba(16, 185, 129, 0.1); border-radius: 10px; border-left: 4px solid #10b981;">
-                <div style="color: #10b981; font-size: 24px; font-weight: bold;">${report.isBotLike ? 'YES' : 'NO'}</div>
-                <div style="color: #94a3b8; font-size: 12px;">Bot Detection</div>
-              </div>
-              
-              <div style="text-align: center; padding: 15px; background: rgba(245, 158, 11, 0.1); border-radius: 10px; border-left: 4px solid #f59e0b;">
-                <div style="color: #f59e0b; font-size: 24px; font-weight: bold;">${this.behaviorAnalyzer.clickIntervals.length || 0}</div>
-                <div style="color: #94a3b8; font-size: 12px;">Total Clicks</div>
-              </div>
+            <div class="wws-stat-card">
+              <div class="wws-stat-value">${report.avgClickInterval ? Math.round(report.avgClickInterval) : 0}ms</div>
+              <div class="wws-stat-label">Avg Interval</div>
             </div>
           </div>
-          
-          <!-- Risk Factors -->
-          ${this.riskFactors.length > 0 ? `
-            <div style="background: rgba(255, 255, 255, 0.05); border-radius: 15px; padding: 25px; margin-bottom: 30px; border: 1px solid rgba(255, 255, 255, 0.1);">
-              <h3 style="color: white; margin-top: 0; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
-                <i class="fas fa-exclamation-triangle"></i> Risk Factors (${this.riskFactors.length})
-              </h3>
-              
-              <div style="max-height: 200px; overflow-y: auto;">
-                ${this.riskFactors.slice(0, 5).map(factor => `
-                  <div style="padding: 12px; margin-bottom: 8px; background: ${factor.level === 'critical' || factor.level === 'high' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(245, 158, 11, 0.1)'}; border-left: 4px solid ${factor.level === 'critical' || factor.level === 'high' ? '#ef4444' : '#f59e0b'}; border-radius: 8px;">
-                    <div style="color: white; font-weight: 500; margin-bottom: 5px;">
-                      <i class="fas fa-${this.getIconForFactor(factor.level)}" style="margin-right: 8px;"></i>
-                      ${factor.message}
-                    </div>
-                    <div style="color: #94a3b8; font-size: 12px; display: flex; justify-content: space-between;">
-                      <span>${factor.type}</span>
-                      <span style="background: ${factor.level === 'critical' || factor.level === 'high' ? '#ef4444' : factor.level === 'medium' ? '#f59e0b' : '#10b981'}; color: white; padding: 2px 8px; border-radius: 10px; font-size: 10px;">${factor.level}</span>
-                    </div>
-                  </div>
-                `).join('')}
-              </div>
-            </div>
-          ` : ''}
-          
-          <!-- Кнопки -->
-          <div style="display: flex; gap: 15px;">
-            <button id="wws-close-screen" style="flex: 1; padding: 15px; background: rgba(255, 255, 255, 0.1); color: white; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 10px; font-weight: 600; cursor: pointer; font-size: 16px; transition: all 0.3s;">
-              <i class="fas fa-times"></i> Close
-            </button>
-            <button id="wws-refresh-scan" style="flex: 1; padding: 15px; background: linear-gradient(135deg, #6C63FF, #36D1DC); color: white; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; font-size: 16px; transition: all 0.3s;">
-              <i class="fas fa-sync-alt"></i> Rescan
-            </button>
+        </div>
+        
+        <div class="wws-section">
+          <div class="wws-section-title">
+            <i class="fas fa-robot"></i>
+            Bot Detection
           </div>
           
-          <!-- Footer -->
-          <div style="margin-top: 30px; color: #64748b; font-size: 12px;">
-            <i class="fas fa-shield-alt"></i> Powered by <a href="https://reaver.is-a.dev/" target="_blank" style="color: #6C63FF; text-decoration: none; font-weight: 600;">Wandering Wizardry Studios</a> • ${new Date().toLocaleTimeString()}
+          <div class="wws-status-card">
+            <div class="wws-status-row">
+              <div class="wws-status-label">
+                <i class="fas ${report.isBotLike ? 'fa-times-circle' : 'fa-check-circle'}"></i>
+                Bot Pattern
+              </div>
+              <div class="wws-status-value" style="color: ${report.isBotLike ? '#ef4444' : '#10b981'}">
+                ${report.isBotLike ? 'DETECTED' : 'CLEAN'}
+              </div>
+            </div>
+            
+            <div class="wws-status-row">
+              <div class="wws-status-label">
+                <i class="fas fa-tachometer-alt"></i>
+                Pattern Variance
+              </div>
+              <div class="wws-status-value">${report.avgClickInterval ? Math.round(report.avgClickInterval) : 0}ms</div>
+            </div>
           </div>
         </div>
       `;
-      
-      overlay.appendChild(animatedBg);
-      document.body.appendChild(overlay);
-      
-      // Обработчики кнопок
-      overlay.querySelector('#wws-close-screen').addEventListener('click', () => {
-        overlay.remove();
-      });
-      
-      overlay.querySelector('#wws-refresh-scan').addEventListener('click', () => {
-        this.collectAllData();
-        this.analyzeRisk();
-        this.updateWidget();
-        overlay.remove();
-        setTimeout(() => this.showProtectionScreen(), 300);
-      });
-      
-      // Закрытие по клику вне окна
-      overlay.addEventListener('click', (e) => {
-        if (e.target === overlay) {
-          overlay.remove();
-        }
-      });
     }
     
-    getIconForFactor(level) {
-      const icons = {
-        'critical': 'exclamation-circle',
-        'high': 'exclamation-triangle',
-        'medium': 'shield-alt',
-        'low': 'info-circle',
-        'trusted': 'check-circle'
-      };
-      return icons[level] || 'info-circle';
+    renderTechnicalPanel(container) {
+      container.innerHTML = `
+        <div class="wws-section">
+          <div class="wws-section-title">
+            <i class="fas fa-desktop"></i>
+            Device Info
+          </div>
+          
+          <div class="wws-tech-item">
+            <div class="wws-tech-label">Browser</div>
+            <div class="wws-tech-value">${navigator.userAgent.substring(0, 40)}...</div>
+          </div>
+          
+          <div class="wws-tech-item">
+            <div class="wws-tech-label">Platform</div>
+            <div class="wws-tech-value">${navigator.platform}</div>
+          </div>
+          
+          <div class="wws-tech-item">
+            <div class="wws-tech-label">Resolution</div>
+            <div class="wws-tech-value">${screen.width}x${screen.height}</div>
+          </div>
+          
+          <div class="wws-tech-item">
+            <div class="wws-tech-label">Color Depth</div>
+            <div class="wws-tech-value">${screen.colorDepth} bit</div>
+          </div>
+        </div>
+        
+        <div class="wws-section">
+          <div class="wws-section-title">
+            <i class="fas fa-network-wired"></i>
+            Network
+          </div>
+          
+          <div class="wws-tech-item">
+            <div class="wws-tech-label">Connection</div>
+            <div class="wws-tech-value">${navigator.connection ? navigator.connection.effectiveType : 'Unknown'}</div>
+          </div>
+          
+          <div class="wws-tech-item">
+            <div class="wws-tech-label">Language</div>
+            <div class="wws-tech-value">${navigator.language}</div>
+          </div>
+          
+          <div class="wws-tech-item">
+            <div class="wws-tech-label">WebDriver</div>
+            <div class="wws-tech-value">${navigator.webdriver ? 'Detected' : 'Not detected'}</div>
+          </div>
+          
+          <div class="wws-tech-item">
+            <div class="wws-tech-label">WebGL</div>
+            <div class="wws-tech-value">${this.detectWebGL() ? 'Supported' : 'Not supported'}</div>
+          </div>
+        </div>
+      `;
+    }
+    
+    renderRisksPanel(container) {
+      if (this.riskFactors.length === 0) {
+        container.innerHTML = `
+          <div class="wws-no-risks">
+            <i class="fas fa-check-circle"></i>
+            No risk factors detected
+            <div style="margin-top: 8px; font-size: 10px; color: #6c6c8c;">
+              Your session appears to be clean
+            </div>
+          </div>
+        `;
+        return;
+      }
+      
+      let factorsHTML = '';
+      this.riskFactors.slice(0, 6).forEach(factor => {
+        factorsHTML += `
+          <div class="wws-factor-item ${factor.level}">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+              <strong>${factor.type.toUpperCase()}</strong>
+              <span style="font-size: 9px; background: ${factor.level === 'high' ? '#ef4444' : factor.level === 'medium' ? '#f59e0b' : '#10b981'}; color: white; padding: 2px 6px; border-radius: 8px;">${factor.level}</span>
+            </div>
+            <div style="font-size: 10px;">${factor.message}</div>
+          </div>
+        `;
+      });
+      
+      container.innerHTML = `
+        <div class="wws-section">
+          <div class="wws-section-title">
+            <i class="fas fa-exclamation-triangle"></i>
+            Risk Factors (${this.riskFactors.length})
+          </div>
+          ${factorsHTML}
+        </div>
+        
+        ${this.riskFactors.length > 6 ? `
+          <div style="text-align: center; color: #94a3b8; font-size: 10px; margin-top: 10px;">
+            + ${this.riskFactors.length - 6} more risk factors detected
+          </div>
+        ` : ''}
+      `;
     }
     
     collectAllData() {
@@ -1154,7 +1599,6 @@
     
     executeVerdict() {
       this.updateWidget();
-      this.createWidget();
       
       switch (this.verdict) {
         case 'full_captcha':
@@ -1170,90 +1614,13 @@
     }
     
     showSimpleCaptcha() {
-      const overlay = this.createOverlay();
-      
-      const a = Math.floor(Math.random() * 9) + 1;
-      const b = Math.floor(Math.random() * 9) + 1;
-      const answer = a + b;
-      
-      overlay.innerHTML = `
-        <div style="max-width: 400px; width: 90%; padding: 30px; background: rgba(18, 18, 26, 0.95); border-radius: 20px; border: 1px solid rgba(108, 99, 255, 0.3); box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5); text-align: center; backdrop-filter: blur(10px);">
-          <div style="margin-bottom: 20px;">
-            <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #6C63FF, #36D1DC); border-radius: 15px; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px;">🤖</div>
-            <h3 style="color: white; margin: 0 0 10px;">Security Check</h3>
-            <p style="color: #94a3b8; font-size: 14px; margin: 0;">Complete verification to continue</p>
-          </div>
-          <div style="background: rgba(255, 255, 255, 0.05); border-radius: 15px; padding: 25px; margin-bottom: 20px;">
-            <div style="color: #94a3b8; margin-bottom: 10px; font-size: 14px;">Solve:</div>
-            <div style="font-size: 36px; font-weight: bold; color: white; font-family: 'Courier New', monospace; margin: 15px 0;">${a} + ${b} = ?</div>
-            <input type="text" id="captcha-answer" placeholder="Your answer" style="width: 100%; padding: 15px; font-size: 18px; background: rgba(255, 255, 255, 0.1); border: 2px solid rgba(255, 255, 255, 0.2); border-radius: 10px; color: white; text-align: center; outline: none;" autocomplete="off">
-          </div>
-          <button id="captcha-submit" style="width: 100%; padding: 16px; background: linear-gradient(135deg, #6C63FF, #36D1DC); color: white; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; font-size: 16px;">Verify</button>
-        </div>
-      `;
-      
-      const answerInput = overlay.querySelector('#captcha-answer');
-      const submitBtn = overlay.querySelector('#captcha-submit');
-      answerInput.focus();
-      
-      const checkAnswer = () => {
-        const userAnswer = parseInt(answerInput.value.trim());
-        if (userAnswer === answer) {
-          this.log('Captcha passed');
-          this.removeOverlay();
-          this.allowAccess();
-        } else {
-          answerInput.value = '';
-          answerInput.placeholder = 'Incorrect, try again';
-          answerInput.style.borderColor = '#ef4444';
-          setTimeout(() => {
-            answerInput.placeholder = 'Your answer';
-            answerInput.style.borderColor = 'rgba(255, 255, 255, 0.2)';
-          }, 2000);
-        }
-      };
-      
-      submitBtn.addEventListener('click', checkAnswer);
-      answerInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') checkAnswer();
-      });
+      // В фоновом режиме просто логируем
+      this.log('Captcha required but running in background mode');
+      this.allowAccess();
     }
     
     showFullCaptcha() {
       this.showSimpleCaptcha();
-    }
-    
-    createOverlay() {
-      const oldOverlay = document.getElementById('wws-security-overlay');
-      if (oldOverlay) oldOverlay.remove();
-      
-      const overlay = document.createElement('div');
-      overlay.id = 'wws-security-overlay';
-      overlay.style.cssText = `
-        position: fixed !important;
-        top: 0 !important;
-        left: 0 !important;
-        right: 0 !important;
-        bottom: 0 !important;
-        background: rgba(5, 5, 15, 0.98) !important;
-        backdrop-filter: blur(5px) !important;
-        z-index: 999999 !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        padding: 20px !important;
-      `;
-      
-      document.body.appendChild(overlay);
-      document.body.style.overflow = 'hidden';
-      
-      return overlay;
-    }
-    
-    removeOverlay() {
-      const overlay = document.getElementById('wws-security-overlay');
-      if (overlay) overlay.remove();
-      document.body.style.overflow = '';
     }
     
     allowAccess() {
@@ -1349,7 +1716,6 @@
   function initializeWWS() {
     if (localStorage.getItem('wws_disabled') === 'true') {
       console.log('🛡️ WWS Premium disabled by user');
-      PROTECTION_LAYER.hide();
       return;
     }
     
@@ -1357,13 +1723,7 @@
       console.log('🛡️ Premium session already verified');
       if (!window.wwsAnalyzer) {
         window.wwsAnalyzer = new WWSRiskAnalyzer();
-      } else {
-        if (!document.getElementById('wws-widget')) {
-          window.wwsAnalyzer.createWidget();
-          window.wwsAnalyzer.updateWidget();
-        }
       }
-      PROTECTION_LAYER.hide();
       return;
     }
     
@@ -1390,7 +1750,10 @@
     },
     getRiskScore: () => window.wwsAnalyzer?.riskScore || 0,
     getBehaviorReport: () => window.wwsAnalyzer?.behaviorAnalyzer?.getBehaviorReport() || null,
-    showProtectionScreen: () => window.wwsAnalyzer?.showProtectionScreen(),
+    showPanel: () => {
+      const panel = document.getElementById('wws-widget-panel');
+      if (panel) panel.style.display = 'block';
+    },
     onAccessGranted: (callback) => window.addEventListener('wws:access-granted', callback)
   };
   
