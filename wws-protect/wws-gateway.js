@@ -26,7 +26,7 @@
   })();
   
   // ==================== PHASE 1: IMMEDIATE PROTECTION LAYER ====================
-  const PROTTECTION_LAYER = (function() {
+  const PROTECTION_LAYER = (function() {
     const overlay = document.createElement('div');
     overlay.id = 'wws-protection-layer';
     overlay.style.cssText = `
@@ -387,6 +387,7 @@
       this.createWidget = this.createWidget.bind(this);
       this.updateWidget = this.updateWidget.bind(this);
       this.showDetailedReport = this.showDetailedReport.bind(this);
+      this.showProtectionScreen = this.showProtectionScreen.bind(this);
       this.log = this.log.bind(this);
       
       this.userId = this.generateUserId();
@@ -401,6 +402,9 @@
       this.isFirstVisit = this.checkFirstVisit();
       this.widget = null;
       this.isRunning = false;
+      this.userHistory = null;
+      
+      this.loadUserHistory(); // Инициализируем историю сразу
       
       this.log('System initialized v' + CONFIG.version);
       this.startAnalysis();
@@ -410,29 +414,29 @@
       if (this.isRunning) return;
       this.isRunning = true;
       
-      PROTTECTION_LAYER.updateStatus('Collecting behavioral data...', 20, 0);
+      PROTECTION_LAYER.updateStatus('Collecting behavioral data...', 20, 0);
       
       try {
         this.behaviorAnalyzer = new AdvancedBehaviorAnalyzer();
         
         await new Promise(resolve => setTimeout(resolve, 800));
         
-        PROTTECTION_LAYER.updateStatus('Analyzing device fingerprint...', 40, 15);
+        PROTECTION_LAYER.updateStatus('Analyzing device fingerprint...', 40, 15);
         this.collectTechnicalData();
         
-        PROTTECTION_LAYER.updateStatus('Scanning network patterns...', 60, 25);
+        PROTECTION_LAYER.updateStatus('Scanning network patterns...', 60, 25);
         this.collectNetworkData();
         
-        PROTTECTION_LAYER.updateStatus('Running behavioral AI...', 80, 35);
+        PROTECTION_LAYER.updateStatus('Running behavioral AI...', 80, 35);
         this.collectBehaviorData();
         
-        PROTTECTION_LAYER.updateStatus('Calculating risk score...', 90, 45);
+        PROTECTION_LAYER.updateStatus('Calculating risk score...', 90, 45);
         this.analyzeRisk();
         
-        PROTTECTION_LAYER.updateStatus('Applying security policy...', 95, this.riskScore * 100);
+        PROTECTION_LAYER.updateStatus('Applying security policy...', 95, this.riskScore * 100);
         
         setTimeout(() => {
-          PROTTECTION_LAYER.hide();
+          PROTECTION_LAYER.hide();
           this.executeVerdict();
         }, 600);
         
@@ -440,7 +444,7 @@
         this.log('Analysis error:', error);
         this.verdict = 'allow_with_logging';
         this.riskScore = 0.5;
-        PROTTECTION_LAYER.hide();
+        PROTECTION_LAYER.hide();
       }
     }
     
@@ -500,74 +504,9 @@
       this.widget = document.createElement('div');
       this.widget.id = 'wws-widget';
       this.widget.innerHTML = `
-        <div class="wws-widget-icon" id="wws-widget-icon">
+        <div class="wws-widget-icon" id="wws-widget-icon" title="Click to show protection screen">
           <i class="fas fa-shield-alt"></i>
           <div class="wws-risk-badge" id="wws-risk-badge">0%</div>
-        </div>
-        <div class="wws-widget-panel" id="wws-widget-panel">
-          <div class="wws-panel-header">
-            <h3><i class="fas fa-fingerprint"></i> WWS Security</h3>
-            <button class="wws-close-panel" id="wws-close-panel"><i class="fas fa-times"></i></button>
-          </div>
-          <div class="wws-panel-content">
-            <div class="wws-status-section">
-              <div class="wws-status-item">
-                <span class="wws-label"><i class="fas fa-info-circle"></i> Status:</span>
-                <span class="wws-value" id="wws-status-value">Analyzing...</span>
-              </div>
-              <div class="wws-status-item">
-                <span class="wws-label"><i class="fas fa-chart-line"></i> Risk:</span>
-                <span class="wws-value">
-                  <span class="wws-risk-meter">
-                    <span class="wws-risk-fill" id="wws-risk-fill"></span>
-                  </span>
-                  <span id="wws-risk-value">0%</span>
-                </span>
-              </div>
-              <div class="wws-status-item">
-                <span class="wws-label"><i class="fas fa-id-badge"></i> Session:</span>
-                <span class="wws-value" id="wws-session-id">${this.sessionId.substring(0, 8)}...</span>
-              </div>
-            </div>
-            
-            <div class="wws-behavior-section">
-              <h4><i class="fas fa-mouse"></i> Behavioral Data</h4>
-              <div class="wws-stats-grid">
-                <div class="wws-stat">
-                  <span class="wws-stat-label"><i class="fas fa-mouse-pointer"></i> Clicks</span>
-                  <span class="wws-stat-value" id="wws-clicks">0</span>
-                </div>
-                <div class="wws-stat">
-                  <span class="wws-stat-label"><i class="fas fa-route"></i> Path</span>
-                  <span class="wws-stat-value" id="wws-path">0</span>
-                </div>
-                <div class="wws-stat">
-                  <span class="wws-stat-label"><i class="fas fa-tachometer-alt"></i> Speed</span>
-                  <span class="wws-stat-value" id="wws-speed">0</span>
-                </div>
-                <div class="wws-stat">
-                  <span class="wws-stat-label"><i class="fas fa-scroll"></i> Scroll</span>
-                  <span class="wws-stat-value" id="wws-scroll">0</span>
-                </div>
-              </div>
-            </div>
-            
-            <div class="wws-factors-section">
-              <h4><i class="fas fa-exclamation-triangle"></i> Risk Factors</h4>
-              <div class="wws-factors-list" id="wws-factors-list">
-                <div class="wws-no-factors"><i class="fas fa-check-circle" style="color: #10b981;"></i> No threats detected</div>
-              </div>
-            </div>
-            
-            <div class="wws-actions-section">
-              <button class="wws-action-btn" id="wws-refresh-btn"><i class="fas fa-sync-alt"></i> Refresh</button>
-              <button class="wws-action-btn secondary" id="wws-details-btn"><i class="fas fa-file-alt"></i> Details</button>
-            </div>
-            
-            <div class="wws-footer">
-              <small><i class="fas fa-shield-alt"></i> WWS v${CONFIG.version} • Session: ${this.sessionId.substring(0, 12)}</small>
-            </div>
-          </div>
         </div>
       `;
       
@@ -585,6 +524,7 @@
           left: 20px;
           z-index: 999998;
           font-family: 'Segoe UI', Roboto, sans-serif;
+          cursor: pointer;
         }
         
         .wws-widget-icon {
@@ -636,274 +576,6 @@
           0%, 100% { transform: scale(1); }
           50% { transform: scale(1.1); }
         }
-        
-        .wws-widget-panel {
-          position: absolute;
-          bottom: 80px;
-          left: 0;
-          width: 380px;
-          background: rgba(18, 18, 26, 0.98);
-          backdrop-filter: blur(15px);
-          border-radius: 20px;
-          border: 1px solid rgba(108, 99, 255, 0.4);
-          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
-          display: none;
-          overflow: hidden;
-          z-index: 999999;
-          max-height: 85vh;
-        }
-        
-        .wws-panel-header {
-          padding: 15px 20px;
-          background: rgba(108, 99, 255, 0.1);
-          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        }
-        
-        .wws-panel-header h3 {
-          margin: 0;
-          color: white;
-          font-size: 18px;
-          font-weight: 700;
-          display: flex;
-          align-items: center;
-          gap: 10px;
-        }
-        
-        .wws-panel-header h3 i {
-          color: #6C63FF;
-        }
-        
-        .wws-close-panel {
-          background: none;
-          border: none;
-          color: #94a3b8;
-          font-size: 18px;
-          cursor: pointer;
-          width: 32px;
-          height: 32px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border-radius: 8px;
-          transition: all 0.3s;
-        }
-        
-        .wws-close-panel:hover {
-          background: rgba(239, 68, 68, 0.2);
-          color: #ef4444;
-          transform: rotate(90deg);
-        }
-        
-        .wws-panel-content {
-          padding: 20px;
-          overflow-y: auto;
-          max-height: calc(85vh - 60px);
-        }
-        
-        .wws-status-item {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 10px;
-          padding: 8px 0;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        }
-        
-        .wws-label {
-          color: #94a3b8;
-          font-size: 14px;
-          display: flex;
-          align-items: center;
-          gap: 8px;
-        }
-        
-        .wws-value {
-          color: white;
-          font-weight: 500;
-          font-size: 14px;
-          display: flex;
-          align-items: center;
-          gap: 10px;
-        }
-        
-        .wws-risk-meter {
-          width: 80px;
-          height: 6px;
-          background: rgba(255, 255, 255, 0.1);
-          border-radius: 3px;
-          overflow: hidden;
-        }
-        
-        .wws-risk-fill {
-          height: 100%;
-          background: #10b981;
-          width: 0%;
-          transition: width 0.5s ease;
-          border-radius: 3px;
-        }
-        
-        .wws-behavior-section {
-          margin-bottom: 20px;
-          padding: 15px;
-          background: rgba(255, 255, 255, 0.05);
-          border-radius: 10px;
-        }
-        
-        .wws-behavior-section h4 {
-          margin: 0 0 15px 0;
-          color: white;
-          font-size: 14px;
-          display: flex;
-          align-items: center;
-          gap: 8px;
-        }
-        
-        .wws-stats-grid {
-          display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 12px;
-        }
-        
-        .wws-stat {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 10px 15px;
-          background: rgba(0, 0, 0, 0.3);
-          border-radius: 8px;
-          border-left: 3px solid #6C63FF;
-        }
-        
-        .wws-stat-label {
-          color: #94a3b8;
-          font-size: 13px;
-          display: flex;
-          align-items: center;
-          gap: 6px;
-        }
-        
-        .wws-stat-label i {
-          font-size: 14px;
-          opacity: 0.7;
-        }
-        
-        .wws-stat-value {
-          color: white;
-          font-weight: 700;
-          font-size: 16px;
-        }
-        
-        .wws-factors-section {
-          margin-bottom: 20px;
-        }
-        
-        .wws-factors-section h4 {
-          margin: 0 0 10px 0;
-          color: white;
-          font-size: 14px;
-          display: flex;
-          align-items: center;
-          gap: 8px;
-        }
-        
-        .wws-factors-list {
-          max-height: 200px;
-          overflow-y: auto;
-        }
-        
-        .wws-factor-item {
-          padding: 10px 12px;
-          margin-bottom: 6px;
-          background: rgba(239, 68, 68, 0.1);
-          border-left: 4px solid #ef4444;
-          border-radius: 6px;
-          font-size: 13px;
-          color: #fca5a5;
-          display: flex;
-          align-items: center;
-          gap: 8px;
-        }
-        
-        .wws-factor-item.low {
-          background: rgba(245, 158, 11, 0.1);
-          border-left-color: #f59e0b;
-          color: #fbbf24;
-        }
-        
-        .wws-factor-item i {
-          font-size: 14px;
-        }
-        
-        .wws-no-factors {
-          padding: 10px;
-          text-align: center;
-          color: #94a3b8;
-          font-size: 12px;
-          background: rgba(255, 255, 255, 0.05);
-          border-radius: 6px;
-        }
-        
-        .wws-actions-section {
-          display: flex;
-          gap: 10px;
-          margin-bottom: 15px;
-        }
-        
-        .wws-action-btn {
-          flex: 1;
-          padding: 12px 16px;
-          background: linear-gradient(135deg, #6C63FF, #36D1DC);
-          color: white;
-          border: none;
-          border-radius: 10px;
-          font-weight: 600;
-          cursor: pointer;
-          font-size: 14px;
-          transition: all 0.3s ease;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 8px;
-          box-shadow: 0 4px 15px rgba(108, 99, 255, 0.3);
-        }
-        
-        .wws-action-btn:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 6px 25px rgba(108, 99, 255, 0.5);
-        }
-        
-        .wws-action-btn.secondary {
-          background: rgba(255, 255, 255, 0.1);
-          color: #94a3b8;
-          box-shadow: none;
-        }
-        
-        .wws-action-btn.secondary:hover {
-          background: rgba(255, 255, 255, 0.2);
-          transform: translateY(0);
-        }
-        
-        .wws-action-btn i {
-          font-size: 14px;
-        }
-        
-        .wws-footer {
-          text-align: center;
-          color: #64748b;
-          font-size: 11px;
-          padding-top: 15px;
-          border-top: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        @media (max-width: 768px) {
-          .wws-widget-panel {
-            width: 340px;
-            left: 10px;
-          }
-        }
       `;
       
       document.head.appendChild(style);
@@ -911,41 +583,13 @@
     
     initWidgetHandlers() {
       const icon = document.getElementById('wws-widget-icon');
-      const panel = document.getElementById('wws-widget-panel');
-      const closeBtn = document.getElementById('wws-close-panel');
-      const refreshBtn = document.getElementById('wws-refresh-btn');
-      const detailsBtn = document.getElementById('wws-details-btn');
       
       icon.addEventListener('click', (e) => {
         e.stopImmediatePropagation();
-        panel.classList.toggle('show');
+        this.showProtectionScreen();
       });
       
-      closeBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        panel.classList.remove('show');
-      });
-      
-      document.addEventListener('click', (e) => {
-        if (this.widget && !this.widget.contains(e.target) && panel.classList.contains('show')) {
-          panel.classList.remove('show');
-        }
-      });
-      
-      refreshBtn.addEventListener('click', () => {
-        this.collectAllData();
-        this.analyzeRisk();
-        this.updateWidget();
-      });
-      
-      detailsBtn.addEventListener('click', () => {
-        this.showDetailedReport();
-      });
-      
-      this.setupDynamicUpdates();
-    }
-    
-    setupDynamicUpdates() {
+      // Обновление виджета каждые 3 секунды
       setInterval(() => {
         if (this.behaviorAnalyzer) {
           this.behaviorData.clicks = this.behaviorAnalyzer.clickIntervals.length;
@@ -960,11 +604,6 @@
       
       const riskValue = Math.round(this.riskScore * 100);
       const riskBadge = document.getElementById('wws-risk-badge');
-      const riskFill = document.getElementById('wws-risk-fill');
-      const riskValueEl = document.getElementById('wws-risk-value');
-      const statusValue = document.getElementById('wws-status-value');
-      const pathEl = document.getElementById('wws-path');
-      const speedEl = document.getElementById('wws-speed');
       
       let riskColor = '#10b981';
       if (this.riskScore > 0.6) riskColor = '#ef4444';
@@ -974,47 +613,175 @@
         riskBadge.textContent = `${riskValue}%`;
         riskBadge.style.background = riskColor;
       }
-      
-      if (riskFill) {
-        riskFill.style.background = riskColor;
-        riskFill.style.width = `${riskValue}%`;
-      }
-      
-      if (riskValueEl) riskValueEl.textContent = `${riskValue}%`;
-      
-      const statusMap = {
-        'pending': '⏳ Analyzing...',
-        'allow': '✅ Access Granted',
-        'allow_with_logging': '📝 Monitored Session',
-        'simple_captcha': '⚠️ Verified',
-        'full_captcha': '🚨 High Security Check'
-      };
-      
-      if (statusValue) statusValue.textContent = statusMap[this.verdict] || this.verdict;
-      
-      const report = this.behaviorAnalyzer.getBehaviorReport();
-      if (pathEl) pathEl.textContent = report.mouseMovements;
-      if (speedEl) speedEl.textContent = report.avgClickInterval.toFixed(0) + 'ms';
-      
-      this.updateRiskFactors();
     }
     
-    updateRiskFactors() {
-      const factorsList = document.getElementById('wws-factors-list');
-      if (!factorsList) return;
+    showProtectionScreen() {
+      const overlay = document.createElement('div');
+      overlay.id = 'wws-protection-screen';
+      overlay.style.cssText = `
+        position: fixed !important;
+        top: 0 !important; left: 0 !important;
+        width: 100vw !important; height: 100vh !important;
+        background: linear-gradient(135deg, #0a0a1a, #121226, #0f0f1f) !important;
+        z-index: 9999999 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif !important;
+        overflow: hidden;
+      `;
       
-      if (this.riskFactors.length > 0) {
-        const factorsHTML = this.riskFactors.slice(0, 4).map(factor => `
-          <div class="wws-factor-item ${factor.level}">
-            <i class="fas fa-${this.getIconForFactor(factor.level)}"></i>
-            ${factor.message}
+      const animatedBg = document.createElement('div');
+      animatedBg.style.cssText = `
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 100%;
+        opacity: 0.1;
+        background: 
+          radial-gradient(circle at 20% 30%, rgba(108, 99, 255, 0.15) 0%, transparent 40%),
+          radial-gradient(circle at 80% 70%, rgba(54, 209, 220, 0.15) 0%, transparent 40%);
+        animation: wws-bg-pulse 8s ease-in-out infinite;
+      `;
+      
+      const report = this.behaviorAnalyzer ? this.behaviorAnalyzer.getBehaviorReport() : {};
+      
+      overlay.innerHTML = `
+        <div style="text-align: center; z-index: 10; position: relative; max-width: 600px; padding: 40px;">
+          <!-- Заголовок -->
+          <div style="display: flex; align-items: center; justify-content: center; gap: 20px; margin-bottom: 30px;">
+            <div style="position: relative;">
+              <i class="fas fa-shield-alt" style="font-size: 72px; background: linear-gradient(135deg, #6C63FF, #36D1DC); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;"></i>
+              <div class="wws-risk-badge" style="position: absolute; top: -15px; right: -15px; background: ${this.riskScore > 0.6 ? '#ef4444' : this.riskScore > 0.3 ? '#f59e0b' : '#10b981'};">${Math.round(this.riskScore * 100)}%</div>
+            </div>
+            <div style="text-align: left;">
+              <h1 style="color: white; margin: 0 0 10px; font-size: 32px; font-weight: 700;">ACTIVE PROTECTION</h1>
+              <p style="color: #a0a0c0; margin: 0; font-size: 16px;">WWS Gateway v${CONFIG.version} • Session: ${this.sessionId.substring(0, 12)}...</p>
+            </div>
           </div>
-        `).join('');
-        
-        factorsList.innerHTML = factorsHTML;
-      } else {
-        factorsList.innerHTML = '<div class="wws-no-factors"><i class="fas fa-check-circle" style="color: #10b981;"></i> No threat indicators</div>';
-      }
+          
+          <!-- Статус -->
+          <div style="background: rgba(255, 255, 255, 0.05); border-radius: 15px; padding: 25px; margin-bottom: 30px; border: 1px solid rgba(255, 255, 255, 0.1);">
+            <h3 style="color: white; margin-top: 0; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+              <i class="fas fa-chart-line"></i> Security Status
+            </h3>
+            
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 20px;">
+              <div style="text-align: center; padding: 15px; background: rgba(0, 0, 0, 0.3); border-radius: 10px;">
+                <div style="color: #94a3b8; font-size: 12px; margin-bottom: 5px;">VERDICT</div>
+                <div style="color: ${this.verdict === 'allow' ? '#10b981' : this.verdict === 'simple_captcha' ? '#f59e0b' : '#ef4444'}; font-weight: bold; font-size: 18px;">
+                  ${this.verdict.toUpperCase().replace(/_/g, ' ')}
+                </div>
+              </div>
+              
+              <div style="text-align: center; padding: 15px; background: rgba(0, 0, 0, 0.3); border-radius: 10px;">
+                <div style="color: #94a3b8; font-size: 12px; margin-bottom: 5px;">USER ID</div>
+                <div style="color: white; font-weight: bold; font-size: 14px; font-family: monospace;">${this.userId.substring(0, 12)}...</div>
+              </div>
+            </div>
+            
+            <!-- Прогресс бар риска -->
+            <div style="margin-bottom: 15px;">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                <span style="color: #94a3b8; font-size: 14px;">Risk Level</span>
+                <span style="color: white; font-weight: bold;">${Math.round(this.riskScore * 100)}%</span>
+              </div>
+              <div style="height: 8px; background: rgba(255, 255, 255, 0.1); border-radius: 4px; overflow: hidden;">
+                <div style="height: 100%; width: ${Math.round(this.riskScore * 100)}%; background: linear-gradient(90deg, ${this.riskScore > 0.6 ? '#ef4444' : this.riskScore > 0.3 ? '#f59e0b' : '#10b981'}, ${this.riskScore > 0.6 ? '#dc2626' : this.riskScore > 0.3 ? '#fbbf24' : '#34d399'});"></div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Behavioral Data -->
+          <div style="background: rgba(255, 255, 255, 0.05); border-radius: 15px; padding: 25px; margin-bottom: 30px; border: 1px solid rgba(255, 255, 255, 0.1);">
+            <h3 style="color: white; margin-top: 0; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+              <i class="fas fa-brain"></i> Behavioral Analysis
+            </h3>
+            
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+              <div style="text-align: center; padding: 15px; background: rgba(108, 99, 255, 0.1); border-radius: 10px; border-left: 4px solid #6C63FF;">
+                <div style="color: #6C63FF; font-size: 24px; font-weight: bold;">${report.mouseMovements || 0}</div>
+                <div style="color: #94a3b8; font-size: 12px;">Mouse Movements</div>
+              </div>
+              
+              <div style="text-align: center; padding: 15px; background: rgba(54, 209, 220, 0.1); border-radius: 10px; border-left: 4px solid #36D1DC;">
+                <div style="color: #36D1DC; font-size: 24px; font-weight: bold;">${this.behaviorData.clicks || 0}</div>
+                <div style="color: #94a3b8; font-size: 12px;">Clicks</div>
+              </div>
+              
+              <div style="text-align: center; padding: 15px; background: rgba(16, 185, 129, 0.1); border-radius: 10px; border-left: 4px solid #10b981;">
+                <div style="color: #10b981; font-size: 24px; font-weight: bold;">${report.isBotLike ? 'YES' : 'NO'}</div>
+                <div style="color: #94a3b8; font-size: 12px;">Bot Detection</div>
+              </div>
+              
+              <div style="text-align: center; padding: 15px; background: rgba(245, 158, 11, 0.1); border-radius: 10px; border-left: 4px solid #f59e0b;">
+                <div style="color: #f59e0b; font-size: 24px; font-weight: bold;">${report.avgClickInterval ? Math.round(report.avgClickInterval) : 0}ms</div>
+                <div style="color: #94a3b8; font-size: 12px;">Avg Click Speed</div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Risk Factors -->
+          ${this.riskFactors.length > 0 ? `
+            <div style="background: rgba(255, 255, 255, 0.05); border-radius: 15px; padding: 25px; margin-bottom: 30px; border: 1px solid rgba(255, 255, 255, 0.1);">
+              <h3 style="color: white; margin-top: 0; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                <i class="fas fa-exclamation-triangle"></i> Risk Factors (${this.riskFactors.length})
+              </h3>
+              
+              <div style="max-height: 200px; overflow-y: auto;">
+                ${this.riskFactors.slice(0, 5).map(factor => `
+                  <div style="padding: 12px; margin-bottom: 8px; background: ${factor.level === 'critical' || factor.level === 'high' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(245, 158, 11, 0.1)'}; border-left: 4px solid ${factor.level === 'critical' || factor.level === 'high' ? '#ef4444' : '#f59e0b'}; border-radius: 8px;">
+                    <div style="color: white; font-weight: 500; margin-bottom: 5px;">
+                      <i class="fas fa-${this.getIconForFactor(factor.level)}" style="margin-right: 8px;"></i>
+                      ${factor.message}
+                    </div>
+                    <div style="color: #94a3b8; font-size: 12px; display: flex; justify-content: space-between;">
+                      <span>${factor.type}</span>
+                      <span style="background: ${factor.level === 'critical' || factor.level === 'high' ? '#ef4444' : factor.level === 'medium' ? '#f59e0b' : '#10b981'}; color: white; padding: 2px 8px; border-radius: 10px; font-size: 10px;">${factor.level}</span>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          ` : ''}
+          
+          <!-- Кнопки -->
+          <div style="display: flex; gap: 15px;">
+            <button id="wws-close-screen" style="flex: 1; padding: 15px; background: rgba(255, 255, 255, 0.1); color: white; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 10px; font-weight: 600; cursor: pointer; font-size: 16px; transition: all 0.3s;">
+              <i class="fas fa-times"></i> Close
+            </button>
+            <button id="wws-refresh-scan" style="flex: 1; padding: 15px; background: linear-gradient(135deg, #6C63FF, #36D1DC); color: white; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; font-size: 16px; transition: all 0.3s;">
+              <i class="fas fa-sync-alt"></i> Rescan
+            </button>
+          </div>
+          
+          <!-- Footer -->
+          <div style="margin-top: 30px; color: #64748b; font-size: 12px;">
+            <i class="fas fa-shield-alt"></i> WWS Gateway Premium Protection • ${new Date().toLocaleTimeString()}
+          </div>
+        </div>
+      `;
+      
+      overlay.appendChild(animatedBg);
+      document.body.appendChild(overlay);
+      
+      // Обработчики кнопок
+      overlay.querySelector('#wws-close-screen').addEventListener('click', () => {
+        overlay.remove();
+      });
+      
+      overlay.querySelector('#wws-refresh-scan').addEventListener('click', () => {
+        this.collectAllData();
+        this.analyzeRisk();
+        this.updateWidget();
+        overlay.remove();
+        setTimeout(() => this.showProtectionScreen(), 300);
+      });
+      
+      // Закрытие по клику вне окна
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+          overlay.remove();
+        }
+      });
     }
     
     getIconForFactor(level) {
@@ -1093,12 +860,14 @@
         const history = localStorage.getItem(`wws_history_${this.userId}`);
         if (history) {
           this.userHistory = JSON.parse(history);
-          const cutoff = Date.now() - (30 * 24 * 60 * 60 * 1000);
-          if (this.userHistory.sessions) {
-            this.userHistory.sessions = this.userHistory.sessions.filter(
-              s => s.timestamp > cutoff
-            );
+          // Инициализируем sessions если их нет
+          if (!this.userHistory.sessions) {
+            this.userHistory.sessions = [];
           }
+          const cutoff = Date.now() - (30 * 24 * 60 * 60 * 1000);
+          this.userHistory.sessions = this.userHistory.sessions.filter(
+            s => s.timestamp > cutoff
+          );
         } else {
           this.userHistory = {
             userId: this.userId,
@@ -1257,6 +1026,11 @@
     analyzeReputation() {
       let score = 0;
       const factors = [];
+      
+      // Убедимся, что история загружена
+      if (!this.userHistory) {
+        this.loadUserHistory();
+      }
       
       if (!this.userHistory.sessions || this.userHistory.sessions.length < 2) {
         score += 0.2;
@@ -1531,93 +1305,6 @@
       }
     }
     
-    showDetailedReport() {
-      const overlay = this.createOverlay();
-      
-      overlay.innerHTML = `
-        <div style="max-width: 800px; width: 95%; max-height: 90vh; overflow-y: auto; background: rgba(18, 18, 26, 0.98); border-radius: 20px; border: 1px solid rgba(108, 99, 255, 0.3); padding: 30px; color: white;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
-            <h2 style="margin: 0; color: #6C63FF;"><i class="fas fa-chart-bar"></i> Detailed Security Report</h2>
-            <button id="wws-close-report" style="background: none; border: none; color: #94a3b8; font-size: 24px; cursor: pointer;"><i class="fas fa-times"></i></button>
-          </div>
-          
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px;">
-            <div style="background: rgba(108, 99, 255, 0.1); padding: 20px; border-radius: 10px;">
-              <h3 style="margin-top: 0; color: #6C63FF;"><i class="fas fa-user-shield"></i> User Profile</h3>
-              <p><strong>User ID:</strong> ${this.userId}</p>
-              <p><strong>Session:</strong> ${this.sessionId}</p>
-              <p><strong>Device:</strong> ${this.generateDeviceFingerprint()}</p>
-              <p><strong>Verdict:</strong> ${this.verdict}</p>
-            </div>
-            
-            <div style="background: rgba(16, 185, 129, 0.1); padding: 20px; border-radius: 10px;">
-              <h3 style="margin-top: 0; color: #10b981;"><i class="fas fa-shield-alt"></i> Risk Assessment</h3>
-              <p><strong>Overall Risk:</strong> ${(this.riskScore * 100).toFixed(1)}%</p>
-              <p><strong>Risk Level:</strong> ${this.riskScore > 0.6 ? 'HIGH' : this.riskScore > 0.3 ? 'MEDIUM' : 'LOW'}</p>
-              <p><strong>Factors:</strong> ${this.riskFactors.length}</p>
-            </div>
-          </div>
-          
-          <div style="margin-bottom: 30px;">
-            <h3 style="color: #f59e0b;"><i class="fas fa-exclamation-triangle"></i> Risk Factors Details</h3>
-            ${this.riskFactors.length > 0 ? this.riskFactors.map(factor => `
-              <div style="background: rgba(239, 68, 68, 0.1); padding: 15px; margin-bottom: 10px; border-left: 4px solid ${factor.level === 'high' || factor.level === 'critical' ? '#ef4444' : factor.level === 'medium' ? '#f59e0b' : '#10b981'}; border-radius: 5px;">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                  <div>
-                    <strong style="color: white;">${factor.message}</strong>
-                    <div style="font-size: 12px; color: #94a3b8; margin-top: 5px;">
-                      Type: ${factor.type} | Level: ${factor.level}
-                    </div>
-                  </div>
-                  <span style="background: ${factor.level === 'high' || factor.level === 'critical' ? '#ef4444' : factor.level === 'medium' ? '#f59e0b' : '#10b981'}; color: white; padding: 2px 8px; border-radius: 10px; font-size: 12px;">${factor.level}</span>
-                </div>
-              </div>
-            `).join('') : '<p style="text-align: center; color: #94a3b8;">No risk factors detected</p>'}
-          </div>
-          
-          ${this.behaviorAnalyzer ? `
-            <div style="margin-bottom: 30px;">
-              <h3 style="color: #36D1DC;"><i class="fas fa-mouse"></i> Behavioral Analysis</h3>
-              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;">
-                <div style="text-align: center; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 10px;">
-                  <div style="font-size: 24px; margin-bottom: 5px;"><i class="fas fa-mouse-pointer" style="color: #6C63FF;"></i></div>
-                  <div style="font-size: 12px; color: #94a3b8;">Clicks</div>
-                  <div style="font-size: 24px; font-weight: bold;">${this.behaviorData.clicks || 0}</div>
-                </div>
-                <div style="text-align: center; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 10px;">
-                  <div style="font-size: 24px; margin-bottom: 5px;"><i class="fas fa-route" style="color: #f59e0b;"></i></div>
-                  <div style="font-size: 12px; color: #94a3b8;">Path Points</div>
-                  <div style="font-size: 24px; font-weight: bold;">${this.behaviorAnalyzer.currentPath.length}</div>
-                </div>
-                <div style="text-align: center; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 10px;">
-                  <div style="font-size: 24px; margin-bottom: 5px;"><i class="fas fa-tachometer-alt" style="color: #10b981;"></i></div>
-                  <div style="font-size: 12px; color: #94a3b8;">Avg Click Speed</div>
-                  <div style="font-size: 24px; font-weight: bold;">${(this.behaviorAnalyzer.clickIntervals.reduce((a,b) => a+b, 0) / this.behaviorAnalyzer.clickIntervals.length || 0).toFixed(0)}ms</div>
-                </div>
-                <div style="text-align: center; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 10px;">
-                  <div style="font-size: 24px; margin-bottom: 5px;"><i class="fas fa-robot" style="color: ${this.behaviorAnalyzer.isBotLike ? '#ef4444' : '#10b981'};"></i></div>
-                  <div style="font-size: 12px; color: #94a3b8;">Bot Detection</div>
-                  <div style="font-size: 24px; font-weight: bold;">${this.behaviorAnalyzer.isBotLike ? 'YES' : 'NO'}</div>
-                </div>
-              </div>
-            </div>
-          ` : ''}
-          
-          <button id="wws-close-report-btn" style="width: 100%; padding: 15px; background: linear-gradient(135deg, #6C63FF, #36D1DC); color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 16px;">
-            <i class="fas fa-times-circle"></i> Close Report
-          </button>
-        </div>
-      `;
-      
-      overlay.querySelector('#wws-close-report').addEventListener('click', () => {
-        this.removeOverlay();
-      });
-      
-      overlay.querySelector('#wws-close-report-btn').addEventListener('click', () => {
-        this.removeOverlay();
-      });
-    }
-    
     saveAnalysisResults() {
       const analysis = {
         userId: this.userId,
@@ -1655,7 +1342,7 @@
   function initializeWWS() {
     if (localStorage.getItem('wws_disabled') === 'true') {
       console.log('🛡️ WWS Premium disabled by user');
-      PROTTECTION_LAYER.hide();
+      PROTECTION_LAYER.hide();
       return;
     }
     
@@ -1676,7 +1363,7 @@
           window.wwsAnalyzer.updateWidget();
         }
       }
-      PROTTECTION_LAYER.hide();
+      PROTECTION_LAYER.hide();
       return;
     }
     
@@ -1704,6 +1391,7 @@
     },
     getRiskScore: () => window.wwsAnalyzer?.riskScore || 0,
     getBehaviorReport: () => window.wwsAnalyzer?.behaviorAnalyzer?.getBehaviorReport() || null,
+    showProtectionScreen: () => window.wwsAnalyzer?.showProtectionScreen(),
     onAccessGranted: (callback) => window.addEventListener('wws:access-granted', callback)
   };
   
