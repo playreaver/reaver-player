@@ -1,661 +1,447 @@
 /**
- * WWS Gateway v1.0.1 - Защитный шлюз для сайта
- * Показывается ДО загрузки основного контента
+ * WWS Gateway v1.0.2 - Защитный шлюз для сайта
+ * Упрощенная и исправленная версия
  * @license MIT
  */
 
 (function() {
   'use strict';
   
-  // Блокируем рендеринг страницы до проверки
-  document.documentElement.style.visibility = 'hidden';
-  document.documentElement.style.opacity = '0';
+  console.log('🛡️ WWS Gateway loading...');
   
-  const GATEWAY_CONFIG = {
-    // Настройки шлюза
-    enabled: true,
-    debug: true, // Временно включим дебаг
-    
-    // Кому показывать капчу
-    showTo: {
-      newVisitors: true,
-      suspiciousIP: true,
-      vpnUsers: false,
-      highRiskCountries: false
-    },
-    
-    // Тип проверки
-    verification: {
-      type: 'captcha',
-      difficulty: 'easy', // Упростим для теста
-      timeout: 300000,
-      attempts: 3
-    },
-    
-    // Внешний вид
-    theme: {
-      primary: '#2563eb',
-      background: '#0f172a',
-      text: '#f8fafc',
-      mode: 'dark'
-    },
-    
-    // Поведение
-    behavior: {
-      rememberDevice: true,
-      autoRedirect: true,
-      showLoader: true,
-      allowSkip: true // Разрешим пропуск для тестирования
-    },
-    
-    // Сообщения
-    messages: {
-      title: 'WWS Protect Gateway',
-      subtitle: 'Пожалуйста, подтвердите, что вы не робот',
-      instructions: 'Это необходимо для защиты сайта от автоматических атак',
-      solving: 'Решите задачу ниже:',
-      placeholder: 'Введите ответ...',
-      submit: 'Продолжить на сайт',
-      verifying: 'Проверяем...',
-      success: 'Проверка пройдена!',
-      error: 'Неправильный ответ. Попробуйте снова.',
-      skip: 'Пропустить проверку',
-      footer: 'Система защиты WWS Protect v1.0.1'
-    }
-  };
+  // Сохраняем оригинальный HTML чтобы восстановить позже
+  const originalBodyHTML = document.body.innerHTML;
+  const originalTitle = document.title;
   
+  // Полностью очищаем страницу
+  document.body.innerHTML = '';
+  document.body.style.cssText = `
+    margin: 0;
+    padding: 0;
+    background: #0f172a;
+    color: #f8fafc;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  `;
+  
+  // Показываем загрузку сразу
+  document.body.innerHTML = `
+    <div id="wws-loading" style="
+      text-align: center;
+      padding: 40px;
+      max-width: 500px;
+      width: 90%;
+    ">
+      <div style="
+        width: 60px;
+        height: 60px;
+        border: 4px solid rgba(255, 255, 255, 0.1);
+        border-top-color: #2563eb;
+        border-radius: 50%;
+        margin: 0 auto 20px;
+        animation: spin 1s linear infinite;
+      "></div>
+      <h2 style="margin: 0 0 10px; color: #2563eb;">WWS Protect</h2>
+      <p style="color: #94a3b8; margin: 0;">Загрузка системы защиты...</p>
+    </div>
+    
+    <style>
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+    </style>
+  `;
+  
+  // Основной класс
   class WWSGateway {
     constructor() {
-      this.config = this.loadConfig();
-      this.attempts = 0;
-      this.isVerified = false;
-      this.startTime = Date.now();
-      this.challenge = null;
-      this.sessionId = this.generateSessionId();
-      this.gatewayElement = null;
-      this.timerInterval = null;
-      
-      if (this.config.debug) {
-        console.log('🛡️ WWS Gateway initializing...', this.config);
-      }
-      
-      // Ждем полной загрузки DOM
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => this.init());
-      } else {
-        this.init();
-      }
-    }
-    
-    loadConfig() {
-      let config = { ...GATEWAY_CONFIG };
-      
-      try {
-        const script = document.currentScript;
-        if (script && script.dataset.config) {
-          const userConfig = JSON.parse(script.dataset.config);
-          config = this.deepMerge(config, userConfig);
-        }
-      } catch (e) {
-        console.warn('Invalid gateway config:', e);
-      }
-      
-      return config;
+      console.log('🛡️ WWS Gateway constructor');
+      this.init();
     }
     
     async init() {
       try {
-        const shouldShow = await this.shouldShowGateway();
+        // Ждем немного чтобы все загрузилось
+        await new Promise(resolve => setTimeout(resolve, 100));
         
-        if (!shouldShow) {
-          this.allowAccess();
-          return;
-        }
-        
-        this.showGateway();
-        this.startTimeoutTimer();
+        // Всегда показываем шлюз для теста
+        await this.showGateway();
         
       } catch (error) {
-        console.error('Gateway init error:', error);
-        // В случае ошибки все равно показываем сайт
-        this.allowAccess();
+        console.error('Gateway error:', error);
+        this.restoreSite();
       }
     }
     
-    async shouldShowGateway() {
-      if (!this.config.enabled) {
-        if (this.config.debug) console.log('Gateway disabled');
-        return false;
-      }
+    async showGateway() {
+      console.log('🛡️ Showing gateway...');
       
-      // Проверка токена
-      const token = localStorage.getItem('wws_gateway_token');
-      if (token) {
-        try {
-          const tokenData = JSON.parse(token);
-          if (tokenData.expires > Date.now()) {
-            if (this.config.debug) console.log('Valid token found');
-            return false;
-          }
-        } catch (e) {
-          // Невалидный токен, продолжаем
-        }
-      }
+      // Прячем загрузку
+      document.getElementById('wws-loading').style.display = 'none';
       
-      // Проверка куки
-      if (document.cookie.includes('wws_verified=true')) {
-        if (this.config.debug) console.log('Cookie found');
-        return false;
-      }
+      // Показываем шлюз
+      document.body.innerHTML = this.getGatewayHTML();
       
-      // Проверка первого визита
-      const isFirstVisit = !sessionStorage.getItem('wws_visited');
-      if (isFirstVisit && this.config.showTo.newVisitors) {
-        if (this.config.debug) console.log('First visit - showing gateway');
-        return true;
-      }
-      
-      // По умолчанию показываем для теста
-      return true;
+      // Настраиваем
+      this.setupGateway();
     }
     
-    showGateway() {
-      this.createGatewayHTML();
-      
-      // Теперь когда элемент создан, можем его найти
-      this.gatewayElement = document.getElementById('wws-gateway');
-      
-      if (!this.gatewayElement) {
-        console.error('Gateway element not found!');
-        this.allowAccess();
-        return;
-      }
-      
-      this.gatewayElement.style.display = 'flex';
-      this.generateChallenge();
-      this.setupEventListeners();
-      this.recordGatewayView();
-      
-      if (this.config.debug) {
-        console.log('Gateway displayed');
-      }
-    }
-    
-    createGatewayHTML() {
-      // Сначала создаем минимальные стили
-      this.injectCriticalCSS();
-      
-      // Создаем основной контейнер
-      const gateway = document.createElement('div');
-      gateway.id = 'wws-gateway';
-      gateway.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: ${this.config.theme.background};
-        color: ${this.config.theme.text};
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        z-index: 999999;
-        display: none;
-        overflow: auto;
-        align-items: center;
-        justify-content: center;
-      `;
-      
-      gateway.innerHTML = `
-        <div class="wws-gateway-container" style="
+    getGatewayHTML() {
+      return `
+        <div id="wws-gateway" style="
           max-width: 500px;
-          margin: 20px;
-          padding: 30px;
+          width: 90%;
+          padding: 40px 30px;
           background: rgba(255, 255, 255, 0.05);
           border-radius: 20px;
-          backdrop-filter: blur(10px);
           border: 1px solid rgba(255, 255, 255, 0.1);
-          position: relative;
-          z-index: 2;
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+          text-align: center;
         ">
-          <!-- Заголовок -->
-          <div class="wws-gateway-header" style="text-align: center; margin-bottom: 30px;">
-            <div class="wws-logo" style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 15px;">
-              <div style="width: 40px; height: 40px; background: ${this.config.theme.primary}; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">WWS</div>
-              <h1 style="margin: 0; font-size: 28px; font-weight: 700; background: linear-gradient(135deg, ${this.config.theme.primary}, #60a5fa); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">${this.config.messages.title}</h1>
-            </div>
-            <div class="wws-subtitle" style="font-size: 16px; color: #94a3b8; line-height: 1.5;">${this.config.messages.subtitle}</div>
+          <!-- Логотип -->
+          <div style="margin-bottom: 30px;">
+            <div style="
+              width: 70px;
+              height: 70px;
+              background: linear-gradient(135deg, #2563eb, #3b82f6);
+              border-radius: 20px;
+              margin: 0 auto 20px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 28px;
+              font-weight: bold;
+              color: white;
+            ">WWS</div>
+            <h1 style="
+              margin: 0 0 10px;
+              font-size: 28px;
+              background: linear-gradient(135deg, #2563eb, #60a5fa);
+              -webkit-background-clip: text;
+              -webkit-text-fill-color: transparent;
+            ">Защитный шлюз</h1>
+            <p style="color: #94a3b8; margin: 0; line-height: 1.5;">
+              Пожалуйста, подтвердите, что вы не робот
+            </p>
           </div>
           
-          <!-- Контент -->
-          <div class="wws-gateway-content">
-            <div class="wws-instructions" style="background: rgba(255, 255, 255, 0.05); padding: 20px; border-radius: 10px; margin-bottom: 30px; border-left: 4px solid ${this.config.theme.primary};">
-              <p style="margin: 0; line-height: 1.6;">${this.config.messages.instructions}</p>
-            </div>
+          <!-- Задача -->
+          <div style="
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 25px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+          ">
+            <div style="
+              font-size: 14px;
+              text-transform: uppercase;
+              letter-spacing: 1px;
+              color: #94a3b8;
+              margin-bottom: 15px;
+            ">Решите задачу:</div>
             
-            <!-- Задача -->
-            <div class="wws-challenge-section" style="margin-bottom: 30px;">
-              <div class="wws-challenge-label" style="font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: #94a3b8; margin-bottom: 10px;">${this.config.messages.solving}</div>
-              <div class="wws-challenge-display" id="wws-challenge-display" style="
-                background: rgba(255, 255, 255, 0.1);
-                border: 2px solid rgba(255, 255, 255, 0.2);
-                border-radius: 10px;
-                padding: 25px;
-                margin-bottom: 20px;
-                text-align: center;
-                font-size: 28px;
-                font-weight: bold;
-                font-family: 'Courier New', monospace;
-                min-height: 100px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-              ">
-                <!-- Задача будет здесь -->
-              </div>
-              
-              <!-- Поле ввода -->
-              <div class="wws-input-group" style="margin-bottom: 20px;">
-                <input type="text" 
-                       id="wws-answer-input" 
-                       placeholder="${this.config.messages.placeholder}"
-                       autocomplete="off"
-                       autocorrect="off"
-                       autocapitalize="off"
-                       spellcheck="false"
-                       style="
-                         width: 100%;
-                         padding: 15px 20px;
-                         font-size: 18px;
-                         background: rgba(255, 255, 255, 0.1);
-                         border: 2px solid rgba(255, 255, 255, 0.2);
-                         border-radius: 10px;
-                         color: ${this.config.theme.text};
-                         text-align: center;
-                         transition: all 0.3s;
-                       ">
-                <div class="wws-input-hint" id="wws-input-hint" style="font-size: 14px; color: #94a3b8; margin-top: 8px; min-height: 20px;"></div>
-              </div>
-              
-              <!-- Счетчик и таймер -->
-              <div class="wws-attempts" id="wws-attempts-counter" style="font-size: 14px; color: #94a3b8; margin-bottom: 10px; display: flex; justify-content: space-between;">
-                Попытка: <span style="color: ${this.config.theme.text}; font-weight: 600;">1</span> из ${this.config.verification.attempts}
-              </div>
-              
-              <div class="wws-timer" id="wws-timer" style="font-size: 14px; color: #94a3b8; margin-bottom: 20px; display: flex; justify-content: space-between;">
-                Осталось времени: <span style="color: ${this.config.theme.text}; font-weight: 600;">05:00</span>
-              </div>
-            </div>
+            <div id="wws-challenge" style="
+              font-size: 36px;
+              font-weight: bold;
+              font-family: 'Courier New', monospace;
+              margin: 20px 0;
+              color: white;
+            ">3 + 5 = ?</div>
             
-            <!-- Кнопки -->
-            <div class="wws-gateway-actions" style="display: flex; gap: 15px; margin-top: 30px;">
-              <button class="wws-btn wws-btn-primary" id="wws-submit-btn" style="
-                flex: 1;
-                padding: 16px;
-                font-size: 16px;
-                font-weight: 600;
-                border: none;
-                border-radius: 10px;
-                cursor: pointer;
-                transition: all 0.3s;
-                text-transform: uppercase;
-                letter-spacing: 1px;
-                background: linear-gradient(135deg, ${this.config.theme.primary}, #3b82f6);
-                color: white;
-              ">
-                ${this.config.messages.submit}
-              </button>
-              
-              ${this.config.behavior.allowSkip ? `
-                <button class="wws-btn wws-btn-skip" id="wws-skip-btn" style="
-                  flex: 1;
-                  padding: 16px;
-                  font-size: 16px;
-                  font-weight: 600;
-                  border: none;
-                  border-radius: 10px;
-                  cursor: pointer;
-                  transition: all 0.3s;
-                  text-transform: uppercase;
-                  letter-spacing: 1px;
-                  background: rgba(255, 255, 255, 0.1);
-                  color: #94a3b8;
-                  border: 1px solid rgba(255, 255, 255, 0.2);
-                ">
-                  ${this.config.messages.skip}
-                </button>
-              ` : ''}
-            </div>
+            <input type="text" 
+                   id="wws-answer" 
+                   placeholder="Введите ответ..."
+                   style="
+                     width: 100%;
+                     padding: 16px;
+                     font-size: 18px;
+                     background: rgba(255, 255, 255, 0.1);
+                     border: 2px solid rgba(255, 255, 255, 0.2);
+                     border-radius: 10px;
+                     color: white;
+                     text-align: center;
+                     outline: none;
+                     transition: all 0.3s;
+                   "
+                   onfocus="this.style.borderColor='#2563eb'; this.style.boxShadow='0 0 0 3px rgba(37, 99, 235, 0.3)';"
+                   onblur="this.style.borderColor='rgba(255, 255, 255, 0.2)'; this.style.boxShadow='none';">
             
-            <!-- Загрузка -->
-            <div class="wws-loader" id="wws-loader" style="display: none; flex-direction: column; align-items: center; margin: 30px 0;">
-              <div class="wws-spinner" style="
-                width: 40px;
-                height: 40px;
-                border: 4px solid rgba(255, 255, 255, 0.1);
-                border-top-color: ${this.config.theme.primary};
-                border-radius: 50%;
-                animation: wws-spin 1s linear infinite;
-                margin-bottom: 15px;
-              "></div>
-              <div class="wws-loader-text" style="color: #94a3b8; font-size: 14px;">${this.config.messages.verifying}</div>
-            </div>
-            
-            <!-- Уведомления -->
-            <div class="wws-notification" id="wws-notification" style="display: none; padding: 15px; border-radius: 10px; margin-top: 20px; text-align: center; font-weight: 500;"></div>
+            <div id="wws-hint" style="
+              font-size: 14px;
+              color: #94a3b8;
+              margin-top: 10px;
+              min-height: 20px;
+            ">Введите числовой ответ</div>
           </div>
+          
+          <!-- Счетчик попыток -->
+          <div id="wws-attempts" style="
+            font-size: 14px;
+            color: #94a3b8;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+          ">
+            <span>Попытка: <strong style="color: white;">1</strong> из 3</span>
+            <span>Время: <strong style="color: white;">05:00</strong></span>
+          </div>
+          
+          <!-- Кнопки -->
+          <div style="display: flex; gap: 15px; margin-bottom: 25px;">
+            <button id="wws-submit" style="
+              flex: 1;
+              padding: 18px;
+              font-size: 16px;
+              font-weight: 600;
+              background: linear-gradient(135deg, #2563eb, #3b82f6);
+              color: white;
+              border: none;
+              border-radius: 10px;
+              cursor: pointer;
+              transition: all 0.3s;
+              text-transform: uppercase;
+              letter-spacing: 1px;
+            " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 10px 20px rgba(37, 99, 235, 0.3)';"
+            onmouseout="this.style.transform='none'; this.style.boxShadow='none';">
+              Продолжить
+            </button>
+            
+            <button id="wws-skip" style="
+              flex: 1;
+              padding: 18px;
+              font-size: 16px;
+              font-weight: 600;
+              background: rgba(255, 255, 255, 0.1);
+              color: #94a3b8;
+              border: 1px solid rgba(255, 255, 255, 0.2);
+              border-radius: 10px;
+              cursor: pointer;
+              transition: all 0.3s;
+            " onmouseover="this.style.background='rgba(255, 255, 255, 0.2)';"
+            onmouseout="this.style.background='rgba(255, 255, 255, 0.1)';">
+              Пропустить
+            </button>
+          </div>
+          
+          <!-- Уведомление -->
+          <div id="wws-notification" style="
+            display: none;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-weight: 500;
+          "></div>
           
           <!-- Футер -->
-          <div class="wws-gateway-footer" style="border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 20px; margin-top: 20px; display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #64748b;">
-            <div class="wws-footer-text">${this.config.messages.footer}</div>
-            <div class="wws-session-id" style="font-family: 'Courier New', monospace; background: rgba(255, 255, 255, 0.05); padding: 5px 10px; border-radius: 5px;">ID: ${this.sessionId.substring(0, 8)}</div>
+          <div style="
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 20px;
+            font-size: 12px;
+            color: #64748b;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+          ">
+            <span>WWS Protect v1.0.2</span>
+            <span style="
+              font-family: 'Courier New', monospace;
+              background: rgba(255, 255, 255, 0.05);
+              padding: 5px 10px;
+              border-radius: 5px;
+            ">ID: ${Date.now().toString(36)}
+          </div>
+          
+          <!-- Фоновые элементы -->
+          <div style="
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: -1;
+            pointer-events: none;
+          ">
+            <div style="
+              position: absolute;
+              width: 400px;
+              height: 400px;
+              border-radius: 50%;
+              background: linear-gradient(135deg, #2563eb, transparent);
+              opacity: 0.1;
+              top: -200px;
+              right: -200px;
+            "></div>
+            <div style="
+              position: absolute;
+              width: 300px;
+              height: 300px;
+              border-radius: 50%;
+              background: linear-gradient(135deg, #3b82f6, transparent);
+              opacity: 0.1;
+              bottom: -150px;
+              left: -150px;
+            "></div>
           </div>
         </div>
         
-        <!-- Фон -->
-        <div class="wws-background" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 1; overflow: hidden; pointer-events: none;">
-          <div style="position: absolute; width: 500px; height: 500px; border-radius: 50%; background: linear-gradient(135deg, ${this.config.theme.primary}, transparent); opacity: 0.1; top: -250px; right: -250px;"></div>
-          <div style="position: absolute; width: 300px; height: 300px; border-radius: 50%; background: linear-gradient(135deg, ${this.config.theme.primary}, transparent); opacity: 0.1; bottom: -150px; left: -150px;"></div>
-        </div>
-      `;
-      
-      document.body.appendChild(gateway);
-      
-      // Добавляем CSS анимацию
-      this.injectAnimationCSS();
-    }
-    
-    injectCriticalCSS() {
-      const style = document.createElement('style');
-      style.textContent = `
-        @keyframes wws-spin {
-          to { transform: rotate(360deg); }
-        }
-        
-        .wws-notification.success {
-          background: rgba(34, 197, 94, 0.2);
-          color: #4ade80;
-          border: 1px solid rgba(34, 197, 94, 0.3);
-        }
-        
-        .wws-notification.error {
-          background: rgba(239, 68, 68, 0.2);
-          color: #f87171;
-          border: 1px solid rgba(239, 68, 68, 0.3);
-        }
-        
-        .question-option {
-          padding: 10px 15px;
-          margin: 5px;
-          background: rgba(255, 255, 255, 0.1);
-          border-radius: 8px;
-          cursor: pointer;
-          transition: all 0.3s;
-        }
-        
-        .question-option:hover,
-        .question-option.selected {
-          background: rgba(37, 99, 235, 0.3);
-          border: 1px solid rgba(37, 99, 235, 0.5);
-        }
-        
-        .puzzle-piece {
-          display: inline-block;
-          width: 50px;
-          height: 50px;
-          margin: 5px;
-          background: rgba(255, 255, 255, 0.1);
-          border-radius: 10px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 24px;
-          cursor: move;
-        }
-        
-        .puzzle-piece.dragging {
-          opacity: 0.5;
-        }
-        
-        .puzzle-dropzone {
-          width: 100px;
-          height: 100px;
-          border: 2px dashed rgba(255, 255, 255, 0.3);
-          border-radius: 10px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          margin: 0 auto;
-        }
-        
-        .puzzle-dropzone.drag-over {
-          border-color: ${this.config.theme.primary};
-          background: rgba(37, 99, 235, 0.1);
-        }
-        
-        @media (max-width: 600px) {
-          .wws-gateway-actions {
-            flex-direction: column;
+        <!-- Стили для адаптивности -->
+        <style>
+          @media (max-width: 600px) {
+            #wws-gateway {
+              padding: 30px 20px;
+            }
+            
+            #wws-challenge {
+              font-size: 28px;
+            }
+            
+            button {
+              padding: 16px !important;
+            }
           }
-        }
+          
+          @media (max-width: 400px) {
+            #wws-gateway {
+              padding: 25px 15px;
+            }
+            
+            #wws-challenge {
+              font-size: 24px;
+            }
+          }
+        </style>
       `;
-      document.head.appendChild(style);
     }
     
-    injectAnimationCSS() {
-      // Уже добавлено в injectCriticalCSS
-    }
-    
-    generateChallenge() {
-      const type = this.config.verification.type;
+    setupGateway() {
+      console.log('🛡️ Setting up gateway...');
       
-      if (type === 'question') {
-        this.challenge = this.generateQuestionChallenge();
-      } else if (type === 'puzzle') {
-        this.challenge = this.generatePuzzleChallenge();
-      } else {
-        this.challenge = this.generateMathChallenge();
-      }
+      // Генерируем случайную задачу
+      this.generateChallenge();
       
-      const display = document.getElementById('wws-challenge-display');
-      const hint = document.getElementById('wws-input-hint');
-      
-      if (display) {
-        display.innerHTML = this.challenge.display;
-      }
-      
-      if (hint && this.challenge.hint) {
-        hint.textContent = this.challenge.hint;
-      }
-    }
-    
-    generateMathChallenge() {
-      const a = Math.floor(Math.random() * 10) + 1;
-      const b = Math.floor(Math.random() * 10) + 1;
-      const op = Math.random() > 0.5 ? '+' : '-';
-      const answer = op === '+' ? a + b : a - b;
-      
-      return {
-        type: 'math',
-        display: `<div>${a} ${op} ${b} = ?</div>`,
-        answer: answer.toString(),
-        hint: 'Введите числовой ответ'
-      };
-    }
-    
-    generateQuestionChallenge() {
-      const questions = [
-        { q: "Сколько цветов у радуги?", a: "7", options: ["5", "6", "7", "8"] },
-        { q: "Сколько дней в неделе?", a: "7", options: ["5", "6", "7", "8"] },
-        { q: "Сколько сторон у квадрата?", a: "4", options: ["3", "4", "5", "6"] }
-      ];
-      
-      const q = questions[Math.floor(Math.random() * questions.length)];
-      const options = q.options.map(opt => 
-        `<div class="question-option" data-value="${opt}">${opt}</div>`
-      ).join('');
-      
-      return {
-        type: 'question',
-        display: `
-          <div style="text-align: left;">
-            <div style="margin-bottom: 15px; font-size: 18px;">${q.q}</div>
-            <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 10px;">
-              ${options}
-            </div>
-          </div>
-        `,
-        answer: q.a,
-        hint: 'Выберите правильный вариант'
-      };
-    }
-    
-    setupEventListeners() {
-      const submitBtn = document.getElementById('wws-submit-btn');
-      const skipBtn = document.getElementById('wws-skip-btn');
-      const input = document.getElementById('wws-answer-input');
+      // Обработчики
+      const submitBtn = document.getElementById('wws-submit');
+      const skipBtn = document.getElementById('wws-skip');
+      const answerInput = document.getElementById('wws-answer');
       
       if (submitBtn) {
-        submitBtn.addEventListener('click', () => this.handleSubmit());
-      }
-      
-      if (input) {
-        input.addEventListener('keypress', (e) => {
-          if (e.key === 'Enter') {
-            this.handleSubmit();
-          }
-        });
-        
-        // Фокус на поле ввода
-        setTimeout(() => input.focus(), 100);
+        submitBtn.addEventListener('click', () => this.checkAnswer());
       }
       
       if (skipBtn) {
         skipBtn.addEventListener('click', () => {
-          if (confirm('Пропустить проверку безопасности?')) {
+          if (confirm('Вы уверены, что хотите пропустить проверку безопасности?')) {
             this.allowAccess();
           }
         });
       }
       
-      // Обработка выбора вариантов
-      document.addEventListener('click', (e) => {
-        if (e.target.classList.contains('question-option')) {
-          this.handleQuestionSelect(e.target);
-        }
-      });
+      if (answerInput) {
+        answerInput.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') {
+            this.checkAnswer();
+          }
+        });
+        
+        // Фокус на поле ввода
+        setTimeout(() => answerInput.focus(), 100);
+      }
+      
+      // Запускаем таймер
+      this.startTimer();
     }
     
-    handleQuestionSelect(element) {
-      document.querySelectorAll('.question-option').forEach(el => {
-        el.classList.remove('selected');
-      });
-      element.classList.add('selected');
+    generateChallenge() {
+      const a = Math.floor(Math.random() * 10) + 1;
+      const b = Math.floor(Math.random() * 10) + 1;
+      const op = Math.random() > 0.5 ? '+' : '-';
       
-      const input = document.getElementById('wws-answer-input');
-      if (input) {
-        input.value = element.dataset.value;
+      this.currentAnswer = op === '+' ? (a + b) : (a - b);
+      
+      const challengeElement = document.getElementById('wws-challenge');
+      if (challengeElement) {
+        challengeElement.textContent = `${a} ${op} ${b} = ?`;
+      }
+      
+      this.attempts = 0;
+      this.updateAttemptsCounter();
+    }
+    
+    updateAttemptsCounter() {
+      const attemptsElement = document.getElementById('wws-attempts');
+      if (attemptsElement) {
+        attemptsElement.innerHTML = `
+          <span>Попытка: <strong style="color: white;">${this.attempts + 1}</strong> из 3</span>
+          <span>Время: <strong style="color: white;" id="wws-timer">05:00</strong></span>
+        `;
       }
     }
     
-    async handleSubmit() {
-      const input = document.getElementById('wws-answer-input');
-      const answer = input ? input.value.trim() : '';
+    startTimer() {
+      this.timeLeft = 300; // 5 минут в секундах
+      this.timerInterval = setInterval(() => {
+        this.timeLeft--;
+        
+        const minutes = Math.floor(this.timeLeft / 60);
+        const seconds = this.timeLeft % 60;
+        const timerElement = document.getElementById('wws-timer');
+        
+        if (timerElement) {
+          timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+        
+        if (this.timeLeft <= 0) {
+          clearInterval(this.timerInterval);
+          this.showNotification('Время истекло!', 'error');
+          this.disableForm();
+        }
+      }, 1000);
+    }
+    
+    async checkAnswer() {
+      const answerInput = document.getElementById('wws-answer');
+      const userAnswer = answerInput ? answerInput.value.trim() : '';
       
-      if (!answer) {
+      if (!userAnswer) {
         this.showNotification('Введите ответ', 'error');
         return;
       }
       
-      this.showLoader(true);
-      
-      // Имитация проверки
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      this.showLoader(false);
-      
-      const isCorrect = this.checkAnswer(answer);
+      const userNum = parseInt(userAnswer);
+      const isCorrect = !isNaN(userNum) && userNum === this.currentAnswer;
       
       if (isCorrect) {
-        this.handleSuccess();
+        this.showNotification('✅ Проверка пройдена!', 'success');
+        
+        // Запоминаем в localStorage
+        localStorage.setItem('wws_verified', Date.now().toString());
+        
+        // Ждем и показываем сайт
+        setTimeout(() => this.allowAccess(), 1500);
       } else {
-        this.handleFailure();
-      }
-    }
-    
-    checkAnswer(userAnswer) {
-      if (!this.challenge) return false;
-      
-      if (this.challenge.type === 'question' || this.challenge.type === 'puzzle') {
-        return userAnswer === this.challenge.answer;
-      }
-      
-      // Для математики
-      const userNum = parseFloat(userAnswer);
-      const correctNum = parseFloat(this.challenge.answer);
-      return !isNaN(userNum) && Math.abs(userNum - correctNum) < 0.001;
-    }
-    
-    handleSuccess() {
-      this.showNotification(this.config.messages.success, 'success');
-      
-      // Сохраняем данные
-      this.saveVerificationToken();
-      document.cookie = 'wws_verified=true; path=/; max-age=2592000';
-      sessionStorage.setItem('wws_visited', 'true');
-      
-      setTimeout(() => {
-        this.allowAccess();
-      }, 1000);
-    }
-    
-    handleFailure() {
-      this.attempts++;
-      
-      const attemptsElement = document.getElementById('wws-attempts-counter');
-      if (attemptsElement) {
-        attemptsElement.innerHTML = `Попытка: <span style="color: ${this.config.theme.text}; font-weight: 600;">${this.attempts + 1}</span> из ${this.config.verification.attempts}`;
-      }
-      
-      this.showNotification(this.config.messages.error, 'error');
-      
-      const input = document.getElementById('wws-answer-input');
-      if (input) {
-        input.value = '';
-        input.focus();
-      }
-      
-      if (this.attempts >= this.config.verification.attempts) {
-        this.handleMaxAttempts();
-      } else {
-        setTimeout(() => {
-          this.generateChallenge();
-        }, 1000);
-      }
-    }
-    
-    handleMaxAttempts() {
-      this.showNotification('Превышено количество попыток', 'error');
-      
-      const submitBtn = document.getElementById('wws-submit-btn');
-      const input = document.getElementById('wws-answer-input');
-      
-      if (submitBtn) submitBtn.disabled = true;
-      if (input) input.disabled = true;
-      
-      setTimeout(() => {
-        this.allowAccess(); // Все равно пропускаем для теста
-      }, 3000);
-    }
-    
-    showLoader(show) {
-      const loader = document.getElementById('wws-loader');
-      const submitBtn = document.getElementById('wws-submit-btn');
-      
-      if (loader) {
-        loader.style.display = show ? 'flex' : 'none';
-      }
-      
-      if (submitBtn) {
-        submitBtn.disabled = show;
+        this.attempts++;
+        this.updateAttemptsCounter();
+        
+        if (this.attempts >= 3) {
+          this.showNotification('❌ Превышено количество попыток', 'error');
+          this.disableForm();
+          
+          // Все равно показываем сайт через 3 секунды
+          setTimeout(() => this.allowAccess(), 3000);
+        } else {
+          this.showNotification('❌ Неправильно. Попробуйте еще раз.', 'error');
+          if (answerInput) {
+            answerInput.value = '';
+            answerInput.focus();
+          }
+          
+          // Новая задача после ошибки
+          setTimeout(() => this.generateChallenge(), 1000);
+        }
       }
     }
     
@@ -664,137 +450,114 @@
       if (!notification) return;
       
       notification.textContent = message;
-      notification.className = `wws-notification ${type}`;
       notification.style.display = 'block';
+      notification.style.background = type === 'success' 
+        ? 'rgba(34, 197, 94, 0.2)' 
+        : 'rgba(239, 68, 68, 0.2)';
+      notification.style.color = type === 'success' 
+        ? '#4ade80' 
+        : '#f87171';
+      notification.style.border = type === 'success'
+        ? '1px solid rgba(34, 197, 94, 0.3)'
+        : '1px solid rgba(239, 68, 68, 0.3)';
       
+      // Автоскрытие
       setTimeout(() => {
         notification.style.display = 'none';
       }, 3000);
     }
     
-    startTimeoutTimer() {
-      const timeLimit = this.config.verification.timeout;
-      const timerElement = document.getElementById('wws-timer');
+    disableForm() {
+      const submitBtn = document.getElementById('wws-submit');
+      const skipBtn = document.getElementById('wws-skip');
+      const answerInput = document.getElementById('wws-answer');
       
-      if (!timerElement) return;
-      
-      const updateTimer = () => {
-        const elapsed = Date.now() - this.startTime;
-        const remaining = Math.max(0, timeLimit - elapsed);
-        const minutes = Math.floor(remaining / 60000);
-        const seconds = Math.floor((remaining % 60000) / 1000);
-        
-        const span = timerElement.querySelector('span');
-        if (span) {
-          span.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-        }
-        
-        if (remaining <= 0) {
-          clearInterval(this.timerInterval);
-          this.handleTimeout();
-        }
-      };
-      
-      this.timerInterval = setInterval(updateTimer, 1000);
-      updateTimer();
-    }
-    
-    handleTimeout() {
-      this.showNotification('Время истекло', 'error');
-      const submitBtn = document.getElementById('wws-submit-btn');
       if (submitBtn) submitBtn.disabled = true;
+      if (skipBtn) skipBtn.disabled = true;
+      if (answerInput) answerInput.disabled = true;
+      
+      clearInterval(this.timerInterval);
     }
     
     allowAccess() {
+      console.log('🛡️ Allowing access...');
+      
       // Очищаем таймер
       if (this.timerInterval) {
         clearInterval(this.timerInterval);
       }
       
-      // Показываем страницу
-      document.documentElement.style.visibility = 'visible';
-      document.documentElement.style.opacity = '1';
-      document.documentElement.style.transition = 'opacity 0.5s ease';
-      
-      // Удаляем шлюз
-      if (this.gatewayElement && this.gatewayElement.parentNode) {
-        this.gatewayElement.style.opacity = '0';
-        this.gatewayElement.style.transition = 'opacity 0.5s ease';
+      // Показываем анимацию перехода
+      document.body.innerHTML = `
+        <div style="
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: #0f172a;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 999999;
+        ">
+          <div style="text-align: center;">
+            <div style="
+              width: 60px;
+              height: 60px;
+              border: 4px solid rgba(255, 255, 255, 0.1);
+              border-top-color: #2563eb;
+              border-radius: 50%;
+              margin: 0 auto 20px;
+              animation: spin 1s linear infinite;
+            "></div>
+            <h3 style="color: white; margin: 0 0 10px;">Доступ разрешен</h3>
+            <p style="color: #94a3b8; margin: 0;">Загружаем сайт...</p>
+          </div>
+        </div>
         
-        setTimeout(() => {
-          this.gatewayElement.parentNode.removeChild(this.gatewayElement);
-        }, 500);
-      }
+        <style>
+          @keyframes spin {
+            to { transform: rotate(360deg); }
+          }
+        </style>
+      `;
       
-      if (this.config.debug) {
-        console.log('🚪 Access granted');
-      }
+      // Ждем и восстанавливаем сайт
+      setTimeout(() => {
+        this.restoreSite();
+      }, 1000);
     }
     
-    generateSessionId() {
-      return 'wws_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-    }
-    
-    saveVerificationToken() {
-      const token = {
-        value: btoa(this.sessionId + '_' + Date.now()),
-        expires: Date.now() + (30 * 24 * 60 * 60 * 1000),
-        device: this.getDeviceFingerprint()
-      };
+    restoreSite() {
+      console.log('🛡️ Restoring site...');
       
-      localStorage.setItem('wws_gateway_token', JSON.stringify(token));
-    }
-    
-    getDeviceFingerprint() {
-      const data = [
-        navigator.userAgent,
-        navigator.language,
-        screen.width + 'x' + screen.height,
-        navigator.platform
-      ].join('|');
+      // Восстанавливаем оригинальный контент
+      document.body.innerHTML = originalBodyHTML;
+      document.title = originalTitle;
       
-      return btoa(data).substr(0, 32);
-    }
-    
-    recordGatewayView() {
-      const views = parseInt(localStorage.getItem('wws_gateway_views') || '0');
-      localStorage.setItem('wws_gateway_views', (views + 1).toString());
-    }
-    
-    deepMerge(target, source) {
-      const result = { ...target };
+      // Убираем стили
+      document.body.style.cssText = '';
       
-      for (const key in source) {
-        if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
-          result[key] = this.deepMerge(result[key] || {}, source[key]);
-        } else {
-          result[key] = source[key];
-        }
-      }
+      // Генерируем событие что шлюз пройден
+      const event = new CustomEvent('wws:gateway-passed', {
+        detail: { timestamp: Date.now() }
+      });
+      window.dispatchEvent(event);
       
-      return result;
-    }
-    
-    // Публичные методы
-    forceShow() {
-      this.showGateway();
-    }
-    
-    skip() {
-      this.allowAccess();
-    }
-    
-    reset() {
-      localStorage.removeItem('wws_gateway_token');
-      sessionStorage.removeItem('wws_visited');
-      document.cookie = 'wws_verified=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+      console.log('✅ Site restored');
     }
   }
   
-  // Инициализация
-  window.addEventListener('load', () => {
+  // Запускаем когда все загружено
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('🛡️ DOM loaded, starting gateway');
+      window.wwsGateway = new WWSGateway();
+    });
+  } else {
+    console.log('🛡️ DOM already loaded, starting gateway');
     window.wwsGateway = new WWSGateway();
-    window.WWSGateway = WWSGateway;
-  });
+  }
   
 })();
