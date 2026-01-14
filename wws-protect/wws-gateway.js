@@ -537,44 +537,52 @@
     }
     
     detectDevTools() {
-      const element = new Image();
-      Object.defineProperty(element, 'id', {
-        get: () => {
-          this.behaviorFlags.devToolsDetected = true;
-          this.suspiciousScore += 0.4;
-        }
-      });
-      
-      console.log(element);
-      console.clear();
+      try {
+        const element = new Image();
+        Object.defineProperty(element, 'id', {
+          get: () => {
+            this.behaviorFlags.devToolsDetected = true;
+            this.suspiciousScore += 0.4;
+          }
+        });
+        
+        console.log(element);
+        console.clear();
+      } catch (e) {
+        // Игнорируем ошибки в консоли
+      }
     }
     
     detectHeadless() {
-      // Проверка различных признаков headless браузеров
-      const tests = [
-        () => navigator.webdriver === true,
-        () => navigator.plugins.length === 0,
-        () => navigator.languages === undefined,
-        () => !window.chrome,
-        () => window.outerWidth === 0 && window.outerHeight === 0,
-        () => window.callPhantom || window._phantom || window.phantom,
-        () => window.__nightmare,
-        () => window.Cypress
-      ];
-      
-      tests.forEach(test => {
-        try {
-          if (test()) {
-            this.behaviorFlags.headlessBrowser = true;
-            this.suspiciousScore += 0.6;
-          }
-        } catch (e) {}
-      });
+      try {
+        // Проверка различных признаков headless браузеров
+        const tests = [
+          () => navigator.webdriver === true,
+          () => navigator.plugins && navigator.plugins.length === 0,
+          () => navigator.languages === undefined,
+          () => !window.chrome,
+          () => window.outerWidth === 0 && window.outerHeight === 0,
+          () => window.callPhantom || window._phantom || window.phantom,
+          () => window.__nightmare,
+          () => window.Cypress
+        ];
+        
+        tests.forEach(test => {
+          try {
+            if (test && test()) {
+              this.behaviorFlags.headlessBrowser = true;
+              this.suspiciousScore += 0.6;
+            }
+          } catch (e) {}
+        });
+      } catch (e) {
+        // Игнорируем ошибки
+      }
     }
     
     calculateVariance(arr) {
-      if (arr.length === 0) return 0;
-      const mean = arr.reduce((a, b) => a + b) / arr.length;
+      if (!arr || arr.length === 0) return 0;
+      const mean = arr.reduce((a, b) => a + b, 0) / arr.length;
       return arr.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / arr.length;
     }
     
@@ -589,7 +597,7 @@
         mouseMovements: this.currentPath.length,
         clickCount: this.clickIntervals.length,
         avgClickInterval: this.clickIntervals.length > 0 ? 
-          this.clickIntervals.reduce((a, b) => a + b) / this.clickIntervals.length : 0,
+          this.clickIntervals.reduce((a, b) => a + b, 0) / this.clickIntervals.length : 0,
         scrollEvents: this.scrollPattern.length,
         keyPresses: this.keyboardPattern.length,
         isBotLike: riskScore > 0.6,
@@ -878,11 +886,11 @@
     generateDeviceFingerprint() {
       try {
         const data = [
-          navigator.userAgent,
-          navigator.language,
+          navigator.userAgent || '',
+          navigator.language || '',
           screen.width + 'x' + screen.height,
           screen.colorDepth,
-          navigator.platform,
+          navigator.platform || '',
           new Date().getTimezoneOffset(),
           navigator.hardwareConcurrency || 'unknown',
           navigator.deviceMemory || 'unknown',
@@ -906,6 +914,8 @@
       try {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
+        
+        if (!ctx) return 'no_canvas';
         
         canvas.width = 200;
         canvas.height = 30;
@@ -937,7 +947,7 @@
         if (debugInfo) {
           const vendor = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL);
           const renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
-          return vendor + '|' + renderer;
+          return (vendor || '') + '|' + (renderer || '');
         }
         return 'webgl_no_debug';
       } catch (e) {
@@ -1802,12 +1812,12 @@
           
           <div class="wws-tech-item">
             <div class="wws-tech-label">Browser</div>
-            <div class="wws-tech-value">${navigator.userAgent.substring(0, 50)}...</div>
+            <div class="wws-tech-value">${(navigator.userAgent || '').substring(0, 50)}...</div>
           </div>
           
           <div class="wws-tech-item">
             <div class="wws-tech-label">Platform</div>
-            <div class="wws-tech-value">${navigator.platform}</div>
+            <div class="wws-tech-value">${navigator.platform || 'Unknown'}</div>
           </div>
           
           <div class="wws-tech-item">
@@ -1838,7 +1848,7 @@
     }
     
     renderRisksPanel(container) {
-      if (this.riskFactors.length === 0) {
+      if (!this.riskFactors || this.riskFactors.length === 0) {
         container.innerHTML = `
           <div class="wws-no-risks">
             <i class="fas fa-check-circle"></i>
@@ -1857,10 +1867,10 @@
         factorsHTML += `
           <div class="wws-factor-item ${levelClass}">
             <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-              <strong>${factor.type.toUpperCase()}</strong>
-              <span style="font-size: 9px; background: ${factor.level === 'high' || factor.level === 'critical' ? '#ef4444' : factor.level === 'medium' ? '#f59e0b' : '#10b981'}; color: white; padding: 2px 6px; border-radius: 8px;">${factor.level}</span>
+              <strong>${(factor.type || '').toUpperCase()}</strong>
+              <span style="font-size: 9px; background: ${factor.level === 'high' || factor.level === 'critical' ? '#ef4444' : factor.level === 'medium' ? '#f59e0b' : '#10b981'}; color: white; padding: 2px 6px; border-radius: 8px;">${factor.level || 'medium'}</span>
             </div>
-            <div style="font-size: 10px;">${factor.message}</div>
+            <div style="font-size: 10px;">${factor.message || 'Unknown risk factor'}</div>
             <div style="font-size: 9px; color: #94a3b8; margin-top: 4px;">Impact: ${Math.round((factor.score || 0) * 100)}%</div>
           </div>
         `;
@@ -1899,11 +1909,11 @@
     
     collectTechnicalData() {
       this.technicalData = {
-        userAgent: navigator.userAgent,
-        platform: navigator.platform,
-        vendor: navigator.vendor,
-        language: navigator.language,
-        languages: navigator.languages,
+        userAgent: navigator.userAgent || '',
+        platform: navigator.platform || '',
+        vendor: navigator.vendor || '',
+        language: navigator.language || '',
+        languages: navigator.languages || [],
         screenWidth: screen.width,
         screenHeight: screen.height,
         colorDepth: screen.colorDepth,
@@ -1987,22 +1997,22 @@
       // 1. Поведенческий анализ (самый важный)
       const behaviorRisk = this.analyzeAdvancedBehavior();
       totalRisk += behaviorRisk.score * CONFIG.weights.behavior;
-      this.riskFactors.push(...behaviorRisk.factors);
+      this.riskFactors.push(...(behaviorRisk.factors || []));
       
       // 2. Технический анализ
       const technicalRisk = this.analyzeTechnical();
       totalRisk += technicalRisk.score * CONFIG.weights.technical;
-      this.riskFactors.push(...technicalRisk.factors);
+      this.riskFactors.push(...(technicalRisk.factors || []));
       
       // 3. Репутация
       const reputationRisk = this.analyzeReputation();
       totalRisk += reputationRisk.score * CONFIG.weights.reputation;
-      this.riskFactors.push(...reputationRisk.factors);
+      this.riskFactors.push(...(reputationRisk.factors || []));
       
       // 4. Сеть
       const networkRisk = this.analyzeNetwork();
       totalRisk += networkRisk.score * CONFIG.weights.network;
-      this.riskFactors.push(...networkRisk.factors);
+      this.riskFactors.push(...(networkRisk.factors || []));
       
       // 5. Первый визит
       if (this.isFirstVisit) {
@@ -2039,7 +2049,13 @@
     analyzeTechnical() {
       let score = 0;
       const factors = [];
-      const ua = this.technicalData.userAgent.toLowerCase();
+      
+      // Проверяем, собраны ли технические данные
+      if (!this.technicalData || Object.keys(this.technicalData).length === 0) {
+        this.collectTechnicalData();
+      }
+      
+      const ua = (this.technicalData.userAgent || '').toLowerCase();
       
       const botPatterns = [
         /bot/i, /crawl/i, /spider/i, /scrape/i,
@@ -2146,6 +2162,10 @@
     analyzeNetwork() {
       let score = 0;
       const factors = [];
+      
+      if (!this.networkData) {
+        this.collectNetworkData();
+      }
       
       if (this.networkData.connection) {
         if (this.networkData.connection.rtt > 500) {
