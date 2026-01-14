@@ -1,39 +1,46 @@
 /**
- * WWS Gateway v3.0 - Интеллектуальная система анализа рисков
- * Показывает проверку только подозрительным пользователям
+ * WWS Gateway v3.1 - Интеллектуальная система анализа рисков с обязательной проверкой
+ * Показывает проверку 1 раз при первом посещении, затем только при подозрениях
  * @license MIT
  */
 
 (function() {
   'use strict';
   
-  console.log('🛡️ WWS Intelligence System initializing...');
+  console.log('🛡️ WWS Intelligence System v3.1 initializing...');
   
   // Конфигурация системы
   const CONFIG = {
     debug: true, // Включить логирование
-    version: '3.0',
+    version: '3.1',
     
     // Пороги риска
     riskThresholds: {
-      LOW: 0.3,      // 0-30% риска - пропуск
+      LOW: 0.3,      // 0-30% риска - пропуск с логированием
       MEDIUM: 0.6,   // 30-60% - простая проверка
       HIGH: 0.8      // 60-100% - полная проверка
     },
     
     // Веса факторов
     weights: {
-      behavior: 0.35,   // 35% - поведение
-      technical: 0.35,  // 35% - технические признаки
-      reputation: 0.20, // 20% - репутация
-      network: 0.10     // 10% - сетевые признаки
+      behavior: 0.35,
+      technical: 0.35,
+      reputation: 0.20,
+      network: 0.10
     },
     
-    // Время запоминания (в мс)
+    // Время запоминания
     memory: {
-      session: 30 * 60 * 1000,      // 30 минут
-      trustedDevice: 7 * 24 * 60 * 60 * 1000, // 7 дней
-      suspiciousActivity: 2 * 60 * 60 * 1000  // 2 часа
+      session: 30 * 60 * 1000,
+      trustedDevice: 7 * 24 * 60 * 60 * 1000,
+      suspiciousActivity: 2 * 60 * 60 * 1000
+    },
+    
+    // Настройки виджета
+    widget: {
+      position: 'bottom-left', // bottom-left, bottom-right, top-left, top-right
+      autoHide: false, // Автоматически скрывать виджет
+      showDetails: true // Показывать детализированную информацию
     }
   };
   
@@ -47,14 +54,29 @@
       this.technicalData = {};
       this.networkData = {};
       this.verdict = 'pending';
+      this.isFirstVisit = this.checkFirstVisit();
+      this.widget = null;
       
       this.log('Система инициализирована');
       
       // Собираем данные
       this.collectAllData();
       
+      // Создаем виджет ДО анализа
+      this.createWidget();
+      
       // Анализируем и принимаем решение
       this.analyzeRisk();
+    }
+    
+    // === ПРОВЕРКА ПЕРВОГО ПОСЕЩЕНИЯ ===
+    checkFirstVisit() {
+      const firstVisit = localStorage.getItem('wws_first_visit');
+      if (!firstVisit) {
+        localStorage.setItem('wws_first_visit', Date.now().toString());
+        return true;
+      }
+      return false;
     }
     
     // === ГЕНЕРАЦИЯ ID ===
@@ -86,7 +108,6 @@
           navigator.deviceMemory || 'unknown'
         ].join('|');
         
-        // Простой хеш
         let hash = 0;
         for (let i = 0; i < data.length; i++) {
           const char = data.charCodeAt(i);
@@ -99,6 +120,640 @@
       }
     }
     
+    // === СОЗДАНИЕ ВИДЖЕТА ===
+    createWidget() {
+      // Удаляем старый виджет если есть
+      const oldWidget = document.getElementById('wws-widget');
+      if (oldWidget) oldWidget.remove();
+      
+      const widget = document.createElement('div');
+      widget.id = 'wws-widget';
+      widget.innerHTML = `
+        <div class="wws-widget-icon">
+          <div class="wws-icon-shield">🛡️</div>
+          <div class="wws-risk-badge" id="wws-risk-badge">0%</div>
+        </div>
+        <div class="wws-widget-panel">
+          <div class="wws-panel-header">
+            <h3>🛡️ WWS Security</h3>
+            <button class="wws-close-panel">×</button>
+          </div>
+          <div class="wws-panel-content">
+            <div class="wws-status-section">
+              <div class="wws-status-item">
+                <span class="wws-label">Статус:</span>
+                <span class="wws-value" id="wws-status-value">Анализ...</span>
+              </div>
+              <div class="wws-status-item">
+                <span class="wws-label">Риск:</span>
+                <span class="wws-value">
+                  <span class="wws-risk-meter">
+                    <span class="wws-risk-fill" id="wws-risk-fill"></span>
+                  </span>
+                  <span id="wws-risk-value">0%</span>
+                </span>
+              </div>
+              <div class="wws-status-item">
+                <span class="wws-label">Сессия:</span>
+                <span class="wws-value" id="wws-session-id">${this.sessionId.substring(0, 8)}...</span>
+              </div>
+            </div>
+            
+            <div class="wws-behavior-section">
+              <h4>📊 Поведение</h4>
+              <div class="wws-stats-grid">
+                <div class="wws-stat">
+                  <span class="wws-stat-label">Клики</span>
+                  <span class="wws-stat-value" id="wws-clicks">0</span>
+                </div>
+                <div class="wws-stat">
+                  <span class="wws-stat-label">Движения</span>
+                  <span class="wws-stat-value" id="wws-movements">0</span>
+                </div>
+                <div class="wws-stat">
+                  <span class="wws-stat-label">Клавиши</span>
+                  <span class="wws-stat-value" id="wws-keypress">0</span>
+                </div>
+                <div class="wws-stat">
+                  <span class="wws-stat-label">Скролл</span>
+                  <span class="wws-stat-value" id="wws-scroll">0</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="wws-factors-section">
+              <h4>⚠️ Факторы риска</h4>
+              <div class="wws-factors-list" id="wws-factors-list">
+                <div class="wws-no-factors">Не обнаружено</div>
+              </div>
+            </div>
+            
+            <div class="wws-actions-section">
+              <button class="wws-action-btn" id="wws-refresh-btn">
+                🔄 Обновить
+              </button>
+              <button class="wws-action-btn secondary" id="wws-details-btn">
+                📊 Подробности
+              </button>
+            </div>
+            
+            <div class="wws-footer">
+              <small>Сессия: ${this.sessionId.substring(0, 12)}</small>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(widget);
+      
+      // Добавляем стили
+      this.addWidgetStyles();
+      
+      // Инициализируем обработчики
+      this.initWidgetHandlers();
+      
+      this.widget = widget;
+      this.updateWidget();
+    }
+    
+    addWidgetStyles() {
+      const style = document.createElement('style');
+      style.textContent = `
+        #wws-widget {
+          position: fixed;
+          bottom: 20px;
+          left: 20px;
+          z-index: 999998;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        .wws-widget-icon {
+          width: 60px;
+          height: 60px;
+          background: linear-gradient(135deg, #6C63FF, #36D1DC);
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          box-shadow: 0 4px 20px rgba(108, 99, 255, 0.3);
+          transition: all 0.3s ease;
+          position: relative;
+          border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .wws-widget-icon:hover {
+          transform: scale(1.05);
+          box-shadow: 0 6px 25px rgba(108, 99, 255, 0.4);
+        }
+        
+        .wws-icon-shield {
+          font-size: 28px;
+          filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+        }
+        
+        .wws-risk-badge {
+          position: absolute;
+          top: -5px;
+          right: -5px;
+          background: #ef4444;
+          color: white;
+          font-size: 10px;
+          font-weight: bold;
+          padding: 2px 6px;
+          border-radius: 10px;
+          min-width: 20px;
+          text-align: center;
+          border: 2px solid #1a1a2e;
+        }
+        
+        .wws-widget-panel {
+          position: absolute;
+          bottom: 70px;
+          left: 0;
+          width: 350px;
+          background: rgba(18, 18, 26, 0.98);
+          backdrop-filter: blur(10px);
+          border-radius: 15px;
+          border: 1px solid rgba(108, 99, 255, 0.3);
+          box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+          display: none;
+          overflow: hidden;
+          z-index: 999999;
+        }
+        
+        .wws-widget-panel.show {
+          display: block;
+          animation: wws-panel-slide 0.3s ease;
+        }
+        
+        @keyframes wws-panel-slide {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .wws-panel-header {
+          padding: 15px 20px;
+          background: rgba(108, 99, 255, 0.1);
+          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+        
+        .wws-panel-header h3 {
+          margin: 0;
+          color: white;
+          font-size: 16px;
+          font-weight: 600;
+        }
+        
+        .wws-close-panel {
+          background: none;
+          border: none;
+          color: #94a3b8;
+          font-size: 24px;
+          cursor: pointer;
+          line-height: 1;
+          padding: 0;
+          width: 24px;
+          height: 24px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 4px;
+        }
+        
+        .wws-close-panel:hover {
+          background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .wws-panel-content {
+          padding: 20px;
+          max-height: 60vh;
+          overflow-y: auto;
+        }
+        
+        .wws-status-section {
+          margin-bottom: 20px;
+        }
+        
+        .wws-status-item {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 10px;
+          padding: 8px 0;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .wws-label {
+          color: #94a3b8;
+          font-size: 14px;
+        }
+        
+        .wws-value {
+          color: white;
+          font-weight: 500;
+          font-size: 14px;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+        
+        .wws-risk-meter {
+          width: 80px;
+          height: 6px;
+          background: rgba(255, 255, 255, 0.1);
+          border-radius: 3px;
+          overflow: hidden;
+        }
+        
+        .wws-risk-fill {
+          height: 100%;
+          background: #10b981;
+          width: 0%;
+          transition: width 0.5s ease;
+          border-radius: 3px;
+        }
+        
+        .wws-behavior-section {
+          margin-bottom: 20px;
+          padding: 15px;
+          background: rgba(255, 255, 255, 0.05);
+          border-radius: 10px;
+        }
+        
+        .wws-behavior-section h4 {
+          margin: 0 0 15px 0;
+          color: white;
+          font-size: 14px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+        
+        .wws-stats-grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 10px;
+        }
+        
+        .wws-stat {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 8px 12px;
+          background: rgba(0, 0, 0, 0.2);
+          border-radius: 6px;
+        }
+        
+        .wws-stat-label {
+          color: #94a3b8;
+          font-size: 12px;
+        }
+        
+        .wws-stat-value {
+          color: white;
+          font-weight: bold;
+          font-size: 14px;
+        }
+        
+        .wws-factors-section {
+          margin-bottom: 20px;
+        }
+        
+        .wws-factors-section h4 {
+          margin: 0 0 10px 0;
+          color: white;
+          font-size: 14px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+        
+        .wws-factors-list {
+          max-height: 150px;
+          overflow-y: auto;
+        }
+        
+        .wws-factor-item {
+          padding: 8px 12px;
+          margin-bottom: 5px;
+          background: rgba(239, 68, 68, 0.1);
+          border-left: 3px solid #ef4444;
+          border-radius: 4px;
+          font-size: 12px;
+          color: #fca5a5;
+        }
+        
+        .wws-factor-item.low {
+          background: rgba(245, 158, 11, 0.1);
+          border-left-color: #f59e0b;
+          color: #fbbf24;
+        }
+        
+        .wws-no-factors {
+          padding: 10px;
+          text-align: center;
+          color: #94a3b8;
+          font-size: 12px;
+          background: rgba(255, 255, 255, 0.05);
+          border-radius: 6px;
+        }
+        
+        .wws-actions-section {
+          display: flex;
+          gap: 10px;
+          margin-bottom: 15px;
+        }
+        
+        .wws-action-btn {
+          flex: 1;
+          padding: 10px 15px;
+          background: linear-gradient(135deg, #6C63FF, #36D1DC);
+          color: white;
+          border: none;
+          border-radius: 8px;
+          font-weight: 500;
+          cursor: pointer;
+          font-size: 13px;
+          transition: all 0.3s ease;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+        }
+        
+        .wws-action-btn:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(108, 99, 255, 0.3);
+        }
+        
+        .wws-action-btn.secondary {
+          background: rgba(255, 255, 255, 0.1);
+          color: #94a3b8;
+        }
+        
+        .wws-action-btn.secondary:hover {
+          background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .wws-footer {
+          text-align: center;
+          color: #64748b;
+          font-size: 11px;
+          padding-top: 15px;
+          border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Адаптивность */
+        @media (max-width: 768px) {
+          .wws-widget-panel {
+            width: 300px;
+            left: 10px;
+            bottom: 80px;
+          }
+          
+          #wws-widget {
+            bottom: 10px;
+            left: 10px;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          .wws-widget-panel {
+            width: calc(100vw - 40px);
+            left: 10px;
+            right: 10px;
+          }
+        }
+      `;
+      
+      document.head.appendChild(style);
+    }
+    
+    initWidgetHandlers() {
+      const icon = this.widget.querySelector('.wws-widget-icon');
+      const panel = this.widget.querySelector('.wws-widget-panel');
+      const closeBtn = this.widget.querySelector('.wws-close-panel');
+      const refreshBtn = this.widget.querySelector('#wws-refresh-btn');
+      const detailsBtn = this.widget.querySelector('#wws-details-btn');
+      
+      // Открытие/закрытие панели
+      icon.addEventListener('click', (e) => {
+        e.stopPropagation();
+        panel.classList.toggle('show');
+      });
+      
+      closeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        panel.classList.remove('show');
+      });
+      
+      // Закрытие при клике вне виджета
+      document.addEventListener('click', (e) => {
+        if (!this.widget.contains(e.target)) {
+          panel.classList.remove('show');
+        }
+      });
+      
+      // Обновление данных
+      refreshBtn.addEventListener('click', () => {
+        this.collectAllData();
+        this.analyzeRisk();
+        this.updateWidget();
+        panel.classList.remove('show');
+      });
+      
+      // Подробности
+      detailsBtn.addEventListener('click', () => {
+        this.showDetailedReport();
+        panel.classList.remove('show');
+      });
+    }
+    
+    updateWidget() {
+      if (!this.widget) return;
+      
+      // Обновляем значения
+      const riskValue = Math.round(this.riskScore * 100);
+      const riskBadge = this.widget.querySelector('#wws-risk-badge');
+      const riskFill = this.widget.querySelector('#wws-risk-fill');
+      const riskValueEl = this.widget.querySelector('#wws-risk-value');
+      const statusValue = this.widget.querySelector('#wws-status-value');
+      const clicksEl = this.widget.querySelector('#wws-clicks');
+      const movementsEl = this.widget.querySelector('#wws-movements');
+      const keypressEl = this.widget.querySelector('#wws-keypress');
+      const scrollEl = this.widget.querySelector('#wws-scroll');
+      const factorsList = this.widget.querySelector('#wws-factors-list');
+      
+      // Цвет риска
+      let riskColor = '#10b981'; // зеленый
+      if (this.riskScore > 0.6) riskColor = '#ef4444'; // красный
+      else if (this.riskScore > 0.3) riskColor = '#f59e0b'; // желтый
+      
+      riskBadge.textContent = `${riskValue}%`;
+      riskBadge.style.background = riskColor;
+      riskFill.style.background = riskColor;
+      riskFill.style.width = `${riskValue}%`;
+      riskValueEl.textContent = `${riskValue}%`;
+      
+      // Статус
+      const statusMap = {
+        'pending': '⏳ Анализ...',
+        'allow': '✅ Разрешено',
+        'allow_with_logging': '📝 Логирование',
+        'simple_captcha': '⚠️ Проверка',
+        'full_captcha': '🚨 Полная проверка'
+      };
+      statusValue.textContent = statusMap[this.verdict] || this.verdict;
+      
+      // Поведение
+      clicksEl.textContent = this.behaviorData.clicks || 0;
+      movementsEl.textContent = this.behaviorData.mouseMovements || 0;
+      keypressEl.textContent = this.behaviorData.keyPresses || 0;
+      scrollEl.textContent = this.behaviorData.scrollEvents || 0;
+      
+      // Факторы риска
+      if (this.riskFactors.length > 0) {
+        const factorsHTML = this.riskFactors.slice(0, 3).map(factor => `
+          <div class="wws-factor-item ${factor.level}">
+            ${factor.message}
+          </div>
+        `).join('');
+        
+        factorsList.innerHTML = factorsHTML;
+      } else {
+        factorsList.innerHTML = '<div class="wws-no-factors">Не обнаружено</div>';
+      }
+    }
+    
+    showDetailedReport() {
+      const overlay = this.createOverlay();
+      
+      overlay.innerHTML = `
+        <div style="
+          max-width: 800px;
+          width: 95%;
+          max-height: 90vh;
+          overflow-y: auto;
+          background: rgba(18, 18, 26, 0.98);
+          border-radius: 20px;
+          border: 1px solid rgba(108, 99, 255, 0.3);
+          padding: 30px;
+          color: white;
+        ">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+            <h2 style="margin: 0; color: #6C63FF;">📊 Детальный отчет WWS</h2>
+            <button id="wws-close-report" style="
+              background: none;
+              border: none;
+              color: #94a3b8;
+              font-size: 24px;
+              cursor: pointer;
+            ">×</button>
+          </div>
+          
+          <div style="
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+          ">
+            <div style="background: rgba(108, 99, 255, 0.1); padding: 20px; border-radius: 10px;">
+              <h3 style="margin-top: 0; color: #6C63FF;">👤 Пользователь</h3>
+              <p><strong>ID:</strong> ${this.userId}</p>
+              <p><strong>Сессия:</strong> ${this.sessionId}</p>
+              <p><strong>Устройство:</strong> ${this.generateDeviceFingerprint()}</p>
+            </div>
+            
+            <div style="background: rgba(16, 185, 129, 0.1); padding: 20px; border-radius: 10px;">
+              <h3 style="margin-top: 0; color: #10b981;">📈 Статистика риска</h3>
+              <p><strong>Общий риск:</strong> ${(this.riskScore * 100).toFixed(1)}%</p>
+              <p><strong>Вердикт:</strong> ${this.verdict}</p>
+              <p><strong>Факторов:</strong> ${this.riskFactors.length}</p>
+            </div>
+          </div>
+          
+          <div style="margin-bottom: 30px;">
+            <h3 style="color: #f59e0b;">⚠️ Детали факторов риска</h3>
+            ${this.riskFactors.length > 0 ? this.riskFactors.map(factor => `
+              <div style="
+                background: rgba(239, 68, 68, 0.1);
+                padding: 15px;
+                margin-bottom: 10px;
+                border-left: 4px solid ${factor.level === 'high' ? '#ef4444' : factor.level === 'medium' ? '#f59e0b' : '#10b981'};
+                border-radius: 5px;
+              ">
+                <div style="display: flex; justify-content: space-between;">
+                  <strong>${factor.message}</strong>
+                  <span style="
+                    background: ${factor.level === 'high' ? '#ef4444' : factor.level === 'medium' ? '#f59e0b' : '#10b981'};
+                    color: white;
+                    padding: 2px 8px;
+                    border-radius: 10px;
+                    font-size: 12px;
+                  ">${factor.level}</span>
+                </div>
+                <div style="font-size: 12px; color: #94a3b8; margin-top: 5px;">
+                  Тип: ${factor.type} | ${new Date().toLocaleTimeString()}
+                </div>
+              </div>
+            `).join('') : '<p style="text-align: center; color: #94a3b8;">Факторы риска не обнаружены</p>'}
+          </div>
+          
+          <div style="margin-bottom: 30px;">
+            <h3 style="color: #36D1DC;">📊 Поведенческие данные</h3>
+            <div style="
+              display: grid;
+              grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+              gap: 10px;
+            ">
+              <div style="text-align: center; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 10px;">
+                <div style="font-size: 24px; margin-bottom: 5px;">🖱️</div>
+                <div style="font-size: 12px; color: #94a3b8;">Клики</div>
+                <div style="font-size: 24px; font-weight: bold;">${this.behaviorData.clicks || 0}</div>
+              </div>
+              <div style="text-align: center; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 10px;">
+                <div style="font-size: 24px; margin-bottom: 5px;">🎮</div>
+                <div style="font-size: 12px; color: #94a3b8;">Движения</div>
+                <div style="font-size: 24px; font-weight: bold;">${this.behaviorData.mouseMovements || 0}</div>
+              </div>
+              <div style="text-align: center; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 10px;">
+                <div style="font-size: 24px; margin-bottom: 5px;">⌨️</div>
+                <div style="font-size: 12px; color: #94a3b8;">Клавиши</div>
+                <div style="font-size: 24px; font-weight: bold;">${this.behaviorData.keyPresses || 0}</div>
+              </div>
+              <div style="text-align: center; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 10px;">
+                <div style="font-size: 24px; margin-bottom: 5px;">📜</div>
+                <div style="font-size: 12px; color: #94a3b8;">Скролл</div>
+                <div style="font-size: 24px; font-weight: bold;">${this.behaviorData.scrollEvents || 0}</div>
+              </div>
+            </div>
+          </div>
+          
+          <button onclick="this.removeOverlay()" style="
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #6C63FF, #36D1DC);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 16px;
+          ">
+            Закрыть отчет
+          </button>
+        </div>
+      `;
+      
+      overlay.querySelector('#wws-close-report').addEventListener('click', () => {
+        this.removeOverlay();
+      });
+    }
+    
     // === СБОР ДАННЫХ ===
     collectAllData() {
       this.collectBehaviorData();
@@ -109,18 +764,13 @@
     
     collectBehaviorData() {
       this.behaviorData = {
-        // Время и события
         pageLoadTime: Date.now(),
         mouseMovements: 0,
         clicks: 0,
         keyPresses: 0,
         scrollEvents: 0,
-        
-        // Источник
         referrer: document.referrer,
         directAccess: !document.referrer,
-        
-        // Скорость взаимодействия
         interactionSpeed: null
       };
       
@@ -128,111 +778,82 @@
       let mouseMoveCount = 0;
       let mouseMoveTimer = null;
       
+      const updateWidgetStats = () => {
+        this.updateWidget();
+      };
+      
       document.addEventListener('mousemove', () => {
         mouseMoveCount++;
         this.behaviorData.mouseMovements++;
         
-        // Измеряем скорость движений
         if (!mouseMoveTimer) {
           mouseMoveTimer = setTimeout(() => {
-            this.behaviorData.mouseSpeed = mouseMoveCount / 0.5; // движений в секунду
+            this.behaviorData.mouseSpeed = mouseMoveCount / 0.5;
             mouseMoveCount = 0;
             mouseMoveTimer = null;
+            updateWidgetStats();
           }, 500);
+        } else {
+          updateWidgetStats();
         }
       });
       
       document.addEventListener('click', (e) => {
         this.behaviorData.clicks++;
-        
-        // Анализ кликов (целевые vs случайные)
-        const tag = e.target.tagName.toLowerCase();
-        if (tag === 'a' || tag === 'button' || e.target.onclick) {
-          this.behaviorData.targetClicks = (this.behaviorData.targetClicks || 0) + 1;
-        }
+        updateWidgetStats();
       });
       
       document.addEventListener('keydown', (e) => {
-        // Игнорируем служебные клавиши
         if (!['Shift', 'Control', 'Alt', 'Meta', 'Tab', 'Escape'].includes(e.key)) {
           this.behaviorData.keyPresses++;
+          updateWidgetStats();
         }
       });
       
       let lastScroll = 0;
       document.addEventListener('scroll', () => {
         const now = Date.now();
-        if (now - lastScroll > 100) { // Дебаунс
+        if (now - lastScroll > 100) {
           this.behaviorData.scrollEvents++;
           lastScroll = now;
+          updateWidgetStats();
         }
       });
     }
     
     collectTechnicalData() {
       this.technicalData = {
-        // Браузер и платформа
         userAgent: navigator.userAgent,
         platform: navigator.platform,
         vendor: navigator.vendor,
         language: navigator.language,
         languages: navigator.languages,
-        
-        // Экран
         screenWidth: screen.width,
         screenHeight: screen.height,
         colorDepth: screen.colorDepth,
-        pixelDepth: screen.pixelDepth,
-        
-        // Окно
         windowWidth: window.innerWidth,
         windowHeight: window.innerHeight,
         devicePixelRatio: window.devicePixelRatio,
-        
-        // Время и локализация
         timezone: new Date().getTimezoneOffset(),
-        locale: navigator.language,
-        
-        // Возможности
         cookiesEnabled: navigator.cookieEnabled,
-        javaEnabled: navigator.javaEnabled ? navigator.javaEnabled() : false,
-        pdfViewerEnabled: navigator.pdfViewerEnabled || false,
-        
-        // Плагины
         plugins: navigator.plugins.length,
-        pluginList: Array.from(navigator.plugins).map(p => p.name).join(', '),
-        
-        // Медиа устройства
-        mediaDevices: 'mediaDevices' in navigator,
-        
-        // WebGL
         webgl: this.detectWebGL(),
-        
-        // Canvas fingerprint
         canvasFingerprint: this.getCanvasFingerprint()
       };
       
-      // Дополнительные проверки
       this.checkHeadlessIndicators();
     }
     
     collectNetworkData() {
       this.networkData = {
-        // Соединение
         connection: navigator.connection ? {
           effectiveType: navigator.connection.effectiveType,
           rtt: navigator.connection.rtt,
           downlink: navigator.connection.downlink,
           saveData: navigator.connection.saveData
         } : null,
-        
-        // Заголовки (будут получены с сервера)
         headers: {},
-        
-        // IP информация (будет получена с сервера)
         ipInfo: null,
-        
-        // Время загрузки
         pageLoadPerformance: performance.timing ? {
           navigationStart: performance.timing.navigationStart,
           loadEventEnd: performance.timing.loadEventEnd,
@@ -246,8 +867,6 @@
         const history = localStorage.getItem(`wws_history_${this.userId}`);
         if (history) {
           this.userHistory = JSON.parse(history);
-          
-          // Очищаем старые записи (> 30 дней)
           const cutoff = Date.now() - (30 * 24 * 60 * 60 * 1000);
           if (this.userHistory.sessions) {
             this.userHistory.sessions = this.userHistory.sessions.filter(
@@ -301,6 +920,18 @@
       totalRisk += networkRisk.score * CONFIG.weights.network;
       this.riskFactors.push(...networkRisk.factors);
       
+      // ОБЯЗАТЕЛЬНАЯ ПРОВЕРКА ПРИ ПЕРВОМ ПОСЕЩЕНИИ
+      if (this.isFirstVisit) {
+        // Для первого посещения добавляем небольшой риск, чтобы гарантировать проверку
+        totalRisk = Math.max(totalRisk, 0.4); // Минимум 40% риска при первом посещении
+        this.riskFactors.push({
+          type: 'system',
+          level: 'medium',
+          message: 'Первое посещение сайта - требуется базовая проверка',
+          details: { firstVisit: true }
+        });
+      }
+      
       this.riskScore = Math.min(1, totalRisk);
       
       // Определяем вердикт
@@ -308,6 +939,9 @@
       
       // Сохраняем результаты
       this.saveAnalysisResults();
+      
+      // Обновляем виджет
+      this.updateWidget();
       
       // Выполняем действие
       this.executeVerdict();
@@ -318,7 +952,7 @@
       const factors = [];
       const timeSinceLoad = Date.now() - this.behaviorData.pageLoadTime;
       
-      // 1. Слишком быстрое взаимодействие (боты кликают сразу)
+      // 1. Слишком быстрое взаимодействие
       if (timeSinceLoad < 1000 && this.behaviorData.clicks > 2) {
         score += 0.4;
         factors.push({
@@ -329,7 +963,7 @@
         });
       }
       
-      // 2. Отсутствие взаимодействия (скрипты)
+      // 2. Отсутствие взаимодействия
       if (timeSinceLoad > 3000 && 
           this.behaviorData.mouseMovements < 2 && 
           this.behaviorData.clicks === 0) {
@@ -343,7 +977,7 @@
       }
       
       // 3. Неестественная скорость мыши
-      if (this.behaviorData.mouseSpeed > 30) { // > 30 движений/сек - подозрительно
+      if (this.behaviorData.mouseSpeed > 30) {
         score += 0.2;
         factors.push({
           type: 'behavior',
@@ -353,7 +987,7 @@
         });
       }
       
-      // 4. Прямой доступ (без реферера)
+      // 4. Прямой доступ
       if (this.behaviorData.directAccess) {
         score += 0.1;
         factors.push({
@@ -366,7 +1000,7 @@
       
       // 5. Очень много кликов за короткое время
       const clicksPerSecond = this.behaviorData.clicks / (timeSinceLoad / 1000);
-      if (clicksPerSecond > 5) { // > 5 кликов/сек
+      if (clicksPerSecond > 5) {
         score += 0.3;
         factors.push({
           type: 'behavior',
@@ -384,15 +1018,11 @@
       const factors = [];
       const ua = this.technicalData.userAgent.toLowerCase();
       
-      // 1. Известные боты и скрейперы
+      // 1. Известные боты
       const botPatterns = [
         /bot/i, /crawl/i, /spider/i, /scrape/i,
         /headless/i, /phantom/i, /selenium/i,
-        /puppeteer/i, /playwright/i, /cheerio/i,
-        /curl/i, /wget/i, /python/i, /java/i,
-        /php/i, /perl/i, /ruby/i, /go-http/i,
-        /node/i, /axios/i, /requests/i,
-        /datanyze/i, /crawler/i, /scanner/i
+        /puppeteer/i, /playwright/i, /cheerio/i
       ];
       
       for (const pattern of botPatterns) {
@@ -408,7 +1038,7 @@
         }
       }
       
-      // 2. WebDriver обнаружение (headless браузеры)
+      // 2. WebDriver обнаружение
       if (navigator.webdriver === true) {
         score += 0.8;
         factors.push({
@@ -427,65 +1057,6 @@
           level: 'medium',
           message: 'Отсутствуют плагины браузера',
           details: { plugins: 0 }
-        });
-      }
-      
-      // 4. Нулевое разрешение
-      if (this.technicalData.screenWidth === 0 || this.technicalData.screenHeight === 0) {
-        score += 0.4;
-        factors.push({
-          type: 'technical',
-          level: 'high',
-          message: 'Нулевое разрешение экрана',
-          details: { width: this.technicalData.screenWidth, height: this.technicalData.screenHeight }
-        });
-      }
-      
-      // 5. Подозрительные комбинации разрешений
-      const suspiciousResolutions = [
-        '800x600', '1024x768', '1280x720', '1366x768'
-      ];
-      const currentRes = `${this.technicalData.screenWidth}x${this.technicalData.screenHeight}`;
-      if (suspiciousResolutions.includes(currentRes)) {
-        score += 0.2;
-        factors.push({
-          type: 'technical',
-          level: 'low',
-          message: 'Подозрительное разрешение экрана',
-          details: { resolution: currentRes }
-        });
-      }
-      
-      // 6. Нет WebGL (признак headless)
-      if (!this.technicalData.webgl) {
-        score += 0.2;
-        factors.push({
-          type: 'technical',
-          level: 'medium',
-          message: 'Отсутствует поддержка WebGL',
-          details: { webgl: false }
-        });
-      }
-      
-      // 7. Пустой или короткий User-Agent
-      if (!ua || ua.length < 20) {
-        score += 0.3;
-        factors.push({
-          type: 'technical',
-          level: 'high',
-          message: 'Подозрительно короткий User-Agent',
-          details: { length: ua ? ua.length : 0 }
-        });
-      }
-      
-      // 8. Проверка языков (боты часто имеют пустой список)
-      if (!this.technicalData.languages || this.technicalData.languages.length === 0) {
-        score += 0.2;
-        factors.push({
-          type: 'technical',
-          level: 'medium',
-          message: 'Отсутствует информация о языках',
-          details: { languages: 'none' }
         });
       }
       
@@ -519,14 +1090,13 @@
         });
       }
       
-      // 3. Частота посещений (слишком частые запросы)
+      // 3. Частота посещений
       if (this.userHistory.sessions && this.userHistory.sessions.length > 10) {
-        // Проверяем последние 10 сессий
         const recentSessions = this.userHistory.sessions.slice(-10);
         const timeSpan = recentSessions[recentSessions.length - 1].timestamp - 
                         recentSessions[0].timestamp;
         
-        if (timeSpan < 5 * 60 * 1000) { // 10 сессий за 5 минут
+        if (timeSpan < 5 * 60 * 1000) {
           score += 0.3;
           factors.push({
             type: 'reputation',
@@ -537,21 +1107,9 @@
         }
       }
       
-      // 4. Время суток (ночные визиты более подозрительны)
-      const hour = new Date().getHours();
-      if (hour >= 0 && hour <= 5) { // Ночь 00:00-05:00
-        score += 0.1;
-        factors.push({
-          type: 'reputation',
-          level: 'low',
-          message: 'Посещение в ночное время',
-          details: { hour }
-        });
-      }
-      
-      // 5. Доверенное устройство (снижает риск)
+      // 4. Доверенное устройство (снижает риск)
       if (this.userHistory.trusted) {
-        score -= 0.3; // Отрицательный вес - снижаем риск
+        score -= 0.3;
         factors.push({
           type: 'reputation',
           level: 'trusted',
@@ -567,7 +1125,7 @@
       let score = 0;
       const factors = [];
       
-      // 1. Медленное соединение (может быть VPN/Tor)
+      // 1. Медленное соединение
       if (this.networkData.connection && this.networkData.connection.rtt > 500) {
         score += 0.2;
         factors.push({
@@ -575,29 +1133,6 @@
           level: 'medium',
           message: 'Высокая задержка сети',
           details: { rtt: this.networkData.connection.rtt + 'ms' }
-        });
-      }
-      
-      // 2. Сохранение данных (чаще на мобильных)
-      if (this.networkData.connection && this.networkData.connection.saveData === true) {
-        score += 0.1;
-        factors.push({
-          type: 'network',
-          level: 'low',
-          message: 'Включен режим экономии данных',
-          details: { saveData: true }
-        });
-      }
-      
-      // 3. Тип соединения (2G/3G более подозрительны для ботов)
-      if (this.networkData.connection && 
-          ['slow-2g', '2g', '3g'].includes(this.networkData.connection.effectiveType)) {
-        score += 0.1;
-        factors.push({
-          type: 'network',
-          level: 'low',
-          message: 'Медленный тип соединения',
-          details: { effectiveType: this.networkData.connection.effectiveType }
         });
       }
       
@@ -623,7 +1158,6 @@
         canvas.width = 200;
         canvas.height = 30;
         
-        // Рисуем текст
         ctx.textBaseline = 'top';
         ctx.font = '14px Arial';
         ctx.textBaseline = 'alphabetic';
@@ -634,34 +1168,43 @@
         ctx.fillStyle = 'rgba(102, 204, 0, 0.7)';
         ctx.fillText('WWS Security', 4, 17);
         
-        // Получаем data URL
-        return canvas.toDataURL().substring(22, 50); // Часть данных
+        return canvas.toDataURL().substring(22, 50);
       } catch (e) {
         return 'error';
       }
     }
     
     checkHeadlessIndicators() {
-      // Проверка пермиссий (боты часто имеют отклоненные)
       try {
         if (Notification.permission === 'denied') {
           this.technicalData.notificationsDenied = true;
         }
       } catch (e) {}
       
-      // Проверка window.chrome (отсутствует в headless)
       this.technicalData.hasChrome = typeof window.chrome !== 'undefined';
-      
-      // Проверка свойств браузера
       this.technicalData.hasChromeRuntime = typeof chrome !== 'undefined' && 
                                            typeof chrome.runtime !== 'undefined';
     }
     
     // === ОПРЕДЕЛЕНИЕ ВЕРДИКТА ===
     determineVerdict() {
-      let verdict = 'allow'; // По умолчанию пропускаем
+      let verdict = 'allow';
       
-      if (this.riskScore >= CONFIG.riskThresholds.HIGH) {
+      // ОБЯЗАТЕЛЬНАЯ ПРОВЕРКА ПРИ ПЕРВОМ ПОСЕЩЕНИИ
+      if (this.isFirstVisit) {
+        if (this.riskScore >= CONFIG.riskThresholds.HIGH) {
+          verdict = 'full_captcha';
+          this.log(`ПЕРВОЕ ПОСЕЩЕНИЕ: ПОЛНАЯ ПРОВЕРКА (риск: ${(this.riskScore * 100).toFixed(1)}%)`);
+        } else if (this.riskScore >= CONFIG.riskThresholds.LOW) {
+          verdict = 'simple_captcha';
+          this.log(`ПЕРВОЕ ПОСЕЩЕНИЕ: ПРОСТАЯ ПРОВЕРКА (риск: ${(this.riskScore * 100).toFixed(1)}%)`);
+        } else {
+          verdict = 'allow_with_logging';
+          this.log(`ПЕРВОЕ ПОСЕЩЕНИЕ: АВТОМАТИЧЕСКАЯ ПРОВЕРКА (риск: ${(this.riskScore * 100).toFixed(1)}%)`);
+        }
+      } 
+      // ПОВТОРНЫЕ ПОСЕЩЕНИЯ
+      else if (this.riskScore >= CONFIG.riskThresholds.HIGH) {
         verdict = 'full_captcha';
         this.log(`Вердикт: ПОЛНАЯ ПРОВЕРКА (риск: ${(this.riskScore * 100).toFixed(1)}%)`);
       } 
@@ -683,6 +1226,9 @@
     
     // === ВЫПОЛНЕНИЕ РЕШЕНИЯ ===
     executeVerdict() {
+      // Обновляем виджет перед показом проверки
+      this.updateWidget();
+      
       switch (this.verdict) {
         case 'full_captcha':
           this.showFullCaptcha();
@@ -706,52 +1252,39 @@
     
     // === ИНТЕРФЕЙСЫ ПРОВЕРОК ===
     showFullCaptcha() {
-      this.log('Показываем полную капчу (высокий риск)');
-      
-      // Сохраняем оригинальный контент
+      this.log('Показываем полную капчу');
       this.saveOriginalContent();
-      
-      // Показываем сложную проверку
       this.createFullCaptchaUI();
     }
     
     showSimpleCaptcha() {
-      this.log('Показываем простую капчу (средний риск)');
-      
-      // Сохраняем оригинальный контент
+      this.log('Показываем простую капчу');
       this.saveOriginalContent();
-      
-      // Показываем легкую проверку
       this.createSimpleCaptchaUI();
     }
     
     logAccess() {
-      this.log('Логируем доступ (низкий риск)');
-      // Отправляем аналитику на сервер
+      this.log('Логируем доступ');
       this.sendAnalytics();
     }
     
     allowAccess() {
       this.log('Пропускаем пользователя');
       
-      // Сохраняем сессию
       this.saveSession();
       
-      // Если было доверенное прохождение - помечаем устройство
       if (this.riskScore < 0.2) {
         this.markAsTrusted();
       }
       
-      // Отправляем событие
       this.emitAccessGranted();
+      this.updateWidget();
     }
     
     // === UI КАПЧИ ===
     createSimpleCaptchaUI() {
-      // Создаем оверлей поверх сайта
       const overlay = this.createOverlay();
       
-      // Генерируем простую задачу
       const a = Math.floor(Math.random() * 9) + 1;
       const b = Math.floor(Math.random() * 9) + 1;
       const answer = a + b;
@@ -783,9 +1316,9 @@
             ">
               🤖
             </div>
-            <h3 style="color: white; margin: 0 0 10px;">Quick Check</h3>
+            <h3 style="color: white; margin: 0 0 10px;">Проверка безопасности</h3>
             <p style="color: #94a3b8; font-size: 14px; margin: 0;">
-              Please solve this simple math to continue
+              ${this.isFirstVisit ? 'Первое посещение сайта' : 'Обновление сессии'}
             </p>
           </div>
           
@@ -796,6 +1329,9 @@
             margin-bottom: 20px;
             border: 1px solid rgba(255, 255, 255, 0.1);
           ">
+            <div style="color: #94a3b8; margin-bottom: 10px; font-size: 14px;">
+              Решите простой пример:
+            </div>
             <div style="
               font-size: 36px;
               font-weight: bold;
@@ -808,7 +1344,7 @@
             
             <input type="text" 
                    id="captcha-answer"
-                   placeholder="Enter answer"
+                   placeholder="Введите ответ"
                    style="
                      width: 100%;
                      padding: 15px;
@@ -819,7 +1355,19 @@
                      color: white;
                      text-align: center;
                      outline: none;
-                   ">
+                   "
+                   autocomplete="off">
+          </div>
+          
+          <div style="
+            color: #64748b;
+            font-size: 12px;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+          ">
+            Уровень риска: <strong>${(this.riskScore * 100).toFixed(0)}%</strong>
           </div>
           
           <button id="captcha-submit"
@@ -833,23 +1381,25 @@
                     font-weight: 600;
                     cursor: pointer;
                     font-size: 16px;
-                  ">
-            Verify
+                    transition: all 0.3s;
+                  "
+                  onmouseover="this.style.transform='translateY(-2px)';"
+                  onmouseout="this.style.transform='translateY(0)';">
+            Проверить
           </button>
           
           <div style="
             color: #64748b;
-            font-size: 12px;
+            font-size: 11px;
             margin-top: 20px;
             padding-top: 15px;
             border-top: 1px solid rgba(255, 255, 255, 0.1);
           ">
-            Risk level: <strong>${(this.riskScore * 100).toFixed(0)}%</strong>
+            WWS Security • Сессия: ${this.sessionId.substring(0, 8)}
           </div>
         </div>
       `;
       
-      // Обработчики
       const answerInput = overlay.querySelector('#captcha-answer');
       const submitBtn = overlay.querySelector('#captcha-submit');
       
@@ -864,10 +1414,8 @@
           this.allowAccess();
         } else {
           answerInput.value = '';
-          answerInput.placeholder = 'Wrong, try again';
+          answerInput.placeholder = 'Неверно, попробуйте еще';
           answerInput.style.borderColor = '#ef4444';
-          
-          // Можно добавить счетчик попыток
         }
       };
       
@@ -878,10 +1426,8 @@
     }
     
     createFullCaptchaUI() {
-      // Создаем оверлей
       const overlay = this.createOverlay();
       
-      // Создаем сложную задачу (перетаскивание, последовательности и т.д.)
       overlay.innerHTML = `
         <div style="
           max-width: 500px;
@@ -894,7 +1440,6 @@
           text-align: center;
           backdrop-filter: blur(20px);
         ">
-          <!-- Заголовок с предупреждением -->
           <div style="margin-bottom: 30px;">
             <div style="
               width: 70px;
@@ -912,14 +1457,13 @@
               ⚠️
             </div>
             <h3 style="color: #f87171; margin: 0 0 10px; font-size: 24px;">
-              Enhanced Security Check
+              Повышенная проверка
             </h3>
             <p style="color: #94a3b8; line-height: 1.5; font-size: 15px;">
-              Suspicious activity detected. Complete this verification to continue.
+              Обнаружены подозрительные факторы. Требуется дополнительная проверка.
             </p>
           </div>
           
-          <!-- Задача с последовательностью -->
           <div style="
             background: rgba(255, 255, 255, 0.05);
             border-radius: 15px;
@@ -928,7 +1472,7 @@
             border: 1px solid rgba(255, 255, 255, 0.15);
           ">
             <div style="color: #94a3b8; margin-bottom: 15px; font-size: 14px;">
-              Complete the sequence:
+              Выберите правильное продолжение:
             </div>
             
             <div style="
@@ -966,7 +1510,6 @@
             </div>
           </div>
           
-          <!-- Информация о риске -->
           <div style="
             background: rgba(239, 68, 68, 0.1);
             border-radius: 10px;
@@ -978,7 +1521,7 @@
             text-align: left;
           ">
             <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-              <span>Risk factors detected:</span>
+              <span>Факторов риска:</span>
               <strong>${this.riskFactors.filter(f => f.level === 'high' || f.level === 'critical').length}</strong>
             </div>
             <div style="font-size: 12px; color: #fca5a5;">
@@ -986,7 +1529,6 @@
             </div>
           </div>
           
-          <!-- Кнопки -->
           <div style="display: flex; gap: 15px;">
             <button id="verify-btn"
                     style="
@@ -1000,25 +1542,10 @@
                       cursor: pointer;
                       font-size: 16px;
                     ">
-              Verify & Continue
-            </button>
-            
-            <button id="report-btn"
-                    style="
-                      padding: 18px 25px;
-                      background: rgba(255, 255, 255, 0.1);
-                      color: #94a3b8;
-                      border: 1px solid rgba(255, 255, 255, 0.2);
-                      border-radius: 12px;
-                      cursor: pointer;
-                      font-size: 14px;
-                    "
-                    title="Report false positive">
-              ⚠️ Report
+              Проверить
             </button>
           </div>
           
-          <!-- Таймер -->
           <div id="captcha-timer" style="
             color: #fbbf24;
             margin-top: 20px;
@@ -1026,7 +1553,6 @@
             font-size: 14px;
           "></div>
           
-          <!-- Футер -->
           <div style="
             border-top: 1px solid rgba(255, 255, 255, 0.1);
             padding-top: 20px;
@@ -1034,10 +1560,7 @@
             color: #64748b;
             font-size: 12px;
           ">
-            <div>WWS Security • Session: ${this.sessionId.substring(0, 8)}</div>
-            <div style="font-size: 11px; margin-top: 5px;">
-              If this is incorrect, please report
-            </div>
+            <div>WWS Security • Сессия: ${this.sessionId.substring(0, 8)}</div>
           </div>
         </div>
         
@@ -1055,14 +1578,14 @@
         </style>
       `;
       
-      // Таймер (60 секунд)
+      // Таймер
       let timeLeft = 60;
       const timerElement = overlay.querySelector('#captcha-timer');
       
       const updateTimer = () => {
         const minutes = Math.floor(timeLeft / 60);
         const seconds = timeLeft % 60;
-        timerElement.textContent = `Time left: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+        timerElement.textContent = `Осталось: ${minutes}:${seconds.toString().padStart(2, '0')}`;
         
         if (timeLeft <= 0) {
           clearInterval(timerInterval);
@@ -1077,7 +1600,6 @@
       // Обработчики
       const options = overlay.querySelectorAll('.sequence-option');
       const verifyBtn = overlay.querySelector('#verify-btn');
-      const reportBtn = overlay.querySelector('#report-btn');
       
       let selectedOption = null;
       
@@ -1092,32 +1614,21 @@
       verifyBtn.addEventListener('click', () => {
         clearInterval(timerInterval);
         
-        if (selectedOption === '10') { // Правильный ответ для последовательности
+        if (selectedOption === '10') {
           this.log('Полная капча пройдена');
           this.removeOverlay();
           this.allowAccess();
         } else {
           this.log('Полная капча не пройдена');
-          // Можно показать ошибку
-        }
-      });
-      
-      reportBtn.addEventListener('click', () => {
-        if (confirm('Report this as a false positive?')) {
-          this.reportFalsePositive();
-          this.removeOverlay();
-          this.allowAccess();
         }
       });
     }
     
     // === УТИЛИТЫ ===
     createOverlay() {
-      // Удаляем старый оверлей
       const oldOverlay = document.getElementById('wws-security-overlay');
       if (oldOverlay) oldOverlay.remove();
       
-      // Создаем новый
       const overlay = document.createElement('div');
       overlay.id = 'wws-security-overlay';
       overlay.style.cssText = `
@@ -1136,8 +1647,6 @@
       `;
       
       document.body.appendChild(overlay);
-      
-      // Блокируем скролл оригинального сайта
       document.body.style.overflow = 'hidden';
       
       return overlay;
@@ -1146,29 +1655,16 @@
     removeOverlay() {
       const overlay = document.getElementById('wws-security-overlay');
       if (overlay) overlay.remove();
-      
-      // Восстанавливаем скролл
       document.body.style.overflow = '';
     }
     
     saveOriginalContent() {
-      // Уже сохранен при инициализации
       if (!window._wwsOriginalContent) {
         window._wwsOriginalContent = {
           bodyHTML: document.body.innerHTML,
           title: document.title,
           bodyStyle: document.body.getAttribute('style')
         };
-      }
-    }
-    
-    restoreOriginalContent() {
-      if (window._wwsOriginalContent) {
-        document.body.innerHTML = window._wwsOriginalContent.bodyHTML;
-        document.title = window._wwsOriginalContent.title;
-        if (window._wwsOriginalContent.bodyStyle) {
-          document.body.setAttribute('style', window._wwsOriginalContent.bodyStyle);
-        }
       }
     }
     
@@ -1183,16 +1679,13 @@
         deviceFingerprint: this.generateDeviceFingerprint()
       };
       
-      // Сохраняем в историю
       if (!this.userHistory.sessions) this.userHistory.sessions = [];
       this.userHistory.sessions.push(session);
       
-      // Ограничиваем количество сессий
       if (this.userHistory.sessions.length > 50) {
         this.userHistory.sessions = this.userHistory.sessions.slice(-50);
       }
       
-      // Сохраняем в localStorage
       try {
         localStorage.setItem(`wws_history_${this.userId}`, JSON.stringify(this.userHistory));
         sessionStorage.setItem('wws_session_active', 'true');
@@ -1213,32 +1706,7 @@
       }
     }
     
-    reportFalsePositive() {
-      const report = {
-        userId: this.userId,
-        sessionId: this.sessionId,
-        riskScore: this.riskScore,
-        factors: this.riskFactors,
-        userAgent: this.technicalData.userAgent,
-        timestamp: Date.now(),
-        type: 'false_positive'
-      };
-      
-      // Сохраняем отчет
-      try {
-        const reports = JSON.parse(localStorage.getItem('wws_false_positives') || '[]');
-        reports.push(report);
-        localStorage.setItem('wws_false_positives', JSON.stringify(reports.slice(-100)));
-      } catch (e) {
-        this.log('Ошибка сохранения отчета:', e);
-      }
-      
-      // Можно отправить на сервер
-      this.sendReportToServer(report);
-    }
-    
     sendAnalytics() {
-      // Отправляем аналитику на ваш сервер
       const analytics = {
         userId: this.userId,
         sessionId: this.sessionId,
@@ -1248,7 +1716,6 @@
         timestamp: Date.now()
       };
       
-      // Пример отправки
       if (typeof gtag !== 'undefined') {
         gtag('event', 'wws_security_scan', {
           risk_score: this.riskScore,
@@ -1256,15 +1723,6 @@
           factors_count: analytics.factors.length
         });
       }
-    }
-    
-    sendReportToServer(report) {
-      // Отправка отчета на сервер
-      // fetch('/api/wws/report-false-positive', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(report)
-      // });
     }
     
     emitAccessGranted() {
@@ -1293,7 +1751,6 @@
         factors: this.riskFactors,
         behaviorData: this.behaviorData,
         technicalData: {
-          // Только безопасные данные
           userAgent: this.technicalData.userAgent,
           platform: this.technicalData.platform,
           screen: `${this.technicalData.screenWidth}x${this.technicalData.screenHeight}`,
@@ -1301,19 +1758,15 @@
         }
       };
       
-      // Сохраняем для отладки
       if (CONFIG.debug) {
         console.log('🛡️ WWS Analysis:', analysis);
       }
       
-      // Можно сохранить в localStorage для анализа
       try {
         const analyses = JSON.parse(localStorage.getItem('wws_analyses') || '[]');
         analyses.push(analysis);
         localStorage.setItem('wws_analyses', JSON.stringify(analyses.slice(-20)));
-      } catch (e) {
-        // Игнорируем ошибки localStorage
-      }
+      } catch (e) {}
     }
     
     handleTimeout() {
@@ -1324,9 +1777,9 @@
         overlay.innerHTML = `
           <div style="text-align: center; color: white; max-width: 400px;">
             <div style="font-size: 48px; margin-bottom: 20px;">⏰</div>
-            <h3 style="margin-bottom: 10px;">Time Expired</h3>
+            <h3 style="margin-bottom: 10px;">Время истекло</h3>
             <p style="color: #94a3b8; margin-bottom: 30px;">
-              Please refresh the page and try again.
+              Обновите страницу и попробуйте снова.
             </p>
             <button onclick="location.reload()"
                     style="
@@ -1337,7 +1790,7 @@
                       border-radius: 8px;
                       cursor: pointer;
                     ">
-              Refresh Page
+              Обновить
             </button>
           </div>
         `;
@@ -1373,8 +1826,12 @@
         if (history.trusted && history.trustedSince) {
           const timeSinceTrusted = Date.now() - history.trustedSince;
           if (timeSinceTrusted < CONFIG.memory.trustedDevice) {
-            console.log('🛡️ Доверенное устройство, пропускаем проверку');
+            console.log('🛡️ Доверенное устройство, проверка не требуется');
             sessionStorage.setItem('wws_session_passed', 'true');
+            // Но все равно создаем виджет для отображения информации
+            const analyzer = new WWSRiskAnalyzer();
+            analyzer.verdict = 'allow';
+            analyzer.updateWidget();
             return;
           }
         }
@@ -1386,11 +1843,11 @@
     if (lastSuspicious) {
       const timeSinceSuspicious = Date.now() - parseInt(lastSuspicious);
       if (timeSinceSuspicious < CONFIG.memory.suspiciousActivity) {
-        console.log('🛡️ Недавно была подозрительная активность, показываем проверку');
+        console.log('🛡️ Недавно была подозрительная активность');
       }
     }
     
-    // Запускаем анализатор
+    // Запускаем анализатор (ОБЯЗАТЕЛЬНО при первом запуске)
     window.wwsAnalyzer = new WWSRiskAnalyzer();
   }
   
@@ -1405,7 +1862,6 @@
   window.WWS = {
     version: CONFIG.version,
     
-    // Методы для интеграции
     forceCheck: () => new WWSRiskAnalyzer(),
     
     markAsTrusted: () => {
@@ -1427,6 +1883,22 @@
     getRiskScore: () => window.wwsAnalyzer?.riskScore || 0,
     
     getRiskFactors: () => window.wwsAnalyzer?.riskFactors || [],
+    
+    showWidget: () => {
+      const widget = document.getElementById('wws-widget');
+      if (widget) {
+        const panel = widget.querySelector('.wws-widget-panel');
+        panel.classList.add('show');
+      }
+    },
+    
+    hideWidget: () => {
+      const widget = document.getElementById('wws-widget');
+      if (widget) {
+        const panel = widget.querySelector('.wws-widget-panel');
+        panel.classList.remove('show');
+      }
+    },
     
     // События
     onAccessGranted: (callback) => {
