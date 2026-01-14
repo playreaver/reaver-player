@@ -64,7 +64,7 @@
         </div>
         
         <!-- Текст -->
-        <h1 style="color: white; margin: 0 0 20px; font-size: 32px; font-weight: 700; letter-spacing: 1px;">SECURITY VERIFICATION</h1>
+        <h1 style="color: white; margin: 0 0 20px; font-size: 32px; font-weight: 700; letter-spacing: 1px;">WWS PROTECT</h1>
         <p id="wws-status-text" style="color: #a0a0c0; font-size: 18px; margin: 0 0 40px; font-weight: 300;">Initializing protection system...</p>
         
         <!-- Прогресс бар -->
@@ -91,6 +91,11 @@
         <!-- Статус иконки -->
         <div id="wws-status-icon" style="color: #fbbf24; font-size: 14px; margin-top: 20px;">
           <i class="fas fa-cog fa-spin"></i> Analyzing...
+        </div>
+        
+        <!-- Powered by -->
+        <div style="margin-top: 60px; color: #6c6c8c; font-size: 12px;">
+          Powered by <a href="https://reaver.is-a.dev/" target="_blank" style="color: #6C63FF; text-decoration: none; font-weight: 600;">Wandering Wizardry Studios</a>
         </div>
       </div>
       
@@ -380,16 +385,7 @@
   
   class WWSRiskAnalyzer {
     constructor() {
-      // Bind all methods to instance
-      this.generateUserId = this.generateUserId.bind(this);
-      this.generateSessionId = this.generateSessionId.bind(this);
-      this.generateDeviceFingerprint = this.generateDeviceFingerprint.bind(this);
-      this.createWidget = this.createWidget.bind(this);
-      this.updateWidget = this.updateWidget.bind(this);
-      this.showDetailedReport = this.showDetailedReport.bind(this);
-      this.showProtectionScreen = this.showProtectionScreen.bind(this);
-      this.log = this.log.bind(this);
-      
+      // Инициализация свойств
       this.userId = this.generateUserId();
       this.sessionId = this.generateSessionId();
       this.riskScore = 0;
@@ -404,9 +400,20 @@
       this.isRunning = false;
       this.userHistory = null;
       
-      this.loadUserHistory(); // Инициализируем историю сразу
-      
       this.log('System initialized v' + CONFIG.version);
+      
+      // Проверяем, не верифицирована ли уже сессия
+      if (sessionStorage.getItem('wws_session_passed') === 'true') {
+        this.log('Premium session already verified');
+        this.verdict = 'allow';
+        this.riskScore = 0;
+        this.behaviorAnalyzer = new AdvancedBehaviorAnalyzer();
+        this.createWidget();
+        PROTECTION_LAYER.hide();
+        return;
+      }
+      
+      // Если сессия новая - запускаем анализ
       this.startAnalysis();
     }
     
@@ -445,6 +452,7 @@
         this.verdict = 'allow_with_logging';
         this.riskScore = 0.5;
         PROTECTION_LAYER.hide();
+        this.createWidget();
       }
     }
     
@@ -513,6 +521,9 @@
       document.body.appendChild(this.widget);
       this.addWidgetStyles();
       this.initWidgetHandlers();
+      
+      // Обновляем виджет после создания
+      this.updateWidget();
     }
     
     addWidgetStyles() {
@@ -592,8 +603,6 @@
       // Обновление виджета каждые 3 секунды
       setInterval(() => {
         if (this.behaviorAnalyzer) {
-          this.behaviorData.clicks = this.behaviorAnalyzer.clickIntervals.length;
-          this.behaviorData.mouseMovements = this.behaviorAnalyzer.currentPath.length;
           this.updateWidget();
         }
       }, 3000);
@@ -653,7 +662,7 @@
               <div class="wws-risk-badge" style="position: absolute; top: -15px; right: -15px; background: ${this.riskScore > 0.6 ? '#ef4444' : this.riskScore > 0.3 ? '#f59e0b' : '#10b981'};">${Math.round(this.riskScore * 100)}%</div>
             </div>
             <div style="text-align: left;">
-              <h1 style="color: white; margin: 0 0 10px; font-size: 32px; font-weight: 700;">ACTIVE PROTECTION</h1>
+              <h1 style="color: white; margin: 0 0 10px; font-size: 32px; font-weight: 700;">WWS PROTECT</h1>
               <p style="color: #a0a0c0; margin: 0; font-size: 16px;">WWS Gateway v${CONFIG.version} • Session: ${this.sessionId.substring(0, 12)}...</p>
             </div>
           </div>
@@ -703,8 +712,8 @@
               </div>
               
               <div style="text-align: center; padding: 15px; background: rgba(54, 209, 220, 0.1); border-radius: 10px; border-left: 4px solid #36D1DC;">
-                <div style="color: #36D1DC; font-size: 24px; font-weight: bold;">${this.behaviorData.clicks || 0}</div>
-                <div style="color: #94a3b8; font-size: 12px;">Clicks</div>
+                <div style="color: #36D1DC; font-size: 24px; font-weight: bold;">${report.avgClickInterval ? Math.round(report.avgClickInterval) : 0}</div>
+                <div style="color: #94a3b8; font-size: 12px;">Avg Click Speed</div>
               </div>
               
               <div style="text-align: center; padding: 15px; background: rgba(16, 185, 129, 0.1); border-radius: 10px; border-left: 4px solid #10b981;">
@@ -713,8 +722,8 @@
               </div>
               
               <div style="text-align: center; padding: 15px; background: rgba(245, 158, 11, 0.1); border-radius: 10px; border-left: 4px solid #f59e0b;">
-                <div style="color: #f59e0b; font-size: 24px; font-weight: bold;">${report.avgClickInterval ? Math.round(report.avgClickInterval) : 0}ms</div>
-                <div style="color: #94a3b8; font-size: 12px;">Avg Click Speed</div>
+                <div style="color: #f59e0b; font-size: 24px; font-weight: bold;">${this.behaviorAnalyzer.clickIntervals.length || 0}</div>
+                <div style="color: #94a3b8; font-size: 12px;">Total Clicks</div>
               </div>
             </div>
           </div>
@@ -755,7 +764,7 @@
           
           <!-- Footer -->
           <div style="margin-top: 30px; color: #64748b; font-size: 12px;">
-            <i class="fas fa-shield-alt"></i> WWS Gateway Premium Protection • ${new Date().toLocaleTimeString()}
+            <i class="fas fa-shield-alt"></i> Powered by <a href="https://reaver.is-a.dev/" target="_blank" style="color: #6C63FF; text-decoration: none; font-weight: 600;">Wandering Wizardry Studios</a> • ${new Date().toLocaleTimeString()}
           </div>
         </div>
       `;
@@ -860,7 +869,6 @@
         const history = localStorage.getItem(`wws_history_${this.userId}`);
         if (history) {
           this.userHistory = JSON.parse(history);
-          // Инициализируем sessions если их нет
           if (!this.userHistory.sessions) {
             this.userHistory.sessions = [];
           }
@@ -1027,7 +1035,6 @@
       let score = 0;
       const factors = [];
       
-      // Убедимся, что история загружена
       if (!this.userHistory) {
         this.loadUserHistory();
       }
@@ -1348,16 +1355,9 @@
     
     if (sessionStorage.getItem('wws_session_passed') === 'true') {
       console.log('🛡️ Premium session already verified');
-      // Reuse existing analyzer if available
       if (!window.wwsAnalyzer) {
         window.wwsAnalyzer = new WWSRiskAnalyzer();
-        // Skip analysis for pre-verified session
-        window.wwsAnalyzer.verdict = 'allow';
-        window.wwsAnalyzer.riskScore = 0;
-        window.wwsAnalyzer.createWidget();
-        window.wwsAnalyzer.updateWidget();
       } else {
-        // Just ensure widget exists
         if (!document.getElementById('wws-widget')) {
           window.wwsAnalyzer.createWidget();
           window.wwsAnalyzer.updateWidget();
@@ -1374,7 +1374,6 @@
   window.WWS = {
     version: CONFIG.version,
     forceCheck: () => {
-      // Ensure fresh analyzer instance
       window.wwsAnalyzer = new WWSRiskAnalyzer();
       return window.wwsAnalyzer;
     },
