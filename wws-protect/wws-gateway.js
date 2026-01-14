@@ -1,6 +1,6 @@
 /**
- * WWS PROTECT v6.1 - Horizontal Security Gateway
- * Complete Protection System with Real Analytics & Beautiful UI
+ * WWS PROTECT v6.2 - Minimal Security Gateway
+ * Clean & Minimal Protection System
  * @license MIT
  */
 
@@ -9,7 +9,7 @@
   
   // ==================== CONFIGURATION ====================
   const CONFIG = {
-    version: '6.1',
+    version: '6.2',
     companyName: 'WWS PROTECT',
     websiteUrl: 'https://reaver.is-a.dev/',
     
@@ -37,8 +37,7 @@
     },
     
     security: {
-      verificationTime: 4000,
-      checkpoints: 6
+      verificationTime: 3000
     }
   };
   
@@ -54,21 +53,15 @@
     verificationComplete: false,
     currentTheme: localStorage.getItem('wws_theme') || CONFIG.widget.defaultTheme,
     metrics: {
-      totalRequests: 0,
-      blockedThreats: 0,
-      dataTransferred: 0,
-      cacheHits: 0,
-      cacheMisses: 0,
-      responseTime: 45,
-      uptime: 99.99,
-      activeConnections: 12,
-      bandwidth: 125,
-      threatsBlockedToday: 3
+      threatsBlocked: 3,
+      securityScore: 96,
+      verificationProgress: 0
     },
-    threats: [],
-    securityScore: 96,
-    currentStep: 1,
-    totalSteps: CONFIG.security.checkpoints
+    position: localStorage.getItem('wws_position') || CONFIG.widget.position,
+    notifications: {
+      enabled: localStorage.getItem('wws_notifications') !== 'false',
+      threatAlerts: localStorage.getItem('wws_threat_alerts') !== 'false'
+    }
   };
   
   // ==================== FONT AWESOME LOAD ====================
@@ -95,7 +88,7 @@
       --wws-danger: #EF4444;
       --wws-border: rgba(255, 255, 255, 0.1);
       --wws-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-      --wws-radius: 20px;
+      --wws-radius: 16px;
       --wws-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
     
@@ -112,88 +105,59 @@
     
     /* ANIMATIONS */
     @keyframes wwsFadeIn {
-      from { opacity: 0; transform: translateY(20px); }
+      from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
     }
     
-    @keyframes wwsSlideIn {
-      from { transform: translateX(-30px); opacity: 0; }
-      to { transform: translateX(0); opacity: 1; }
-    }
-    
     @keyframes wwsShieldGlow {
-      0%, 100% { filter: drop-shadow(0 0 25px var(--wws-primary)); transform: scale(1); }
-      50% { filter: drop-shadow(0 0 35px var(--wws-primary)); transform: scale(1.05); }
+      0%, 100% { filter: drop-shadow(0 0 20px var(--wws-primary)); }
+      50% { filter: drop-shadow(0 0 30px var(--wws-primary)); }
     }
     
     @keyframes wwsProgress {
       0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
+      100% { background-position: 100% 50%; }
     }
     
     @keyframes wwsPulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.7; }
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
     }
     
     @keyframes wwsRipple {
-      0% { transform: scale(0.8); opacity: 0.8; }
+      0% { transform: scale(0.8); opacity: 0.5; }
       100% { transform: scale(2); opacity: 0; }
     }
     
-    /* HORIZONTAL PROTECTION SCREEN */
+    /* MINIMAL PROTECTION SCREEN */
     .wws-protection-screen {
       position: fixed !important;
       top: 0 !important;
       left: 0 !important;
       width: 100vw !important;
       height: 100vh !important;
-      background: linear-gradient(135deg, #0a0a1a 0%, #121226 50%, #0a0a1a 100%) !important;
+      background: linear-gradient(135deg, #0a0a1a 0%, #121226 100%) !important;
       z-index: 2147483647 !important;
       display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', sans-serif !important;
+      animation: wwsFadeIn 0.4s ease-out;
       overflow: hidden !important;
     }
     
-    .wws-protection-container {
-      display: flex;
+    .wws-protection-content {
       width: 100%;
-      height: 100%;
-      max-width: 100%;
-      padding: 0;
-    }
-    
-    .wws-left-panel {
-      flex: 0 0 45%;
-      background: rgba(15, 23, 42, 0.95);
-      backdrop-filter: blur(20px);
-      padding: 60px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      position: relative;
-      overflow-y: auto;
-      border-right: 1px solid rgba(255, 255, 255, 0.1);
-    }
-    
-    .wws-right-panel {
-      flex: 0 0 55%;
-      background: rgba(30, 41, 59, 0.8);
-      backdrop-filter: blur(10px);
-      padding: 60px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      position: relative;
-      overflow-y: auto;
+      max-width: 500px;
+      padding: 40px;
+      text-align: center;
     }
     
     .wws-shield-wrapper {
       position: relative;
-      margin-bottom: 50px;
-      width: 160px;
-      height: 160px;
+      margin: 0 auto 40px;
+      width: 140px;
+      height: 140px;
     }
     
     .wws-shield {
@@ -210,9 +174,8 @@
     }
     
     .wws-shield i {
-      font-size: 70px;
+      font-size: 60px;
       color: white;
-      filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
     }
     
     .wws-shield-ripple {
@@ -220,162 +183,58 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      width: 200px;
-      height: 200px;
+      width: 160px;
+      height: 160px;
       border: 2px solid rgba(59, 130, 246, 0.3);
       border-radius: 50%;
-      animation: wwsRipple 3s ease-out infinite;
+      animation: wwsRipple 2s ease-out infinite;
     }
     
     .wws-shield-ripple:nth-child(3) {
-      width: 240px;
-      height: 240px;
-      border-color: rgba(59, 130, 246, 0.15);
-      animation-delay: 1s;
+      width: 180px;
+      height: 180px;
+      animation-delay: 0.5s;
     }
     
     .wws-title {
       color: white;
-      font-size: 48px;
-      font-weight: 800;
+      font-size: 40px;
+      font-weight: 700;
       margin: 0 0 15px;
       letter-spacing: -0.5px;
-      background: linear-gradient(135deg, #3B82F6, #8B5CF6);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
     }
     
     .wws-subtitle {
       color: #94A3B8;
-      font-size: 20px;
+      font-size: 18px;
       font-weight: 400;
       margin: 0 0 50px;
       line-height: 1.5;
     }
     
-    /* HORIZONTAL STEPS */
-    .wws-steps-horizontal {
-      display: flex;
-      gap: 25px;
-      margin: 50px 0;
-      position: relative;
-    }
-    
-    .wws-steps-track {
-      position: absolute;
-      top: 32px;
-      left: 32px;
-      right: 32px;
-      height: 3px;
-      background: rgba(255, 255, 255, 0.1);
-      z-index: 1;
-    }
-    
-    .wws-step-progress {
-      position: absolute;
-      top: 32px;
-      left: 32px;
-      height: 3px;
-      background: linear-gradient(90deg, var(--wws-primary), var(--wws-secondary));
-      transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
-      z-index: 2;
-    }
-    
-    .wws-step-item {
-      flex: 1;
-      position: relative;
-      z-index: 3;
-      min-width: 100px;
-    }
-    
-    .wws-step-circle {
-      width: 64px;
-      height: 64px;
+    .wws-status-container {
       background: rgba(255, 255, 255, 0.05);
-      border: 2px solid rgba(255, 255, 255, 0.1);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0 auto 15px;
-      transition: var(--wws-transition);
+      border-radius: 16px;
+      padding: 30px;
+      margin: 0 0 30px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
     }
     
-    .wws-step-circle i {
-      font-size: 24px;
+    .wws-status-text {
       color: #94A3B8;
-      transition: var(--wws-transition);
+      font-size: 16px;
+      margin: 0 0 20px;
     }
     
-    .wws-step-item.active .wws-step-circle {
-      background: linear-gradient(135deg, var(--wws-primary), var(--wws-secondary));
-      border-color: var(--wws-primary);
-      transform: scale(1.1);
-    }
-    
-    .wws-step-item.active .wws-step-circle i {
-      color: white;
-    }
-    
-    .wws-step-item.completed .wws-step-circle {
-      background: var(--wws-success);
-      border-color: var(--wws-success);
-    }
-    
-    .wws-step-item.completed .wws-step-circle i {
-      color: white;
-    }
-    
-    .wws-step-label {
-      text-align: center;
-      color: #94A3B8;
-      font-size: 14px;
-      font-weight: 600;
-      margin-bottom: 8px;
-      transition: var(--wws-transition);
-    }
-    
-    .wws-step-item.active .wws-step-label {
-      color: white;
-    }
-    
-    .wws-step-status {
-      text-align: center;
-      font-size: 12px;
-      color: #64748B;
-      min-height: 18px;
-    }
-    
-    /* PROGRESS SECTION */
-    .wws-progress-section {
-      margin: 50px 0;
-    }
-    
-    .wws-progress-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 15px;
-    }
-    
-    .wws-progress-title {
-      color: white;
-      font-size: 18px;
-      font-weight: 600;
-    }
-    
-    .wws-progress-percent {
-      color: var(--wws-primary);
-      font-size: 24px;
-      font-weight: 700;
+    .wws-progress-container {
+      width: 100%;
     }
     
     .wws-progress-bar {
       width: 100%;
-      height: 10px;
+      height: 6px;
       background: rgba(255, 255, 255, 0.1);
-      border-radius: 5px;
+      border-radius: 3px;
       overflow: hidden;
       margin-bottom: 10px;
     }
@@ -384,212 +243,56 @@
       height: 100%;
       width: 0%;
       background: linear-gradient(90deg, var(--wws-primary), var(--wws-secondary));
-      background-size: 200% 100%;
       animation: wwsProgress 2s linear infinite;
       transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
-      border-radius: 5px;
+      border-radius: 3px;
     }
     
-    /* RIGHT PANEL CONTENT */
-    .wws-metrics-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 25px;
-      margin-bottom: 40px;
-    }
-    
-    .wws-metric-card {
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 16px;
-      padding: 30px;
-      border-left: 4px solid var(--wws-primary);
-      transition: var(--wws-transition);
-    }
-    
-    .wws-metric-card:hover {
-      transform: translateY(-5px);
-      background: rgba(255, 255, 255, 0.08);
-    }
-    
-    .wws-metric-card:nth-child(2) {
-      border-left-color: var(--wws-secondary);
-    }
-    
-    .wws-metric-card:nth-child(3) {
-      border-left-color: var(--wws-success);
-    }
-    
-    .wws-metric-card:nth-child(4) {
-      border-left-color: var(--wws-warning);
-    }
-    
-    .wws-metric-value {
-      font-size: 36px;
-      font-weight: 800;
-      color: white;
-      margin-bottom: 10px;
-      line-height: 1;
-    }
-    
-    .wws-metric-label {
+    .wws-progress-text {
+      display: flex;
+      justify-content: space-between;
       color: #94A3B8;
       font-size: 14px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-    
-    .wws-metric-subtext {
-      color: #64748B;
-      font-size: 12px;
-      margin-top: 5px;
-    }
-    
-    .wws-security-status {
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 16px;
-      padding: 30px;
-      margin-bottom: 30px;
-    }
-    
-    .wws-security-score {
-      display: flex;
-      align-items: center;
-      gap: 20px;
-      margin-bottom: 25px;
-    }
-    
-    .wws-score-circle {
-      position: relative;
-      width: 120px;
-      height: 120px;
-    }
-    
-    .wws-score-bg {
-      width: 100%;
-      height: 100%;
-      border-radius: 50%;
-      background: conic-gradient(var(--wws-primary) 0%, rgba(255, 255, 255, 0.1) 0%);
-      transition: background 1s ease;
-    }
-    
-    .wws-score-inner {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      right: 10px;
-      bottom: 10px;
-      background: var(--wws-surface);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
-    }
-    
-    .wws-score-value {
-      font-size: 32px;
-      font-weight: 800;
-      color: white;
-      line-height: 1;
-    }
-    
-    .wws-score-label {
-      color: #94A3B8;
-      font-size: 12px;
-      margin-top: 5px;
-    }
-    
-    .wws-security-info {
-      flex: 1;
-    }
-    
-    .wws-security-title {
-      color: white;
-      font-size: 20px;
-      font-weight: 700;
-      margin-bottom: 10px;
-    }
-    
-    .wws-security-desc {
-      color: #94A3B8;
-      font-size: 14px;
-      line-height: 1.5;
-    }
-    
-    .wws-threats-list {
-      margin-top: 20px;
-    }
-    
-    .wws-threat-item {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-      padding: 15px 0;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    }
-    
-    .wws-threat-item:last-child {
-      border-bottom: none;
-    }
-    
-    .wws-threat-icon {
-      width: 40px;
-      height: 40px;
-      background: rgba(239, 68, 68, 0.1);
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    
-    .wws-threat-icon i {
-      color: var(--wws-danger);
-      font-size: 18px;
-    }
-    
-    .wws-threat-content {
-      flex: 1;
-    }
-    
-    .wws-threat-title {
-      color: white;
-      font-size: 14px;
-      font-weight: 600;
-      margin-bottom: 5px;
-    }
-    
-    .wws-threat-desc {
-      color: #94A3B8;
-      font-size: 12px;
     }
     
     .wws-footer {
-      margin-top: 40px;
-      padding-top: 20px;
-      border-top: 1px solid rgba(255, 255, 255, 0.1);
       color: #64748B;
       font-size: 14px;
+      margin-top: 40px;
     }
     
     .wws-footer a {
-      color: var(--wws-primary);
-      text-decoration: none;
-      font-weight: 600;
-      transition: color 0.2s;
-    }
-    
-    .wws-footer a:hover {
       color: #60A5FA;
+      text-decoration: none;
+      font-weight: 500;
     }
     
     /* WIDGET STYLES */
     .wws-widget {
       position: fixed;
-      bottom: 30px;
-      right: 30px;
       z-index: 2147483646;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    
+    /* Position classes */
+    .wws-position-bottom-right {
+      bottom: 24px;
+      right: 24px;
+    }
+    
+    .wws-position-bottom-left {
+      bottom: 24px;
+      left: 24px;
+    }
+    
+    .wws-position-top-right {
+      top: 24px;
+      right: 24px;
+    }
+    
+    .wws-position-top-left {
+      top: 24px;
+      left: 24px;
     }
     
     .wws-widget-toggle {
@@ -606,7 +309,6 @@
       border: 2px solid rgba(255, 255, 255, 0.2);
       backdrop-filter: blur(10px);
       position: relative;
-      overflow: hidden;
     }
     
     .wws-widget-toggle:hover {
@@ -617,10 +319,12 @@
     .wws-widget-toggle i {
       font-size: 28px;
       color: white;
-      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+      position: relative;
+      z-index: 1;
     }
     
-    .wws-widget-badge {
+    /* Notification badge - OUTSIDE the shield */
+    .wws-notification-badge {
       position: absolute;
       top: -8px;
       right: -8px;
@@ -635,13 +339,38 @@
       border: 3px solid rgba(255, 255, 255, 0.9);
       box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
       animation: wwsPulse 2s ease-in-out infinite;
+      z-index: 2;
+      pointer-events: none;
+    }
+    
+    /* Adjust badge position based on widget position */
+    .wws-position-bottom-left .wws-notification-badge {
+      right: -8px;
+      left: auto;
+    }
+    
+    .wws-position-bottom-right .wws-notification-badge {
+      right: -8px;
+      left: auto;
+    }
+    
+    .wws-position-top-left .wws-notification-badge {
+      right: -8px;
+      left: auto;
+      bottom: -8px;
+      top: auto;
+    }
+    
+    .wws-position-top-right .wws-notification-badge {
+      right: -8px;
+      left: auto;
+      bottom: -8px;
+      top: auto;
     }
     
     .wws-widget-panel {
       position: absolute;
-      bottom: 80px;
-      right: 0;
-      width: 420px;
+      width: 380px;
       background: var(--wws-surface);
       backdrop-filter: blur(20px);
       border-radius: 20px;
@@ -650,9 +379,32 @@
       display: none;
       overflow: hidden;
       z-index: 2147483647;
-      max-height: 80vh;
+      max-height: 70vh;
       animation: wwsFadeIn 0.3s ease-out;
       color: var(--wws-text);
+    }
+    
+    /* Panel position based on widget position */
+    .wws-position-bottom-right .wws-widget-panel {
+      bottom: 80px;
+      right: 0;
+    }
+    
+    .wws-position-bottom-left .wws-widget-panel {
+      bottom: 80px;
+      left: 0;
+    }
+    
+    .wws-position-top-right .wws-widget-panel {
+      top: 80px;
+      right: 0;
+      bottom: auto;
+    }
+    
+    .wws-position-top-left .wws-widget-panel {
+      top: 80px;
+      left: 0;
+      bottom: auto;
     }
     
     .wws-panel-header {
@@ -673,8 +425,8 @@
     }
     
     .wws-header-icon {
-      width: 52px;
-      height: 52px;
+      width: 48px;
+      height: 48px;
       background: linear-gradient(135deg, var(--wws-primary), var(--wws-secondary));
       border-radius: 14px;
       display: flex;
@@ -726,13 +478,11 @@
       padding: 8px;
       background: rgba(0, 0, 0, 0.05);
       border-bottom: 1px solid var(--wws-border);
-      overflow-x: auto;
-      white-space: nowrap;
     }
     
     .wws-tab {
       flex: 1;
-      padding: 12px 16px;
+      padding: 12px 8px;
       background: none;
       border: none;
       color: var(--wws-text-secondary);
@@ -741,11 +491,10 @@
       cursor: pointer;
       border-radius: 10px;
       display: flex;
+      flex-direction: column;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
       transition: var(--wws-transition);
-      min-width: 100px;
-      justify-content: center;
     }
     
     .wws-tab i {
@@ -769,8 +518,7 @@
     .wws-panel-content {
       padding: 24px;
       overflow-y: auto;
-      max-height: calc(80vh - 180px);
-      min-height: 300px;
+      max-height: calc(70vh - 180px);
     }
     
     .wws-panel-content::-webkit-scrollbar {
@@ -785,10 +533,6 @@
     .wws-panel-content::-webkit-scrollbar-thumb {
       background: var(--wws-primary);
       border-radius: 3px;
-    }
-    
-    .wws-panel-content::-webkit-scrollbar-thumb:hover {
-      background: var(--wws-secondary);
     }
     
     .wws-panel-footer {
@@ -816,8 +560,9 @@
       transform: translateY(-2px);
     }
     
+    /* Minimal content styles */
     .wws-section {
-      margin-bottom: 28px;
+      margin-bottom: 24px;
     }
     
     .wws-section:last-child {
@@ -827,7 +572,7 @@
     .wws-section-title {
       font-size: 15px;
       font-weight: 700;
-      margin-bottom: 18px;
+      margin-bottom: 16px;
       display: flex;
       align-items: center;
       gap: 10px;
@@ -839,32 +584,38 @@
       font-size: 16px;
     }
     
-    .wws-widget-metrics {
+    .wws-stats-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
       gap: 16px;
       margin-bottom: 20px;
     }
     
-    .wws-widget-metric {
+    .wws-stat-card {
       background: rgba(0, 0, 0, 0.05);
       border-radius: 12px;
       padding: 20px;
       text-align: center;
     }
     
-    .wws-widget-metric-value {
+    .wws-stat-value {
       font-size: 24px;
       font-weight: 800;
       margin-bottom: 8px;
       color: var(--wws-text);
     }
     
-    .wws-widget-metric-label {
+    .wws-stat-label {
       font-size: 12px;
       color: var(--wws-text-secondary);
       text-transform: uppercase;
       letter-spacing: 1px;
+    }
+    
+    .wws-status-list {
+      background: rgba(0, 0, 0, 0.05);
+      border-radius: 12px;
+      padding: 20px;
     }
     
     .wws-status-item {
@@ -890,78 +641,12 @@
     .wws-status-label i {
       width: 20px;
       text-align: center;
-      color: var(--wws-primary);
     }
     
     .wws-status-value {
       font-size: 14px;
       font-weight: 700;
       color: var(--wws-text);
-    }
-    
-    .wws-threat-list {
-      max-height: 300px;
-      overflow-y: auto;
-      padding-right: 5px;
-    }
-    
-    .wws-threat-list::-webkit-scrollbar {
-      width: 4px;
-    }
-    
-    .wws-threat-list::-webkit-scrollbar-thumb {
-      background: var(--wws-danger);
-    }
-    
-    .wws-widget-threat {
-      background: rgba(239, 68, 68, 0.1);
-      border-left: 4px solid var(--wws-danger);
-      border-radius: 10px;
-      padding: 16px;
-      margin-bottom: 12px;
-      animation: wwsSlideIn 0.3s ease;
-    }
-    
-    .wws-widget-threat-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 8px;
-    }
-    
-    .wws-widget-threat-type {
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--wws-text);
-    }
-    
-    .wws-widget-threat-time {
-      font-size: 11px;
-      color: var(--wws-text-secondary);
-    }
-    
-    .wws-widget-threat-desc {
-      font-size: 12px;
-      color: var(--wws-text-secondary);
-      line-height: 1.4;
-    }
-    
-    .wws-no-threats {
-      text-align: center;
-      padding: 40px 20px;
-      color: var(--wws-text-secondary);
-    }
-    
-    .wws-no-threats i {
-      font-size: 48px;
-      color: var(--wws-success);
-      margin-bottom: 20px;
-      display: block;
-      opacity: 0.8;
-    }
-    
-    .wws-settings-group {
-      margin-bottom: 24px;
     }
     
     .wws-settings-item {
@@ -1041,7 +726,7 @@
       color: var(--wws-text);
       font-size: 14px;
       cursor: pointer;
-      min-width: 140px;
+      min-width: 120px;
       transition: var(--wws-transition);
     }
     
@@ -1055,48 +740,72 @@
       box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
     }
     
-    /* RESPONSIVE */
-    @media (max-width: 1200px) {
-      .wws-left-panel,
-      .wws-right-panel {
-        padding: 40px;
-      }
-      
-      .wws-title {
-        font-size: 40px;
-      }
-      
-      .wws-metric-value {
-        font-size: 32px;
-      }
+    /* Notification styles */
+    .wws-notification {
+      position: fixed;
+      z-index: 2147483648;
+      animation: wwsFadeIn 0.3s ease-out;
+      max-width: 320px;
     }
     
-    @media (max-width: 1024px) {
-      .wws-protection-container {
-        flex-direction: column;
-      }
-      
-      .wws-left-panel,
-      .wws-right-panel {
-        flex: 1;
-        max-height: 50vh;
-      }
-      
-      .wws-left-panel {
-        border-right: none;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      }
+    .wws-notification-content {
+      background: var(--wws-surface);
+      border-radius: 12px;
+      padding: 16px;
+      border: 1px solid var(--wws-border);
+      box-shadow: var(--wws-shadow);
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
     }
     
-    @media (max-width: 768px) {
-      .wws-widget-panel {
-        width: calc(100vw - 40px);
-        right: 20px;
-      }
-      
-      .wws-left-panel,
-      .wws-right-panel {
-        padding: 30px 20px;
+    .wws-notification-icon {
+      width: 40px;
+      height: 40px;
+      background: rgba(239, 68, 68, 0.1);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    
+    .wws-notification-icon i {
+      color: var(--wws-danger);
+      font-size: 18px;
+    }
+    
+    .wws-notification-text {
+      flex: 1;
+    }
+    
+    .wws-notification-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--wws-text);
+      margin-bottom: 4px;
+    }
+    
+    .wws-notification-message {
+      font-size: 13px;
+      color: var(--wws-text-secondary);
+      line-height: 1.4;
+    }
+    
+    .wws-notification-close {
+      background: none;
+      border: none;
+      color: var(--wws-text-secondary);
+      font-size: 14px;
+      cursor: pointer;
+      padding: 4px;
+      margin-left: 4px;
+    }
+    
+    /* Responsive */
+    @media (max-width: 480px) {
+      .wws-protection-content {
+        padding: 20px;
       }
       
       .wws-title {
@@ -1107,46 +816,41 @@
         font-size: 16px;
       }
       
-      .wws-steps-horizontal {
-        gap: 15px;
+      .wws-widget-panel {
+        width: calc(100vw - 40px);
       }
       
-      .wws-step-circle {
-        width: 50px;
-        height: 50px;
+      .wws-position-bottom-right .wws-widget-panel,
+      .wws-position-bottom-left .wws-widget-panel {
+        bottom: 80px;
+        left: 20px;
+        right: 20px;
+        width: auto;
       }
       
-      .wws-step-circle i {
-        font-size: 20px;
-      }
-      
-      .wws-metrics-grid {
-        grid-template-columns: 1fr;
-        gap: 20px;
-      }
-      
-      .wws-widget-toggle {
-        width: 56px;
-        height: 56px;
+      .wws-position-top-right .wws-widget-panel,
+      .wws-position-top-left .wws-widget-panel {
+        top: 80px;
+        left: 20px;
+        right: 20px;
+        width: auto;
       }
     }
     
-    @media (max-height: 700px) {
-      .wws-left-panel,
-      .wws-right-panel {
-        padding: 30px;
+    @media (max-height: 600px) {
+      .wws-protection-content {
+        padding: 20px;
+        max-width: 400px;
       }
       
       .wws-shield-wrapper {
+        width: 120px;
+        height: 120px;
         margin-bottom: 30px;
       }
       
-      .wws-steps-horizontal {
-        margin: 30px 0;
-      }
-      
-      .wws-progress-section {
-        margin: 30px 0;
+      .wws-shield i {
+        font-size: 50px;
       }
     }
   `;
@@ -1161,44 +865,72 @@
       return num.toString();
     },
     
-    formatBytes: (bytes) => {
-      const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-      if (bytes === 0) return '0 B';
-      const i = Math.floor(Math.log(bytes) / Math.log(1024));
-      return (bytes / Math.pow(1024, i)).toFixed(1) + ' ' + sizes[i];
+    showNotification: (title, message, type = 'info') => {
+      if (!State.notifications.enabled) return;
+      
+      const notification = document.createElement('div');
+      notification.className = 'wws-notification wws-position-top-right';
+      notification.style.top = '24px';
+      notification.style.right = '24px';
+      
+      const icon = type === 'threat' ? 'fas fa-exclamation-triangle' : 'fas fa-info-circle';
+      const iconColor = type === 'threat' ? 'var(--wws-danger)' : 'var(--wws-primary)';
+      
+      notification.innerHTML = `
+        <div class="wws-notification-content">
+          <div class="wws-notification-icon" style="background: ${type === 'threat' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(59, 130, 246, 0.1)'}">
+            <i class="${icon}" style="color: ${iconColor}"></i>
+          </div>
+          <div class="wws-notification-text">
+            <div class="wws-notification-title">${title}</div>
+            <div class="wws-notification-message">${message}</div>
+          </div>
+          <button class="wws-notification-close">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+      `;
+      
+      document.body.appendChild(notification);
+      
+      // Close button
+      notification.querySelector('.wws-notification-close').addEventListener('click', () => {
+        notification.style.opacity = '0';
+        notification.style.transform = 'translateY(-10px)';
+        setTimeout(() => {
+          if (notification.parentNode) {
+            notification.parentNode.removeChild(notification);
+          }
+        }, 300);
+      });
+      
+      // Auto remove after 5 seconds
+      setTimeout(() => {
+        if (notification.parentNode) {
+          notification.style.opacity = '0';
+          notification.style.transform = 'translateY(-10px)';
+          setTimeout(() => {
+            if (notification.parentNode) {
+              notification.parentNode.removeChild(notification);
+            }
+          }, 300);
+        }
+      }, 5000);
     },
     
-    formatTime: (ms) => {
-      if (ms < 1000) return ms + 'ms';
-      return (ms / 1000).toFixed(1) + 's';
-    },
-    
-    generateId: () => {
-      return 'wws_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
-    },
-    
-    updateSecurityScore: (score) => {
-      const circle = document.querySelector('.wws-score-bg');
-      if (circle) {
-        const percentage = (score / 100) * 360;
-        circle.style.background = `conic-gradient(var(--wws-primary) ${percentage}deg, rgba(255, 255, 255, 0.1) ${percentage}deg)`;
+    updateBadge: (count) => {
+      const badge = document.querySelector('.wws-notification-badge');
+      if (badge) {
+        badge.textContent = count;
+        badge.style.display = count > 0 ? 'block' : 'none';
       }
     }
   };
   
-  // ==================== PROTECTION SCREEN ====================
+  // ==================== MINIMAL PROTECTION SCREEN ====================
   class ProtectionScreen {
     constructor() {
       this.screen = null;
-      this.steps = [
-        { id: 'device', name: 'Device', icon: 'fas fa-laptop', description: 'Analyzing device' },
-        { id: 'network', name: 'Network', icon: 'fas fa-wifi', description: 'Checking network' },
-        { id: 'security', name: 'Security', icon: 'fas fa-shield-alt', description: 'Security scan' },
-        { id: 'firewall', name: 'Firewall', icon: 'fas fa-fire', description: 'Firewall check' },
-        { id: 'behavior', name: 'Behavior', icon: 'fas fa-brain', description: 'Behavior analysis' },
-        { id: 'verification', name: 'Verify', icon: 'fas fa-check-circle', description: 'Final verification' }
-      ];
-      this.progress = 0;
       this.interval = null;
     }
     
@@ -1209,129 +941,35 @@
       this.screen.className = 'wws-protection-screen';
       
       this.screen.innerHTML = `
-        <div class="wws-protection-container">
-          <!-- LEFT PANEL -->
-          <div class="wws-left-panel">
-            <div class="wws-shield-wrapper">
-              <div class="wws-shield-ripple"></div>
-              <div class="wws-shield-ripple"></div>
-              <div class="wws-shield">
-                <i class="fas fa-shield-alt"></i>
-              </div>
+        <div class="wws-protection-content">
+          <div class="wws-shield-wrapper">
+            <div class="wws-shield-ripple"></div>
+            <div class="wws-shield-ripple"></div>
+            <div class="wws-shield">
+              <i class="fas fa-shield-alt"></i>
             </div>
+          </div>
+          
+          <h1 class="wws-title">${CONFIG.companyName}</h1>
+          <p class="wws-subtitle">Verifying your connection</p>
+          
+          <div class="wws-status-container">
+            <div class="wws-status-text" id="wws-status-text">Starting security scan...</div>
             
-            <h1 class="wws-title">${CONFIG.companyName}</h1>
-            <p class="wws-subtitle">Real-time security verification and threat protection</p>
-            
-            <!-- HORIZONTAL STEPS -->
-            <div class="wws-steps-horizontal">
-              <div class="wws-steps-track"></div>
-              <div class="wws-step-progress" id="wws-step-progress"></div>
-              ${this.steps.map((step, index) => `
-                <div class="wws-step-item" id="wws-step-${step.id}">
-                  <div class="wws-step-circle">
-                    <i class="${step.icon}"></i>
-                  </div>
-                  <div class="wws-step-label">${step.name}</div>
-                  <div class="wws-step-status" id="wws-status-${step.id}">Pending</div>
-                </div>
-              `).join('')}
-            </div>
-            
-            <!-- PROGRESS SECTION -->
-            <div class="wws-progress-section">
-              <div class="wws-progress-header">
-                <div class="wws-progress-title">Security Verification</div>
-                <div class="wws-progress-percent" id="wws-progress-percent">0%</div>
-              </div>
+            <div class="wws-progress-container">
               <div class="wws-progress-bar">
                 <div class="wws-progress-fill" id="wws-progress-fill"></div>
+              </div>
+              <div class="wws-progress-text">
+                <span>0%</span>
+                <span id="wws-progress-percent">Initializing</span>
+                <span>100%</span>
               </div>
             </div>
           </div>
           
-          <!-- RIGHT PANEL -->
-          <div class="wws-right-panel">
-            <div class="wws-metrics-grid">
-              <div class="wws-metric-card">
-                <div class="wws-metric-value">${State.metrics.blockedThreats}</div>
-                <div class="wws-metric-label">Threats Blocked</div>
-                <div class="wws-metric-subtext">Today's protection</div>
-              </div>
-              
-              <div class="wws-metric-card">
-                <div class="wws-metric-value">${Utils.formatNumber(State.metrics.totalRequests)}</div>
-                <div class="wws-metric-label">Requests</div>
-                <div class="wws-metric-subtext">Last 24 hours</div>
-              </div>
-              
-              <div class="wws-metric-card">
-                <div class="wws-metric-value">${State.metrics.responseTime}ms</div>
-                <div class="wws-metric-label">Response Time</div>
-                <div class="wws-metric-subtext">Average latency</div>
-              </div>
-              
-              <div class="wws-metric-card">
-                <div class="wws-metric-value">${Utils.formatBytes(State.metrics.dataTransferred)}</div>
-                <div class="wws-metric-label">Data Protected</div>
-                <div class="wws-metric-subtext">Secure transfer</div>
-              </div>
-            </div>
-            
-            <div class="wws-security-status">
-              <div class="wws-security-score">
-                <div class="wws-score-circle">
-                  <div class="wws-score-bg"></div>
-                  <div class="wws-score-inner">
-                    <div class="wws-score-value" id="wws-score-value">${State.securityScore}</div>
-                    <div class="wws-score-label">Security Score</div>
-                  </div>
-                </div>
-                <div class="wws-security-info">
-                  <div class="wws-security-title">System Protection Active</div>
-                  <div class="wws-security-desc">
-                    Your connection is being secured with enterprise-grade protection. 
-                    All threats are monitored and blocked in real-time.
-                  </div>
-                </div>
-              </div>
-              
-              <div class="wws-threats-list">
-                <div class="wws-threat-item">
-                  <div class="wws-threat-icon">
-                    <i class="fas fa-shield-alt"></i>
-                  </div>
-                  <div class="wws-threat-content">
-                    <div class="wws-threat-title">Web Application Firewall</div>
-                    <div class="wws-threat-desc">Active protection against OWASP Top 10 threats</div>
-                  </div>
-                </div>
-                
-                <div class="wws-threat-item">
-                  <div class="wws-threat-icon">
-                    <i class="fas fa-robot"></i>
-                  </div>
-                  <div class="wws-threat-content">
-                    <div class="wws-threat-title">Bot Mitigation</div>
-                    <div class="wws-threat-desc">Blocking automated threats and scrapers</div>
-                  </div>
-                </div>
-                
-                <div class="wws-threat-item">
-                  <div class="wws-threat-icon">
-                    <i class="fas fa-bolt"></i>
-                  </div>
-                  <div class="wws-threat-content">
-                    <div class="wws-threat-title">DDoS Protection</div>
-                    <div class="wws-threat-desc">Mitigating distributed denial of service attacks</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <div class="wws-footer">
-              <i class="fas fa-lock"></i> Secured by <a href="${CONFIG.websiteUrl}" target="_blank">Wandering Wizardry Studios</a>
-            </div>
+          <div class="wws-footer">
+            Powered by <a href="${CONFIG.websiteUrl}" target="_blank">Wandering Wizardry Studios</a>
           </div>
         </div>
       `;
@@ -1341,164 +979,68 @@
     }
     
     startVerification() {
-      this.progress = 0;
+      let progress = 0;
+      const steps = [
+        'Checking security protocols...',
+        'Analyzing connection...',
+        'Verifying integrity...',
+        'Finalizing protection...'
+      ];
       let currentStep = 0;
       
-      // Initialize score display
-      Utils.updateSecurityScore(State.securityScore);
-      
       this.interval = setInterval(() => {
-        if (this.progress >= 100) {
+        if (progress >= 100) {
           clearInterval(this.interval);
           this.completeVerification();
           return;
         }
         
-        // Update progress
-        this.progress = Math.min(100, this.progress + 1.5);
+        progress = Math.min(100, progress + 1.5);
+        
+        // Update UI
         const progressFill = document.getElementById('wws-progress-fill');
         const progressPercent = document.getElementById('wws-progress-percent');
-        const stepProgress = document.getElementById('wws-step-progress');
+        const statusText = document.getElementById('wws-status-text');
         
-        if (progressFill) progressFill.style.width = `${this.progress}%`;
-        if (progressPercent) progressPercent.textContent = `${Math.floor(this.progress)}%`;
-        if (stepProgress) stepProgress.style.width = `${(this.progress / 100) * 100}%`;
+        if (progressFill) progressFill.style.width = `${progress}%`;
+        if (progressPercent) progressPercent.textContent = `${Math.floor(progress)}%`;
         
-        // Update steps
-        const stepIndex = Math.floor((this.progress / 100) * this.steps.length);
-        if (stepIndex > currentStep) {
+        // Update status text based on progress
+        const stepIndex = Math.floor((progress / 100) * steps.length);
+        if (stepIndex > currentStep && statusText) {
           currentStep = stepIndex;
-          
-          // Mark previous steps as completed
-          for (let i = 0; i < currentStep; i++) {
-            const stepId = this.steps[i].id;
-            const stepElement = document.getElementById(`wws-step-${stepId}`);
-            const statusElement = document.getElementById(`wws-status-${stepId}`);
-            
-            if (stepElement) {
-              stepElement.classList.remove('active');
-              stepElement.classList.add('completed');
-            }
-            if (statusElement) {
-              statusElement.textContent = '✓';
-              statusElement.style.color = 'var(--wws-success)';
-            }
-          }
-          
-          // Mark current step as active
-          if (currentStep < this.steps.length) {
-            const currentStepId = this.steps[currentStep].id;
-            const currentStepElement = document.getElementById(`wws-step-${currentStepId}`);
-            const currentStatusElement = document.getElementById(`wws-status-${currentStepId}`);
-            
-            if (currentStepElement) {
-              currentStepElement.classList.add('active');
-            }
-            if (currentStatusElement) {
-              currentStatusElement.textContent = this.steps[currentStep].description;
-              currentStatusElement.style.color = 'var(--wws-primary)';
-            }
-          }
+          statusText.textContent = steps[currentStep - 1] || steps[0];
         }
         
-        // Update security score gradually
-        if (this.progress < 80) {
-          const targetScore = 75 + Math.floor((this.progress / 80) * 25);
-          const scoreElement = document.getElementById('wws-score-value');
-          if (scoreElement) {
-            State.securityScore = targetScore;
-            scoreElement.textContent = targetScore;
-            Utils.updateSecurityScore(targetScore);
-          }
-        }
-        
-        // Update metrics dynamically
-        State.metrics.totalRequests += Math.floor(Math.random() * 100);
-        State.metrics.dataTransferred += Math.floor(Math.random() * 1024 * 1024);
-        State.metrics.responseTime = 35 + Math.floor(Math.random() * 20);
-        
-        // Update metrics display
-        this.updateMetrics();
-        
-      }, 50);
-    }
-    
-    updateMetrics() {
-      // Update metrics in real-time
-      const threatElement = document.querySelector('.wws-metric-card:nth-child(1) .wws-metric-value');
-      const requestElement = document.querySelector('.wws-metric-card:nth-child(2) .wws-metric-value');
-      const responseElement = document.querySelector('.wws-metric-card:nth-child(3) .wws-metric-value');
-      const dataElement = document.querySelector('.wws-metric-card:nth-child(4) .wws-metric-value');
-      
-      if (threatElement) threatElement.textContent = State.metrics.blockedThreats;
-      if (requestElement) requestElement.textContent = Utils.formatNumber(State.metrics.totalRequests);
-      if (responseElement) responseElement.textContent = `${State.metrics.responseTime}ms`;
-      if (dataElement) dataElement.textContent = Utils.formatBytes(State.metrics.dataTransferred);
+      }, 30);
     }
     
     completeVerification() {
-      // Final updates
-      State.securityScore = 96;
-      const scoreElement = document.getElementById('wws-score-value');
-      if (scoreElement) {
-        scoreElement.textContent = '96';
-        Utils.updateSecurityScore(96);
+      const progressPercent = document.getElementById('wws-progress-percent');
+      const statusText = document.getElementById('wws-status-text');
+      
+      if (progressPercent) progressPercent.textContent = '100%';
+      if (statusText) statusText.textContent = 'Verification complete';
+      
+      // Update state
+      State.verificationComplete = true;
+      State.metrics.securityScore = 96;
+      localStorage.setItem('wws_verified', 'true');
+      
+      // Show notification
+      if (State.notifications.enabled) {
+        Utils.showNotification(
+          'Protection Active',
+          'Your connection is now secured with WWS PROTECT',
+          'info'
+        );
       }
       
-      // Mark all steps as completed
-      this.steps.forEach(step => {
-        const stepElement = document.getElementById(`wws-step-${step.id}`);
-        const statusElement = document.getElementById(`wws-status-${step.id}`);
-        
-        if (stepElement) {
-          stepElement.classList.remove('active');
-          stepElement.classList.add('completed');
-        }
-        if (statusElement) {
-          statusElement.textContent = '✓';
-          statusElement.style.color = 'var(--wws-success)';
-        }
-      });
-      
-      // Add some threats for realism
-      State.threats = [
-        {
-          id: Utils.generateId(),
-          type: 'SQL Injection Attempt',
-          time: Date.now() - 300000,
-          description: 'Blocked SQL injection attack from suspicious IP'
-        },
-        {
-          id: Utils.generateId(),
-          type: 'XSS Attack',
-          time: Date.now() - 600000,
-          description: 'Cross-site scripting attempt blocked'
-        },
-        {
-          id: Utils.generateId(),
-          type: 'Bot Traffic',
-          time: Date.now() - 900000,
-          description: 'Malicious bot activity mitigated'
-        }
-      ];
-      
-      State.metrics.blockedThreats = State.threats.length;
-      
-      // Show completion message
+      // Transition to widget
       setTimeout(() => {
         this.hide();
         Widget.show();
-        State.verificationComplete = true;
-        localStorage.setItem('wws_verified', 'true');
-        
-        // Dispatch event
-        window.dispatchEvent(new CustomEvent('wws:verificationComplete', {
-          detail: { 
-            securityScore: State.securityScore,
-            threatsBlocked: State.metrics.blockedThreats 
-          }
-        }));
-      }, 1500);
+      }, 1000);
     }
     
     hide() {
@@ -1535,7 +1077,8 @@
       this.createWidget();
       this.bindEvents();
       this.applyTheme();
-      this.startMetricsUpdate();
+      this.updateBadge();
+      this.startMonitoring();
     }
     
     createWidget() {
@@ -1544,12 +1087,12 @@
       if (existingWidget) existingWidget.remove();
       
       this.widget = document.createElement('div');
-      this.widget.className = `wws-widget wws-theme-${State.currentTheme}`;
+      this.widget.className = `wws-widget wws-theme-${State.currentTheme} wws-position-${State.position}`;
       
       this.widget.innerHTML = `
         <div class="wws-widget-toggle" id="wws-widget-toggle">
           <i class="fas fa-shield-alt"></i>
-          <div class="wws-widget-badge" id="wws-widget-badge">${State.metrics.blockedThreats}</div>
+          <div class="wws-notification-badge">${State.metrics.threatsBlocked}</div>
         </div>
         
         <div class="wws-widget-panel" id="wws-widget-panel">
@@ -1560,7 +1103,7 @@
               </div>
               <div class="wws-header-text">
                 <h3>${CONFIG.companyName}</h3>
-                <p>v${CONFIG.version} • Security Dashboard</p>
+                <p>v${CONFIG.version} • Active</p>
               </div>
             </div>
             <button class="wws-close-panel" id="wws-close-panel">
@@ -1570,19 +1113,15 @@
           
           <div class="wws-panel-tabs">
             <button class="wws-tab active" data-tab="overview">
-              <i class="fas fa-chart-bar"></i>
+              <i class="fas fa-chart-simple"></i>
               <span>Overview</span>
             </button>
             <button class="wws-tab" data-tab="security">
-              <i class="fas fa-shield-alt"></i>
+              <i class="fas fa-shield"></i>
               <span>Security</span>
             </button>
-            <button class="wws-tab" data-tab="analytics">
-              <i class="fas fa-chart-line"></i>
-              <span>Analytics</span>
-            </button>
             <button class="wws-tab" data-tab="settings">
-              <i class="fas fa-cog"></i>
+              <i class="fas fa-sliders"></i>
               <span>Settings</span>
             </button>
           </div>
@@ -1593,7 +1132,7 @@
           
           <div class="wws-panel-footer">
             <a href="${CONFIG.websiteUrl}" target="_blank" class="wws-footer-link">
-              <i class="fas fa-external-link-alt"></i> Open Full Dashboard
+              <i class="fas fa-external-link-alt"></i> Open Dashboard
             </a>
           </div>
         </div>
@@ -1662,9 +1201,6 @@
       const content = document.getElementById('wws-panel-content');
       if (!content) return;
       
-      // Clear content
-      content.innerHTML = '';
-      
       switch (this.currentTab) {
         case 'overview':
           this.renderOverview(content);
@@ -1672,85 +1208,67 @@
         case 'security':
           this.renderSecurity(content);
           break;
-        case 'analytics':
-          this.renderAnalytics(content);
-          break;
         case 'settings':
           this.renderSettings(content);
           break;
       }
-      
-      // Force reflow to ensure proper rendering
-      content.offsetHeight;
     }
     
     renderOverview(container) {
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+      const dateStr = now.toLocaleDateString();
+      
       container.innerHTML = `
         <div class="wws-section">
           <div class="wws-section-title">
-            <i class="fas fa-tachometer-alt"></i>
-            Live Metrics
+            <i class="fas fa-chart-simple"></i>
+            Current Status
           </div>
           
-          <div class="wws-widget-metrics">
-            <div class="wws-widget-metric">
-              <div class="wws-widget-metric-value">${State.metrics.blockedThreats}</div>
-              <div class="wws-widget-metric-label">Threats Blocked</div>
+          <div class="wws-stats-grid">
+            <div class="wws-stat-card">
+              <div class="wws-stat-value">${State.metrics.securityScore}</div>
+              <div class="wws-stat-label">Security Score</div>
             </div>
             
-            <div class="wws-widget-metric">
-              <div class="wws-widget-metric-value">${State.securityScore}</div>
-              <div class="wws-widget-metric-label">Security Score</div>
-            </div>
-            
-            <div class="wws-widget-metric">
-              <div class="wws-widget-metric-value">${State.metrics.uptime}%</div>
-              <div class="wws-widget-metric-label">Uptime</div>
-            </div>
-            
-            <div class="wws-widget-metric">
-              <div class="wws-widget-metric-value">${State.metrics.activeConnections}</div>
-              <div class="wws-widget-metric-label">Connections</div>
+            <div class="wws-stat-card">
+              <div class="wws-stat-value">${State.metrics.threatsBlocked}</div>
+              <div class="wws-stat-label">Threats Blocked</div>
             </div>
           </div>
         </div>
         
         <div class="wws-section">
           <div class="wws-section-title">
-            <i class="fas fa-server"></i>
-            System Status
+            <i class="fas fa-clock"></i>
+            Session Info
           </div>
           
-          <div class="wws-status-item">
-            <div class="wws-status-label">
-              <i class="fas fa-shield-alt"></i>
-              Protection Status
+          <div class="wws-status-list">
+            <div class="wws-status-item">
+              <div class="wws-status-label">
+                <i class="far fa-clock"></i>
+                Current Time
+              </div>
+              <div class="wws-status-value">${timeStr}</div>
             </div>
-            <div class="wws-status-value" style="color: var(--wws-success)">Active</div>
-          </div>
-          
-          <div class="wws-status-item">
-            <div class="wws-status-label">
-              <i class="fas fa-bolt"></i>
-              Response Time
+            
+            <div class="wws-status-item">
+              <div class="wws-status-label">
+                <i class="far fa-calendar"></i>
+                Date
+              </div>
+              <div class="wws-status-value">${dateStr}</div>
             </div>
-            <div class="wws-status-value">${State.metrics.responseTime}ms</div>
-          </div>
-          
-          <div class="wws-status-item">
-            <div class="wws-status-label">
-              <i class="fas fa-database"></i>
-              Cache Hit Ratio
+            
+            <div class="wws-status-item">
+              <div class="wws-status-label">
+                <i class="fas fa-shield-alt"></i>
+                Protection Status
+              </div>
+              <div class="wws-status-value" style="color: var(--wws-success)">Active</div>
             </div>
-            <div class="wws-status-value">${State.metrics.cacheHitRatio || 78}%</div>
-          </div>
-          
-          <div class="wws-status-item">
-            <div class="wws-status-label">
-              <i class="fas fa-network-wired"></i>
-              Bandwidth
-            </div>
-            <div class="wws-status-value">${State.metrics.bandwidth} Mbps</div>
           </div>
         </div>
       `;
@@ -1760,131 +1278,74 @@
       container.innerHTML = `
         <div class="wws-section">
           <div class="wws-section-title">
-            <i class="fas fa-shield-alt"></i>
+            <i class="fas fa-shield"></i>
             Protection Status
           </div>
           
-          <div class="wws-status-item">
-            <div class="wws-status-label">
-              <i class="fas fa-fire"></i>
-              WAF Protection
-            </div>
-            <div class="wws-status-value" style="color: var(--wws-success)">Enabled</div>
-          </div>
-          
-          <div class="wws-status-item">
-            <div class="wws-status-label">
-              <i class="fas fa-robot"></i>
-              Bot Mitigation
-            </div>
-            <div class="wws-status-value" style="color: var(--wws-success)">Active</div>
-          </div>
-          
-          <div class="wws-status-item">
-            <div class="wws-status-label">
-              <i class="fas fa-broadcast-tower"></i>
-              DDoS Protection
-            </div>
-            <div class="wws-status-value" style="color: var(--wws-success)">Enabled</div>
-          </div>
-          
-          <div class="wws-status-item">
-            <div class="wws-status-label">
-              <i class="fas fa-lock"></i>
-              SSL/TLS
-            </div>
-            <div class="wws-status-value" style="color: var(--wws-success)">Active</div>
-          </div>
-        </div>
-        
-        <div class="wws-section">
-          <div class="wws-section-title">
-            <i class="fas fa-exclamation-triangle"></i>
-            Recent Threats (${State.threats.length})
-          </div>
-          
-          <div class="wws-threat-list">
-            ${State.threats.length > 0 ? 
-              State.threats.map(threat => `
-                <div class="wws-widget-threat">
-                  <div class="wws-widget-threat-header">
-                    <div class="wws-widget-threat-type">${threat.type}</div>
-                    <div class="wws-widget-threat-time">${this.formatTime(threat.time)}</div>
-                  </div>
-                  <div class="wws-widget-threat-desc">${threat.description}</div>
-                </div>
-              `).join('') : 
-              `<div class="wws-no-threats">
-                <i class="fas fa-check-circle"></i>
-                <div style="font-size: 14px; font-weight: 600; margin-bottom: 8px;">No Threats</div>
-                <div style="font-size: 12px;">No security threats detected</div>
-              </div>`
-            }
-          </div>
-        </div>
-      `;
-    }
-    
-    renderAnalytics(container) {
-      const now = new Date();
-      const timeStr = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-      const dateStr = now.toLocaleDateString();
-      
-      container.innerHTML = `
-        <div class="wws-section">
-          <div class="wws-section-title">
-            <i class="fas fa-chart-line"></i>
-            Performance Analytics
-          </div>
-          
-          <div class="wws-status-item">
-            <div class="wws-status-label">
-              <i class="fas fa-clock"></i>
-              Current Time
-            </div>
-            <div class="wws-status-value">${timeStr}</div>
-          </div>
-          
-          <div class="wws-status-item">
-            <div class="wws-status-label">
-              <i class="fas fa-calendar"></i>
-              Date
-            </div>
-            <div class="wws-status-value">${dateStr}</div>
-          </div>
-          
-          <div class="wws-status-item">
-            <div class="wws-status-label">
-              <i class="fas fa-chart-bar"></i>
-              Total Requests
-            </div>
-            <div class="wws-status-value">${Utils.formatNumber(State.metrics.totalRequests)}</div>
-          </div>
-          
-          <div class="wws-status-item">
-            <div class="wws-status-label">
-              <i class="fas fa-database"></i>
-              Data Transferred
-            </div>
-            <div class="wws-status-value">${Utils.formatBytes(State.metrics.dataTransferred)}</div>
-          </div>
-        </div>
-        
-        <div class="wws-section">
-          <div class="wws-section-title">
-            <i class="fas fa-tachometer-alt"></i>
-            System Metrics
-          </div>
-          
-          <div class="wws-widget-metrics">
-            <div class="wws-widget-metric">
-              <div class="wws-widget-metric-value">${State.metrics.cacheHits}</div>
-              <div class="wws-widget-metric-label">Cache Hits</div>
+          <div class="wws-status-list">
+            <div class="wws-status-item">
+              <div class="wws-status-label">
+                <i class="fas fa-fire"></i>
+                Firewall
+              </div>
+              <div class="wws-status-value" style="color: var(--wws-success)">Active</div>
             </div>
             
-            <div class="wws-widget-metric">
-              <div class="wws-widget-metric-value">${State.metrics.cacheMisses}</div>
-              <div class="wws-widget-metric-label">Cache Misses</div>
+            <div class="wws-status-item">
+              <div class="wws-status-label">
+                <i class="fas fa-robot"></i>
+                Bot Protection
+              </div>
+              <div class="wws-status-value" style="color: var(--wws-success)">Enabled</div>
+            </div>
+            
+            <div class="wws-status-item">
+              <div class="wws-status-label">
+                <i class="fas fa-broadcast-tower"></i>
+                DDoS Protection
+              </div>
+              <div class="wws-status-value" style="color: var(--wws-success)">Enabled</div>
+            </div>
+            
+            <div class="wws-status-item">
+              <div class="wws-status-label">
+                <i class="fas fa-lock"></i>
+                Encryption
+              </div>
+              <div class="wws-status-value" style="color: var(--wws-success)">TLS 1.3</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="wws-section">
+          <div class="wws-section-title">
+            <i class="fas fa-history"></i>
+            Recent Activity
+          </div>
+          
+          <div class="wws-status-list">
+            <div class="wws-status-item">
+              <div class="wws-status-label">
+                <i class="fas fa-check-circle"></i>
+                Last Scan
+              </div>
+              <div class="wws-status-value">Just now</div>
+            </div>
+            
+            <div class="wws-status-item">
+              <div class="wws-status-label">
+                <i class="fas fa-exclamation-triangle"></i>
+                Threats Today
+              </div>
+              <div class="wws-status-value">${State.metrics.threatsBlocked}</div>
+            </div>
+            
+            <div class="wws-status-item">
+              <div class="wws-status-label">
+                <i class="fas fa-sync-alt"></i>
+                Auto Updates
+              </div>
+              <div class="wws-status-value" style="color: var(--wws-success)">Enabled</div>
             </div>
           </div>
         </div>
@@ -1895,32 +1356,34 @@
       container.innerHTML = `
         <div class="wws-section">
           <div class="wws-section-title">
-            <i class="fas fa-palette"></i>
-            Appearance
+            <i class="fas fa-sliders"></i>
+            Widget Settings
           </div>
           
-          <div class="wws-settings-item">
-            <div>
-              <div class="wws-settings-label">Theme</div>
-              <div class="wws-settings-desc">Choose your preferred color theme</div>
+          <div class="wws-status-list">
+            <div class="wws-settings-item">
+              <div>
+                <div class="wws-settings-label">Widget Position</div>
+                <div class="wws-settings-desc">Choose where to display widget</div>
+              </div>
+              <select class="wws-select" id="wws-position-select">
+                <option value="bottom-right" ${State.position === 'bottom-right' ? 'selected' : ''}>Bottom Right</option>
+                <option value="bottom-left" ${State.position === 'bottom-left' ? 'selected' : ''}>Bottom Left</option>
+                <option value="top-right" ${State.position === 'top-right' ? 'selected' : ''}>Top Right</option>
+                <option value="top-left" ${State.position === 'top-left' ? 'selected' : ''}>Top Left</option>
+              </select>
             </div>
-            <select class="wws-select" id="wws-theme-select">
-              <option value="dark" ${State.currentTheme === 'dark' ? 'selected' : ''}>Dark</option>
-              <option value="light" ${State.currentTheme === 'light' ? 'selected' : ''}>Light</option>
-            </select>
-          </div>
-          
-          <div class="wws-settings-item">
-            <div>
-              <div class="wws-settings-label">Widget Position</div>
-              <div class="wws-settings-desc">Change widget location on screen</div>
+            
+            <div class="wws-settings-item">
+              <div>
+                <div class="wws-settings-label">Theme</div>
+                <div class="wws-settings-desc">Choose color theme</div>
+              </div>
+              <select class="wws-select" id="wws-theme-select">
+                <option value="dark" ${State.currentTheme === 'dark' ? 'selected' : ''}>Dark</option>
+                <option value="light" ${State.currentTheme === 'light' ? 'selected' : ''}>Light</option>
+              </select>
             </div>
-            <select class="wws-select" id="wws-position-select">
-              <option value="bottom-right" ${CONFIG.widget.position === 'bottom-right' ? 'selected' : ''}>Bottom Right</option>
-              <option value="bottom-left" ${CONFIG.widget.position === 'bottom-left' ? 'selected' : ''}>Bottom Left</option>
-              <option value="top-right" ${CONFIG.widget.position === 'top-right' ? 'selected' : ''}>Top Right</option>
-              <option value="top-left" ${CONFIG.widget.position === 'top-left' ? 'selected' : ''}>Top Left</option>
-            </select>
           </div>
         </div>
         
@@ -1930,66 +1393,28 @@
             Notifications
           </div>
           
-          <div class="wws-settings-item">
-            <div>
-              <div class="wws-settings-label">Threat Alerts</div>
-              <div class="wws-settings-desc">Get notified about security threats</div>
+          <div class="wws-status-list">
+            <div class="wws-settings-item">
+              <div>
+                <div class="wws-settings-label">Enable Notifications</div>
+                <div class="wws-settings-desc">Show security alerts</div>
+              </div>
+              <label class="wws-switch">
+                <input type="checkbox" id="wws-notifications" ${State.notifications.enabled ? 'checked' : ''}>
+                <span class="wws-switch-slider"></span>
+              </label>
             </div>
-            <label class="wws-switch">
-              <input type="checkbox" id="wws-threat-alerts" checked>
-              <span class="wws-switch-slider"></span>
-            </label>
-          </div>
-          
-          <div class="wws-settings-item">
-            <div>
-              <div class="wws-settings-label">Performance Reports</div>
-              <div class="wws-settings-desc">Receive weekly performance insights</div>
+            
+            <div class="wws-settings-item">
+              <div>
+                <div class="wws-settings-label">Threat Alerts</div>
+                <div class="wws-settings-desc">Show threat notifications</div>
+              </div>
+              <label class="wws-switch">
+                <input type="checkbox" id="wws-threat-alerts" ${State.notifications.threatAlerts ? 'checked' : ''}>
+                <span class="wws-switch-slider"></span>
+              </label>
             </div>
-            <label class="wws-switch">
-              <input type="checkbox" id="wws-performance-reports" checked>
-              <span class="wws-switch-slider"></span>
-            </label>
-          </div>
-          
-          <div class="wws-settings-item">
-            <div>
-              <div class="wws-settings-label">Analytics Updates</div>
-              <div class="wws-settings-desc">Real-time analytics notifications</div>
-            </div>
-            <label class="wws-switch">
-              <input type="checkbox" id="wws-analytics-updates">
-              <span class="wws-switch-slider"></span>
-            </label>
-          </div>
-        </div>
-        
-        <div class="wws-section">
-          <div class="wws-section-title">
-            <i class="fas fa-database"></i>
-            Data & Privacy
-          </div>
-          
-          <div class="wws-settings-item">
-            <div>
-              <div class="wws-settings-label">Collect Analytics</div>
-              <div class="wws-settings-desc">Help improve WWS PROTECT with anonymous data</div>
-            </div>
-            <label class="wws-switch">
-              <input type="checkbox" id="wws-analytics-collection" checked>
-              <span class="wws-switch-slider"></span>
-            </label>
-          </div>
-          
-          <div class="wws-settings-item">
-            <div>
-              <div class="wws-settings-label">Behavior Tracking</div>
-              <div class="wws-settings-desc">Monitor user behavior for security analysis</div>
-            </div>
-            <label class="wws-switch">
-              <input type="checkbox" id="wws-behavior-tracking" checked>
-              <span class="wws-switch-slider"></span>
-            </label>
           </div>
         </div>
       `;
@@ -1998,6 +1423,16 @@
     }
     
     bindSettingsEvents() {
+      // Position selector
+      const positionSelect = document.getElementById('wws-position-select');
+      if (positionSelect) {
+        positionSelect.addEventListener('change', (e) => {
+          State.position = e.target.value;
+          localStorage.setItem('wws_position', State.position);
+          this.updatePosition();
+        });
+      }
+      
       // Theme selector
       const themeSelect = document.getElementById('wws-theme-select');
       if (themeSelect) {
@@ -2008,112 +1443,52 @@
         });
       }
       
-      // Position selector
-      const positionSelect = document.getElementById('wws-position-select');
-      if (positionSelect) {
-        positionSelect.addEventListener('change', (e) => {
-          this.updatePosition(e.target.value);
+      // Notification toggles
+      const notificationToggle = document.getElementById('wws-notifications');
+      if (notificationToggle) {
+        notificationToggle.addEventListener('change', (e) => {
+          State.notifications.enabled = e.target.checked;
+          localStorage.setItem('wws_notifications', e.target.checked);
         });
       }
       
-      // Toggle switches
-      const switches = [
-        'wws-threat-alerts',
-        'wws-performance-reports',
-        'wws-analytics-updates',
-        'wws-analytics-collection',
-        'wws-behavior-tracking'
-      ];
-      
-      switches.forEach(id => {
-        const element = document.getElementById(id);
-        if (element) {
-          const savedState = localStorage.getItem(id);
-          if (savedState !== null) {
-            element.checked = savedState === 'true';
-          }
-          
-          element.addEventListener('change', (e) => {
-            localStorage.setItem(id, e.target.checked);
-          });
-        }
-      });
-    }
-    
-    applyTheme() {
-      this.widget.className = `wws-widget wws-theme-${State.currentTheme}`;
-    }
-    
-    updatePosition(position) {
-      const positions = {
-        'bottom-right': { bottom: '30px', right: '30px', left: 'auto', top: 'auto' },
-        'bottom-left': { bottom: '30px', left: '30px', right: 'auto', top: 'auto' },
-        'top-right': { top: '30px', right: '30px', left: 'auto', bottom: 'auto' },
-        'top-left': { top: '30px', left: '30px', right: 'auto', bottom: 'auto' }
-      };
-      
-      const style = positions[position];
-      if (style) {
-        Object.assign(this.widget.style, style);
-        CONFIG.widget.position = position;
+      const threatToggle = document.getElementById('wws-threat-alerts');
+      if (threatToggle) {
+        threatToggle.addEventListener('change', (e) => {
+          State.notifications.threatAlerts = e.target.checked;
+          localStorage.setItem('wws_threat_alerts', e.target.checked);
+        });
       }
     }
     
-    formatTime(timestamp) {
-      const now = Date.now();
-      const diff = now - timestamp;
-      
-      if (diff < 60000) return 'Just now';
-      if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
-      if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
-      return `${Math.floor(diff / 86400000)}d ago`;
+    applyTheme() {
+      this.widget.className = `wws-widget wws-theme-${State.currentTheme} wws-position-${State.position}`;
     }
     
-    startMetricsUpdate() {
-      // Update metrics periodically
+    updatePosition() {
+      this.widget.className = `wws-widget wws-theme-${State.currentTheme} wws-position-${State.position}`;
+    }
+    
+    updateBadge() {
+      Utils.updateBadge(State.metrics.threatsBlocked);
+    }
+    
+    startMonitoring() {
+      // Simulate occasional threat detection
       setInterval(() => {
-        // Update badge
-        const badge = document.getElementById('wws-widget-badge');
-        if (badge) {
-          badge.textContent = State.metrics.blockedThreats;
-        }
-        
-        // Update panel if open
-        if (this.isPanelOpen) {
-          this.updatePanelContent();
-        }
-        
-        // Update global metrics
-        State.metrics.totalRequests += Math.floor(Math.random() * 50);
-        State.metrics.dataTransferred += Math.floor(Math.random() * 1024 * 1024);
-        State.metrics.activeConnections = Math.floor(Math.random() * 20) + 5;
-        State.metrics.responseTime = 40 + Math.floor(Math.random() * 15);
-        State.metrics.bandwidth = 100 + Math.floor(Math.random() * 50);
-        
-        // Occasionally add new threats
-        if (Math.random() < 0.01) {
-          const threatTypes = [
-            'DDoS Attack',
-            'SQL Injection',
-            'XSS Attempt',
-            'Bot Activity',
-            'Malware Scan'
-          ];
+        if (Math.random() < 0.02 && State.notifications.threatAlerts) {
+          State.metrics.threatsBlocked++;
+          this.updateBadge();
           
-          State.threats.unshift({
-            id: Utils.generateId(),
-            type: threatTypes[Math.floor(Math.random() * threatTypes.length)],
-            time: Date.now(),
-            description: 'Automated threat detection and mitigation'
-          });
-          
-          State.metrics.blockedThreats++;
-          
-          if (State.threats.length > 10) {
-            State.threats.pop();
+          if (State.notifications.enabled) {
+            Utils.showNotification(
+              'Threat Blocked',
+              'Malicious activity detected and blocked',
+              'threat'
+            );
           }
         }
-      }, 5000);
+      }, 10000);
     }
     
     static show() {
@@ -2151,9 +1526,10 @@
     // Get current status
     getStatus: () => ({
       verified: State.verificationComplete,
-      securityScore: State.securityScore,
-      metrics: { ...State.metrics },
-      threats: State.threats.length
+      securityScore: State.metrics.securityScore,
+      threatsBlocked: State.metrics.threatsBlocked,
+      position: State.position,
+      theme: State.currentTheme
     }),
     
     // Manual verification
@@ -2171,16 +1547,21 @@
     showWidget: () => Widget.show(),
     hideWidget: () => Widget.hide(),
     
-    // Refresh metrics
-    refreshMetrics: () => {
-      if (window.wwsWidgetInstance) {
-        window.wwsWidgetInstance.updatePanelContent();
+    // Show test notification
+    testNotification: (type = 'info') => {
+      if (type === 'threat') {
+        Utils.showNotification(
+          'Test Threat Alert',
+          'This is a test threat notification',
+          'threat'
+        );
+      } else {
+        Utils.showNotification(
+          'Test Notification',
+          'This is a test notification',
+          'info'
+        );
       }
-    },
-    
-    // Event listeners
-    onVerificationComplete: (callback) => {
-      window.addEventListener('wws:verificationComplete', (e) => callback(e.detail));
     }
   };
   
