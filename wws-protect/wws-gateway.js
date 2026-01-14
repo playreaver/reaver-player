@@ -124,7 +124,6 @@
     
     overlay.appendChild(animatedBg);
     
-    // ... (остальная логика show/hide/updateStatus)
     let originalBodyContent = null;
     
     function show() {
@@ -194,7 +193,6 @@
     }
     
     startTracking() {
-      // Трекинг пути мыши с координатами и временем
       document.addEventListener('mousemove', (e) => {
         const now = Date.now();
         const point = {
@@ -207,13 +205,11 @@
         this.currentPath.push(point);
         if (this.currentPath.length > 50) this.currentPath.shift();
         
-        // Анализ паттернов
         if (this.currentPath.length > 10) {
           this.analyzeMovementPattern();
         }
       });
       
-      // Анализ времени между кликами
       document.addEventListener('click', (e) => {
         const now = Date.now();
         const interval = now - this.lastClickTime;
@@ -226,20 +222,18 @@
         }
       });
       
-      // Трекинг фокуса
       let focusTime = Date.now();
       document.addEventListener('visibilitychange', () => {
         if (document.hidden) {
           const timeOnPage = Date.now() - focusTime;
           if (timeOnPage < 1000 && this.clickIntervals.length > 5) {
-            this.isBotLike = true; // Слишком быстрое переключение
+            this.isBotLike = true;
           }
         } else {
           focusTime = Date.now();
         }
       });
       
-      // Проверка на отладку
       this.detectDevTools();
     }
     
@@ -254,7 +248,6 @@
     }
     
     analyzeMovementPattern() {
-      // Проверка на линейные движения (боты часто двигаются прямо)
       const recent = this.currentPath.slice(-10);
       const angles = [];
       
@@ -265,13 +258,11 @@
         angles.push(Math.abs(angle));
       }
       
-      // Если углы слишком похожи (линейное движение) - это бот
       const variance = this.calculateVariance(angles);
       if (variance < 0.01) {
         this.isBotLike = true;
       }
       
-      // Проверка на ровные интервалы (боты двигаются с постоянной скоростью)
       const speeds = recent.map(p => p.speed).filter(s => s > 0);
       const speedVariance = this.calculateVariance(speeds);
       if (speedVariance < 0.05 && speeds.length > 5) {
@@ -282,13 +273,11 @@
     analyzeClickPatterns() {
       if (this.clickIntervals.length < 5) return;
       
-      // Боты часто кликают с ровными интервалами
       const variance = this.calculateVariance(this.clickIntervals);
       if (variance < 50 && this.clickIntervals.length > 5) {
         this.isBotLike = true;
       }
       
-      // Слишком быстрые клики (< 100ms)
       const avgInterval = this.clickIntervals.reduce((a, b) => a + b) / this.clickIntervals.length;
       if (avgInterval < 100) {
         this.isBotLike = true;
@@ -302,7 +291,6 @@
     }
     
     detectDevTools() {
-      // Проверка на открытые DevTools
       let devToolsOpen = false;
       const threshold = 160;
       
@@ -324,8 +312,8 @@
       let score = 0;
       
       if (this.isBotLike) score += 0.5;
-      if (this.currentPath.length < 5) score += 0.3; // Мало движений мыши
-      if (this.clickIntervals.length < 3) score += 0.2; // Мало кликов
+      if (this.currentPath.length < 5) score += 0.3;
+      if (this.clickIntervals.length < 3) score += 0.2;
       
       return Math.min(score, 0.8);
     }
@@ -349,7 +337,6 @@
         const b = this.currentPath[i-1];
         const c = this.currentPath[i];
         
-        // Проверка на изменение направления
         const angle = Math.atan2(c.y - b.y, c.x - b.x) - Math.atan2(b.y - a.y, b.x - a.x);
         if (Math.abs(angle) > 0.5) complexity++;
       }
@@ -410,10 +397,8 @@
       PROTTECTION_LAYER.updateStatus('Collecting behavioral data...', 20, 0);
       
       try {
-        // Запускаем продвинутый анализ поведения
         this.behaviorAnalyzer = new AdvancedBehaviorAnalyzer();
         
-        // Даем время собрать данные
         await new Promise(resolve => setTimeout(resolve, 800));
         
         PROTTECTION_LAYER.updateStatus('Analyzing device fingerprint...', 40, 15);
@@ -443,15 +428,62 @@
       }
     }
     
-    // ... (методы generateUserId, generateSessionId, generateDeviceFingerprint остаются)
+    checkFirstVisit() {
+      const firstVisit = localStorage.getItem('wws_first_visit');
+      if (!firstVisit) {
+        localStorage.setItem('wws_first_visit', Date.now().toString());
+        return true;
+      }
+      return false;
+    }
+    
+    generateUserId() {
+      let userId = localStorage.getItem('wws_user_id');
+      if (!userId) {
+        userId = 'usr_' + Date.now().toString(36) + '_' + 
+                Math.random().toString(36).substr(2, 8);
+        localStorage.setItem('wws_user_id', userId);
+      }
+      return userId;
+    }
+    
+    generateSessionId() {
+      return 'sess_' + Date.now().toString(36) + '_' + 
+             Math.random().toString(36).substr(2, 6);
+    }
+    
+    generateDeviceFingerprint() {
+      try {
+        const data = [
+          navigator.userAgent,
+          navigator.language,
+          screen.width + 'x' + screen.height,
+          screen.colorDepth,
+          navigator.platform,
+          new Date().getTimezoneOffset(),
+          navigator.hardwareConcurrency || 'unknown',
+          navigator.deviceMemory || 'unknown'
+        ].join('|');
+        
+        let hash = 0;
+        for (let i = 0; i < data.length; i++) {
+          const char = data.charCodeAt(i);
+          hash = ((hash << 5) - hash) + char;
+          hash = hash & hash;
+        }
+        return 'dev_' + Math.abs(hash).toString(36);
+      } catch (e) {
+        return 'dev_unknown';
+      }
+    }
     
     createWidget() {
       const oldWidget = document.getElementById('wws-widget');
       if (oldWidget) oldWidget.remove();
       
-      const widget = document.createElement('div');
-      widget.id = 'wws-widget';
-      widget.innerHTML = `
+      this.widget = document.createElement('div');
+      this.widget.id = 'wws-widget';
+      this.widget.innerHTML = `
         <div class="wws-widget-icon" id="wws-widget-icon">
           <i class="fas fa-shield-alt"></i>
           <div class="wws-risk-badge" id="wws-risk-badge">0%</div>
@@ -523,10 +555,9 @@
         </div>
       `;
       
-      document.body.appendChild(widget);
+      document.body.appendChild(this.widget);
       this.addWidgetStyles();
       this.initWidgetHandlers();
-      this.widget = widget;
     }
     
     addWidgetStyles() {
@@ -606,6 +637,15 @@
           max-height: 85vh;
         }
         
+        .wws-panel-header {
+          padding: 15px 20px;
+          background: rgba(108, 99, 255, 0.1);
+          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+        
         .wws-panel-header h3 {
           margin: 0;
           color: white;
@@ -639,6 +679,70 @@
           background: rgba(239, 68, 68, 0.2);
           color: #ef4444;
           transform: rotate(90deg);
+        }
+        
+        .wws-panel-content {
+          padding: 20px;
+          overflow-y: auto;
+          max-height: calc(85vh - 60px);
+        }
+        
+        .wws-status-item {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 10px;
+          padding: 8px 0;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .wws-label {
+          color: #94a3b8;
+          font-size: 14px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+        
+        .wws-value {
+          color: white;
+          font-weight: 500;
+          font-size: 14px;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+        
+        .wws-risk-meter {
+          width: 80px;
+          height: 6px;
+          background: rgba(255, 255, 255, 0.1);
+          border-radius: 3px;
+          overflow: hidden;
+        }
+        
+        .wws-risk-fill {
+          height: 100%;
+          background: #10b981;
+          width: 0%;
+          transition: width 0.5s ease;
+          border-radius: 3px;
+        }
+        
+        .wws-behavior-section {
+          margin-bottom: 20px;
+          padding: 15px;
+          background: rgba(255, 255, 255, 0.05);
+          border-radius: 10px;
+        }
+        
+        .wws-behavior-section h4 {
+          margin: 0 0 15px 0;
+          color: white;
+          font-size: 14px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
         }
         
         .wws-stats-grid {
@@ -676,6 +780,24 @@
           font-size: 16px;
         }
         
+        .wws-factors-section {
+          margin-bottom: 20px;
+        }
+        
+        .wws-factors-section h4 {
+          margin: 0 0 10px 0;
+          color: white;
+          font-size: 14px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+        
+        .wws-factors-list {
+          max-height: 200px;
+          overflow-y: auto;
+        }
+        
         .wws-factor-item {
           padding: 10px 12px;
           margin-bottom: 6px;
@@ -697,6 +819,21 @@
         
         .wws-factor-item i {
           font-size: 14px;
+        }
+        
+        .wws-no-factors {
+          padding: 10px;
+          text-align: center;
+          color: #94a3b8;
+          font-size: 12px;
+          background: rgba(255, 255, 255, 0.05);
+          border-radius: 6px;
+        }
+        
+        .wws-actions-section {
+          display: flex;
+          gap: 10px;
+          margin-bottom: 15px;
         }
         
         .wws-action-btn {
@@ -737,6 +874,14 @@
           font-size: 14px;
         }
         
+        .wws-footer {
+          text-align: center;
+          color: #64748b;
+          font-size: 11px;
+          padding-top: 15px;
+          border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
         @media (max-width: 768px) {
           .wws-widget-panel {
             width: 340px;
@@ -752,6 +897,8 @@
       const icon = document.getElementById('wws-widget-icon');
       const panel = document.getElementById('wws-widget-panel');
       const closeBtn = document.getElementById('wws-close-panel');
+      const refreshBtn = document.getElementById('wws-refresh-btn');
+      const detailsBtn = document.getElementById('wws-details-btn');
       
       icon.addEventListener('click', (e) => {
         e.stopImmediatePropagation();
@@ -763,13 +910,30 @@
         panel.classList.remove('show');
       });
       
+      document.addEventListener('click', (e) => {
+        if (this.widget && !this.widget.contains(e.target) && panel.classList.contains('show')) {
+          panel.classList.remove('show');
+        }
+      });
+      
+      refreshBtn.addEventListener('click', () => {
+        this.collectAllData();
+        this.analyzeRisk();
+        this.updateWidget();
+      });
+      
+      detailsBtn.addEventListener('click', () => {
+        this.showDetailedReport();
+      });
+      
       this.setupDynamicUpdates();
     }
     
     setupDynamicUpdates() {
-      // Обновляем виджет каждые 3 секунды
       setInterval(() => {
         if (this.behaviorAnalyzer) {
+          this.behaviorData.clicks = this.behaviorAnalyzer.clickIntervals.length;
+          this.behaviorData.mouseMovements = this.behaviorAnalyzer.currentPath.length;
           this.updateWidget();
         }
       }, 3000);
@@ -812,12 +976,10 @@
       
       if (statusValue) statusValue.textContent = statusMap[this.verdict] || this.verdict;
       
-      // Обновляем behavioral данные
       const report = this.behaviorAnalyzer.getBehaviorReport();
       if (pathEl) pathEl.textContent = report.mouseMovements;
       if (speedEl) speedEl.textContent = report.avgClickInterval.toFixed(0) + 'ms';
       
-      // Обновляем факторы
       this.updateRiskFactors();
     }
     
@@ -850,11 +1012,103 @@
       return icons[level] || 'info-circle';
     }
     
+    collectAllData() {
+      this.collectBehaviorData();
+      this.collectTechnicalData();
+      this.collectNetworkData();
+      this.loadUserHistory();
+    }
+    
+    collectBehaviorData() {
+      this.behaviorData = {
+        pageLoadTime: Date.now(),
+        mouseMovements: this.behaviorAnalyzer ? this.behaviorAnalyzer.currentPath.length : 0,
+        clicks: this.behaviorAnalyzer ? this.behaviorAnalyzer.clickIntervals.length : 0,
+        keyPresses: 0,
+        scrollEvents: 0,
+        referrer: document.referrer,
+        directAccess: !document.referrer,
+        interactionSpeed: null,
+        lastActivity: Date.now()
+      };
+    }
+    
+    collectTechnicalData() {
+      this.technicalData = {
+        userAgent: navigator.userAgent,
+        platform: navigator.platform,
+        vendor: navigator.vendor,
+        language: navigator.language,
+        languages: navigator.languages,
+        screenWidth: screen.width,
+        screenHeight: screen.height,
+        colorDepth: screen.colorDepth,
+        windowWidth: window.innerWidth,
+        windowHeight: window.innerHeight,
+        devicePixelRatio: window.devicePixelRatio,
+        timezone: new Date().getTimezoneOffset(),
+        cookiesEnabled: navigator.cookieEnabled,
+        plugins: navigator.plugins ? navigator.plugins.length : 0,
+        webgl: this.detectWebGL(),
+        canvasFingerprint: this.getCanvasFingerprint(),
+        webdriver: navigator.webdriver,
+        hasChrome: typeof window.chrome !== 'undefined'
+      };
+    }
+    
+    collectNetworkData() {
+      this.networkData = {
+        connection: navigator.connection ? {
+          effectiveType: navigator.connection.effectiveType,
+          rtt: navigator.connection.rtt,
+          downlink: navigator.connection.downlink,
+          saveData: navigator.connection.saveData
+        } : null,
+        pageLoadPerformance: performance.timing ? {
+          navigationStart: performance.timing.navigationStart,
+          loadEventEnd: performance.timing.loadEventEnd,
+          domComplete: performance.timing.domComplete
+        } : null
+      };
+    }
+    
+    loadUserHistory() {
+      try {
+        const history = localStorage.getItem(`wws_history_${this.userId}`);
+        if (history) {
+          this.userHistory = JSON.parse(history);
+          const cutoff = Date.now() - (30 * 24 * 60 * 60 * 1000);
+          if (this.userHistory.sessions) {
+            this.userHistory.sessions = this.userHistory.sessions.filter(
+              s => s.timestamp > cutoff
+            );
+          }
+        } else {
+          this.userHistory = {
+            userId: this.userId,
+            firstSeen: Date.now(),
+            sessions: [],
+            riskHistory: [],
+            incidents: 0,
+            trusted: false
+          };
+        }
+      } catch (e) {
+        this.userHistory = {
+          userId: this.userId,
+          firstSeen: Date.now(),
+          sessions: [],
+          riskHistory: [],
+          incidents: 0,
+          trusted: false
+        };
+      }
+    }
+    
     analyzeRisk() {
       let totalRisk = 0;
       this.riskFactors = [];
       
-      // Продвинутый анализ поведения
       const behaviorRisk = this.analyzeAdvancedBehavior();
       totalRisk += behaviorRisk.score * CONFIG.weights.behavior;
       this.riskFactors.push(...behaviorRisk.factors);
@@ -894,7 +1148,6 @@
       
       const report = this.behaviorAnalyzer.getBehaviorReport();
       
-      // Ботоподобное поведение
       if (report.isBotLike) {
         score += 0.6;
         factors.push({
@@ -905,7 +1158,6 @@
         });
       }
       
-      // Мало движений мыши
       if (report.mouseMovements < 10) {
         score += 0.3;
         factors.push({
@@ -916,7 +1168,6 @@
         });
       }
       
-      // Слишком быстрые клики
       if (report.avgClickInterval < 150 && report.avgClickInterval > 0) {
         score += 0.25;
         factors.push({
@@ -927,7 +1178,6 @@
         });
       }
       
-      // Низкая сложность пути
       if (report.pathComplexity < 0.1) {
         score += 0.2;
         factors.push({
@@ -941,7 +1191,416 @@
       return { score: Math.min(1, score), factors };
     }
     
-    // ... (остальные методы collectAllData, analyzeTechnical, analyzeReputation, analyzeNetwork, determineVerdict, executeVerdict и т.д.)
+    analyzeTechnical() {
+      let score = 0;
+      const factors = [];
+      const ua = this.technicalData.userAgent.toLowerCase();
+      
+      const botPatterns = [
+        /bot/i, /crawl/i, /spider/i, /scrape/i,
+        /headless/i, /phantom/i, /selenium/i,
+        /puppeteer/i, /playwright/i, /cheerio/i
+      ];
+      
+      for (const pattern of botPatterns) {
+        if (pattern.test(ua)) {
+          score += 0.6;
+          factors.push({
+            type: 'technical',
+            level: 'high',
+            message: 'Bot User-Agent detected: ' + ua.match(pattern)[0],
+            details: { userAgent: ua }
+          });
+          break;
+        }
+      }
+      
+      if (navigator.webdriver === true) {
+        score += 0.8;
+        factors.push({
+          type: 'technical',
+          level: 'critical',
+          message: 'WebDriver detected (headless browser)',
+          details: { webdriver: true }
+        });
+      }
+      
+      if (this.technicalData.plugins === 0 && !ua.includes('mobile')) {
+        score += 0.3;
+        factors.push({
+          type: 'technical',
+          level: 'medium',
+          message: 'No browser plugins detected',
+          details: { plugins: 0 }
+        });
+      }
+      
+      return { score: Math.min(1, score), factors };
+    }
+    
+    analyzeReputation() {
+      let score = 0;
+      const factors = [];
+      
+      if (!this.userHistory.sessions || this.userHistory.sessions.length < 2) {
+        score += 0.2;
+        factors.push({
+          type: 'reputation',
+          level: 'low',
+          message: 'New or infrequent user',
+          details: { sessions: this.userHistory.sessions?.length || 0 }
+        });
+      }
+      
+      if (this.userHistory.incidents > 0) {
+        score += Math.min(0.5, this.userHistory.incidents * 0.1);
+        factors.push({
+          type: 'reputation',
+          level: 'medium',
+          message: `Previous security incidents: ${this.userHistory.incidents}`,
+          details: { incidents: this.userHistory.incidents }
+        });
+      }
+      
+      if (this.userHistory.trusted) {
+        score -= 0.3;
+        factors.push({
+          type: 'reputation',
+          level: 'trusted',
+          message: 'Trusted device verified',
+          details: { trusted: true }
+        });
+      }
+      
+      return { score: Math.max(0, Math.min(1, score)), factors };
+    }
+    
+    analyzeNetwork() {
+      let score = 0;
+      const factors = [];
+      
+      if (this.networkData.connection && this.networkData.connection.rtt > 500) {
+        score += 0.2;
+        factors.push({
+          type: 'network',
+          level: 'medium',
+          message: 'High network latency (possible proxy/VPN)',
+          details: { rtt: this.networkData.connection.rtt + 'ms' }
+        });
+      }
+      
+      return { score: Math.min(1, score), factors };
+    }
+    
+    detectWebGL() {
+      try {
+        const canvas = document.createElement('canvas');
+        return !!(window.WebGLRenderingContext && 
+                 (canvas.getContext('webgl') || canvas.getContext('experimental-webgl')));
+      } catch (e) {
+        return false;
+      }
+    }
+    
+    getCanvasFingerprint() {
+      try {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        canvas.width = 200;
+        canvas.height = 30;
+        
+        ctx.textBaseline = 'top';
+        ctx.font = '14px Arial';
+        ctx.textBaseline = 'alphabetic';
+        ctx.fillStyle = '#f60';
+        ctx.fillRect(125, 1, 62, 20);
+        ctx.fillStyle = '#069';
+        ctx.fillText('WWS Security', 2, 15);
+        ctx.fillStyle = 'rgba(102, 204, 0, 0.7)';
+        ctx.fillText('WWS Security', 4, 17);
+        
+        return canvas.toDataURL().substring(22, 50);
+      } catch (e) {
+        return 'error';
+      }
+    }
+    
+    determineVerdict() {
+      let verdict = 'allow';
+      
+      if (this.isFirstVisit) {
+        if (this.riskScore >= CONFIG.riskThresholds.HIGH) {
+          verdict = 'full_captcha';
+        } else if (this.riskScore >= CONFIG.riskThresholds.LOW) {
+          verdict = 'simple_captcha';
+        } else {
+          verdict = 'allow_with_logging';
+        }
+      } 
+      else if (this.riskScore >= CONFIG.riskThresholds.HIGH) {
+        verdict = 'full_captcha';
+      } 
+      else if (this.riskScore >= CONFIG.riskThresholds.MEDIUM) {
+        verdict = 'simple_captcha';
+      }
+      else if (this.riskScore >= CONFIG.riskThresholds.LOW) {
+        verdict = 'allow_with_logging';
+      }
+      else {
+        verdict = 'allow';
+      }
+      
+      this.verdict = verdict;
+      this.log(`Verdict: ${verdict} (risk: ${(this.riskScore * 100).toFixed(1)}%)`);
+    }
+    
+    executeVerdict() {
+      this.updateWidget();
+      this.createWidget();
+      
+      switch (this.verdict) {
+        case 'full_captcha':
+          this.showFullCaptcha();
+          break;
+        case 'simple_captcha':
+          this.showSimpleCaptcha();
+          break;
+        default:
+          this.allowAccess();
+          break;
+      }
+    }
+    
+    showSimpleCaptcha() {
+      const overlay = this.createOverlay();
+      
+      const a = Math.floor(Math.random() * 9) + 1;
+      const b = Math.floor(Math.random() * 9) + 1;
+      const answer = a + b;
+      
+      overlay.innerHTML = `
+        <div style="max-width: 400px; width: 90%; padding: 30px; background: rgba(18, 18, 26, 0.95); border-radius: 20px; border: 1px solid rgba(108, 99, 255, 0.3); box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5); text-align: center; backdrop-filter: blur(10px);">
+          <div style="margin-bottom: 20px;">
+            <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #6C63FF, #36D1DC); border-radius: 15px; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px;">🤖</div>
+            <h3 style="color: white; margin: 0 0 10px;">Security Check</h3>
+            <p style="color: #94a3b8; font-size: 14px; margin: 0;">Complete verification to continue</p>
+          </div>
+          <div style="background: rgba(255, 255, 255, 0.05); border-radius: 15px; padding: 25px; margin-bottom: 20px;">
+            <div style="color: #94a3b8; margin-bottom: 10px; font-size: 14px;">Solve:</div>
+            <div style="font-size: 36px; font-weight: bold; color: white; font-family: 'Courier New', monospace; margin: 15px 0;">${a} + ${b} = ?</div>
+            <input type="text" id="captcha-answer" placeholder="Your answer" style="width: 100%; padding: 15px; font-size: 18px; background: rgba(255, 255, 255, 0.1); border: 2px solid rgba(255, 255, 255, 0.2); border-radius: 10px; color: white; text-align: center; outline: none;" autocomplete="off">
+          </div>
+          <button id="captcha-submit" style="width: 100%; padding: 16px; background: linear-gradient(135deg, #6C63FF, #36D1DC); color: white; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; font-size: 16px;">Verify</button>
+        </div>
+      `;
+      
+      const answerInput = overlay.querySelector('#captcha-answer');
+      const submitBtn = overlay.querySelector('#captcha-submit');
+      answerInput.focus();
+      
+      const checkAnswer = () => {
+        const userAnswer = parseInt(answerInput.value.trim());
+        if (userAnswer === answer) {
+          this.log('Captcha passed');
+          this.removeOverlay();
+          this.allowAccess();
+        } else {
+          answerInput.value = '';
+          answerInput.placeholder = 'Incorrect, try again';
+          answerInput.style.borderColor = '#ef4444';
+          setTimeout(() => {
+            answerInput.placeholder = 'Your answer';
+            answerInput.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+          }, 2000);
+        }
+      };
+      
+      submitBtn.addEventListener('click', checkAnswer);
+      answerInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') checkAnswer();
+      });
+    }
+    
+    showFullCaptcha() {
+      this.showSimpleCaptcha();
+    }
+    
+    createOverlay() {
+      const oldOverlay = document.getElementById('wws-security-overlay');
+      if (oldOverlay) oldOverlay.remove();
+      
+      const overlay = document.createElement('div');
+      overlay.id = 'wws-security-overlay';
+      overlay.style.cssText = `
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        background: rgba(5, 5, 15, 0.98) !important;
+        backdrop-filter: blur(5px) !important;
+        z-index: 999999 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 20px !important;
+      `;
+      
+      document.body.appendChild(overlay);
+      document.body.style.overflow = 'hidden';
+      
+      return overlay;
+    }
+    
+    removeOverlay() {
+      const overlay = document.getElementById('wws-security-overlay');
+      if (overlay) overlay.remove();
+      document.body.style.overflow = '';
+    }
+    
+    allowAccess() {
+      this.log('Access granted to site');
+      this.saveSession();
+      this.updateWidget();
+      
+      if (this.riskScore < 0.2) {
+        this.markAsTrusted();
+      }
+      
+      const event = new CustomEvent('wws:access-granted', {
+        detail: {
+          userId: this.userId,
+          sessionId: this.sessionId,
+          riskScore: this.riskScore,
+          verdict: this.verdict
+        }
+      });
+      window.dispatchEvent(event);
+    }
+    
+    saveSession() {
+      const session = {
+        sessionId: this.sessionId,
+        timestamp: Date.now(),
+        riskScore: this.riskScore,
+        verdict: this.verdict,
+        factors: this.riskFactors
+      };
+      
+      if (!this.userHistory.sessions) this.userHistory.sessions = [];
+      this.userHistory.sessions.push(session);
+      
+      if (this.userHistory.sessions.length > 50) {
+        this.userHistory.sessions = this.userHistory.sessions.slice(-50);
+      }
+      
+      try {
+        localStorage.setItem(`wws_history_${this.userId}`, JSON.stringify(this.userHistory));
+        sessionStorage.setItem('wws_session_passed', 'true');
+      } catch (e) {
+        this.log('Session save error:', e);
+      }
+    }
+    
+    markAsTrusted() {
+      this.userHistory.trusted = true;
+      this.userHistory.trustedSince = Date.now();
+      this.userHistory.trustedDevice = this.generateDeviceFingerprint();
+      
+      try {
+        localStorage.setItem(`wws_history_${this.userId}`, JSON.stringify(this.userHistory));
+      } catch (e) {
+        this.log('Trust save error:', e);
+      }
+    }
+    
+    showDetailedReport() {
+      const overlay = this.createOverlay();
+      
+      overlay.innerHTML = `
+        <div style="max-width: 800px; width: 95%; max-height: 90vh; overflow-y: auto; background: rgba(18, 18, 26, 0.98); border-radius: 20px; border: 1px solid rgba(108, 99, 255, 0.3); padding: 30px; color: white;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+            <h2 style="margin: 0; color: #6C63FF;"><i class="fas fa-chart-bar"></i> Detailed Security Report</h2>
+            <button id="wws-close-report" style="background: none; border: none; color: #94a3b8; font-size: 24px; cursor: pointer;"><i class="fas fa-times"></i></button>
+          </div>
+          
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px;">
+            <div style="background: rgba(108, 99, 255, 0.1); padding: 20px; border-radius: 10px;">
+              <h3 style="margin-top: 0; color: #6C63FF;"><i class="fas fa-user-shield"></i> User Profile</h3>
+              <p><strong>User ID:</strong> ${this.userId}</p>
+              <p><strong>Session:</strong> ${this.sessionId}</p>
+              <p><strong>Device:</strong> ${this.generateDeviceFingerprint()}</p>
+              <p><strong>Verdict:</strong> ${this.verdict}</p>
+            </div>
+            
+            <div style="background: rgba(16, 185, 129, 0.1); padding: 20px; border-radius: 10px;">
+              <h3 style="margin-top: 0; color: #10b981;"><i class="fas fa-shield-alt"></i> Risk Assessment</h3>
+              <p><strong>Overall Risk:</strong> ${(this.riskScore * 100).toFixed(1)}%</p>
+              <p><strong>Risk Level:</strong> ${this.riskScore > 0.6 ? 'HIGH' : this.riskScore > 0.3 ? 'MEDIUM' : 'LOW'}</p>
+              <p><strong>Factors:</strong> ${this.riskFactors.length}</p>
+            </div>
+          </div>
+          
+          <div style="margin-bottom: 30px;">
+            <h3 style="color: #f59e0b;"><i class="fas fa-exclamation-triangle"></i> Risk Factors Details</h3>
+            ${this.riskFactors.length > 0 ? this.riskFactors.map(factor => `
+              <div style="background: rgba(239, 68, 68, 0.1); padding: 15px; margin-bottom: 10px; border-left: 4px solid ${factor.level === 'high' || factor.level === 'critical' ? '#ef4444' : factor.level === 'medium' ? '#f59e0b' : '#10b981'}; border-radius: 5px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <div>
+                    <strong style="color: white;">${factor.message}</strong>
+                    <div style="font-size: 12px; color: #94a3b8; margin-top: 5px;">
+                      Type: ${factor.type} | Level: ${factor.level}
+                    </div>
+                  </div>
+                  <span style="background: ${factor.level === 'high' || factor.level === 'critical' ? '#ef4444' : factor.level === 'medium' ? '#f59e0b' : '#10b981'}; color: white; padding: 2px 8px; border-radius: 10px; font-size: 12px;">${factor.level}</span>
+                </div>
+              </div>
+            `).join('') : '<p style="text-align: center; color: #94a3b8;">No risk factors detected</p>'}
+          </div>
+          
+          ${this.behaviorAnalyzer ? `
+            <div style="margin-bottom: 30px;">
+              <h3 style="color: #36D1DC;"><i class="fas fa-mouse"></i> Behavioral Analysis</h3>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;">
+                <div style="text-align: center; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 10px;">
+                  <div style="font-size: 24px; margin-bottom: 5px;"><i class="fas fa-mouse-pointer" style="color: #6C63FF;"></i></div>
+                  <div style="font-size: 12px; color: #94a3b8;">Clicks</div>
+                  <div style="font-size: 24px; font-weight: bold;">${this.behaviorData.clicks || 0}</div>
+                </div>
+                <div style="text-align: center; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 10px;">
+                  <div style="font-size: 24px; margin-bottom: 5px;"><i class="fas fa-route" style="color: #f59e0b;"></i></div>
+                  <div style="font-size: 12px; color: #94a3b8;">Path Points</div>
+                  <div style="font-size: 24px; font-weight: bold;">${this.behaviorAnalyzer.currentPath.length}</div>
+                </div>
+                <div style="text-align: center; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 10px;">
+                  <div style="font-size: 24px; margin-bottom: 5px;"><i class="fas fa-tachometer-alt" style="color: #10b981;"></i></div>
+                  <div style="font-size: 12px; color: #94a3b8;">Avg Click Speed</div>
+                  <div style="font-size: 24px; font-weight: bold;">${(this.behaviorAnalyzer.clickIntervals.reduce((a,b) => a+b, 0) / this.behaviorAnalyzer.clickIntervals.length || 0).toFixed(0)}ms</div>
+                </div>
+                <div style="text-align: center; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 10px;">
+                  <div style="font-size: 24px; margin-bottom: 5px;"><i class="fas fa-robot" style="color: ${this.behaviorAnalyzer.isBotLike ? '#ef4444' : '#10b981'};"></i></div>
+                  <div style="font-size: 12px; color: #94a3b8;">Bot Detection</div>
+                  <div style="font-size: 24px; font-weight: bold;">${this.behaviorAnalyzer.isBotLike ? 'YES' : 'NO'}</div>
+                </div>
+              </div>
+            </div>
+          ` : ''}
+          
+          <button id="wws-close-report-btn" style="width: 100%; padding: 15px; background: linear-gradient(135deg, #6C63FF, #36D1DC); color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 16px;">
+            <i class="fas fa-times-circle"></i> Close Report
+          </button>
+        </div>
+      `;
+      
+      overlay.querySelector('#wws-close-report').addEventListener('click', () => {
+        this.removeOverlay();
+      });
+      
+      overlay.querySelector('#wws-close-report-btn').addEventListener('click', () => {
+        this.removeOverlay();
+      });
+    }
     
     saveAnalysisResults() {
       const analysis = {
@@ -967,6 +1626,12 @@
         analyses.push(analysis);
         localStorage.setItem('wws_analyses', JSON.stringify(analyses.slice(-30)));
       } catch (e) {}
+    }
+    
+    log(message, data) {
+      if (CONFIG.debug) {
+        console.log(`🛡️ WWS v${CONFIG.version}: ${message}`, data || '');
+      }
     }
   }
   
