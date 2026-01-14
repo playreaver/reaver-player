@@ -1,6 +1,6 @@
 /**
- * WWS Gateway v3.1 - Интеллектуальная система анализа рисков с обязательной проверкой
- * Показывает проверку 1 раз при первом посещении, затем только при подозрениях
+ * WWS Gateway v3.1 - Intelligent Risk Analysis System with Mandatory Check
+ * Shows verification on first visit, then only on suspicion
  * @license MIT
  */
 
@@ -9,19 +9,18 @@
   
   console.log('🛡️ WWS Intelligence System v3.1 initializing...');
   
-  // Конфигурация системы
   const CONFIG = {
-    debug: true, // Включить логирование
+    debug: true,
     version: '3.1',
     
-    // Пороги риска
+    // Risk thresholds
     riskThresholds: {
-      LOW: 0.3,      // 0-30% риска - пропуск с логированием
-      MEDIUM: 0.6,   // 30-60% - простая проверка
-      HIGH: 0.8      // 60-100% - полная проверка
+      LOW: 0.3,      // 0-30% risk - allow with logging
+      MEDIUM: 0.6,   // 30-60% - simple verification
+      HIGH: 0.8      // 60-100% - full verification
     },
     
-    // Веса факторов
+    // Factor weights
     weights: {
       behavior: 0.35,
       technical: 0.35,
@@ -29,18 +28,18 @@
       network: 0.10
     },
     
-    // Время запоминания
+    // Memory settings
     memory: {
       session: 30 * 60 * 1000,
       trustedDevice: 7 * 24 * 60 * 60 * 1000,
       suspiciousActivity: 2 * 60 * 60 * 1000
     },
     
-    // Настройки виджета
+    // Widget settings
     widget: {
-      position: 'bottom-left', // bottom-left, bottom-right, top-left, top-right
-      autoHide: false, // Автоматически скрывать виджет
-      showDetails: true // Показывать детализированную информацию
+      position: 'bottom-left',
+      autoHide: false,
+      showDetails: true
     }
   };
   
@@ -57,19 +56,13 @@
       this.isFirstVisit = this.checkFirstVisit();
       this.widget = null;
       
-      this.log('Система инициализирована');
+      this.log('System initialized');
       
-      // Собираем данные
       this.collectAllData();
-      
-      // Создаем виджет ДО анализа
       this.createWidget();
-      
-      // Анализируем и принимаем решение
       this.analyzeRisk();
     }
     
-    // === ПРОВЕРКА ПЕРВОГО ПОСЕЩЕНИЯ ===
     checkFirstVisit() {
       const firstVisit = localStorage.getItem('wws_first_visit');
       if (!firstVisit) {
@@ -79,7 +72,6 @@
       return false;
     }
     
-    // === ГЕНЕРАЦИЯ ID ===
     generateUserId() {
       let userId = localStorage.getItem('wws_user_id');
       if (!userId) {
@@ -120,9 +112,7 @@
       }
     }
     
-    // === СОЗДАНИЕ ВИДЖЕТА ===
     createWidget() {
-      // Удаляем старый виджет если есть
       const oldWidget = document.getElementById('wws-widget');
       if (oldWidget) oldWidget.remove();
       
@@ -141,11 +131,11 @@
           <div class="wws-panel-content">
             <div class="wws-status-section">
               <div class="wws-status-item">
-                <span class="wws-label">Статус:</span>
-                <span class="wws-value" id="wws-status-value">Анализ...</span>
+                <span class="wws-label">Status:</span>
+                <span class="wws-value" id="wws-status-value">Analyzing...</span>
               </div>
               <div class="wws-status-item">
-                <span class="wws-label">Риск:</span>
+                <span class="wws-label">Risk:</span>
                 <span class="wws-value">
                   <span class="wws-risk-meter">
                     <span class="wws-risk-fill" id="wws-risk-fill"></span>
@@ -154,62 +144,58 @@
                 </span>
               </div>
               <div class="wws-status-item">
-                <span class="wws-label">Сессия:</span>
+                <span class="wws-label">Session:</span>
                 <span class="wws-value" id="wws-session-id">${this.sessionId.substring(0, 8)}...</span>
               </div>
             </div>
             
             <div class="wws-behavior-section">
-              <h4>📊 Поведение</h4>
+              <h4>📊 Behavior</h4>
               <div class="wws-stats-grid">
                 <div class="wws-stat">
-                  <span class="wws-stat-label">Клики</span>
+                  <span class="wws-stat-label">Clicks</span>
                   <span class="wws-stat-value" id="wws-clicks">0</span>
                 </div>
                 <div class="wws-stat">
-                  <span class="wws-stat-label">Движения</span>
+                  <span class="wws-stat-label">Movements</span>
                   <span class="wws-stat-value" id="wws-movements">0</span>
                 </div>
                 <div class="wws-stat">
-                  <span class="wws-stat-label">Клавиши</span>
+                  <span class="wws-stat-label">Keypress</span>
                   <span class="wws-stat-value" id="wws-keypress">0</span>
                 </div>
                 <div class="wws-stat">
-                  <span class="wws-stat-label">Скролл</span>
+                  <span class="wws-stat-label">Scroll</span>
                   <span class="wws-stat-value" id="wws-scroll">0</span>
                 </div>
               </div>
             </div>
             
             <div class="wws-factors-section">
-              <h4>⚠️ Факторы риска</h4>
+              <h4>⚠️ Risk Factors</h4>
               <div class="wws-factors-list" id="wws-factors-list">
-                <div class="wws-no-factors">Не обнаружено</div>
+                <div class="wws-no-factors">None detected</div>
               </div>
             </div>
             
             <div class="wws-actions-section">
               <button class="wws-action-btn" id="wws-refresh-btn">
-                🔄 Обновить
+                🔄 Refresh
               </button>
               <button class="wws-action-btn secondary" id="wws-details-btn">
-                📊 Подробности
+                📊 Details
               </button>
             </div>
             
             <div class="wws-footer">
-              <small>Сессия: ${this.sessionId.substring(0, 12)}</small>
+              <small>Session: ${this.sessionId.substring(0, 12)}</small>
             </div>
           </div>
         </div>
       `;
       
       document.body.appendChild(widget);
-      
-      // Добавляем стили
       this.addWidgetStyles();
-      
-      // Инициализируем обработчики
       this.initWidgetHandlers();
       
       this.widget = widget;
@@ -507,7 +493,6 @@
           border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
         
-        /* Адаптивность */
         @media (max-width: 768px) {
           .wws-widget-panel {
             width: 300px;
@@ -540,7 +525,6 @@
       const refreshBtn = this.widget.querySelector('#wws-refresh-btn');
       const detailsBtn = this.widget.querySelector('#wws-details-btn');
       
-      // Открытие/закрытие панели
       icon.addEventListener('click', (e) => {
         e.stopPropagation();
         panel.classList.toggle('show');
@@ -551,14 +535,12 @@
         panel.classList.remove('show');
       });
       
-      // Закрытие при клике вне виджета
       document.addEventListener('click', (e) => {
         if (!this.widget.contains(e.target)) {
           panel.classList.remove('show');
         }
       });
       
-      // Обновление данных
       refreshBtn.addEventListener('click', () => {
         this.collectAllData();
         this.analyzeRisk();
@@ -566,7 +548,6 @@
         panel.classList.remove('show');
       });
       
-      // Подробности
       detailsBtn.addEventListener('click', () => {
         this.showDetailedReport();
         panel.classList.remove('show');
@@ -576,7 +557,6 @@
     updateWidget() {
       if (!this.widget) return;
       
-      // Обновляем значения
       const riskValue = Math.round(this.riskScore * 100);
       const riskBadge = this.widget.querySelector('#wws-risk-badge');
       const riskFill = this.widget.querySelector('#wws-risk-fill');
@@ -588,10 +568,9 @@
       const scrollEl = this.widget.querySelector('#wws-scroll');
       const factorsList = this.widget.querySelector('#wws-factors-list');
       
-      // Цвет риска
-      let riskColor = '#10b981'; // зеленый
-      if (this.riskScore > 0.6) riskColor = '#ef4444'; // красный
-      else if (this.riskScore > 0.3) riskColor = '#f59e0b'; // желтый
+      let riskColor = '#10b981';
+      if (this.riskScore > 0.6) riskColor = '#ef4444';
+      else if (this.riskScore > 0.3) riskColor = '#f59e0b';
       
       riskBadge.textContent = `${riskValue}%`;
       riskBadge.style.background = riskColor;
@@ -599,23 +578,20 @@
       riskFill.style.width = `${riskValue}%`;
       riskValueEl.textContent = `${riskValue}%`;
       
-      // Статус
       const statusMap = {
-        'pending': '⏳ Анализ...',
-        'allow': '✅ Разрешено',
-        'allow_with_logging': '📝 Логирование',
-        'simple_captcha': '⚠️ Проверка',
-        'full_captcha': '🚨 Полная проверка'
+        'pending': '⏳ Analyzing...',
+        'allow': '✅ Allowed',
+        'allow_with_logging': '📝 Logging',
+        'simple_captcha': '⚠️ Verification',
+        'full_captcha': '🚨 Full Check'
       };
       statusValue.textContent = statusMap[this.verdict] || this.verdict;
       
-      // Поведение
       clicksEl.textContent = this.behaviorData.clicks || 0;
       movementsEl.textContent = this.behaviorData.mouseMovements || 0;
       keypressEl.textContent = this.behaviorData.keyPresses || 0;
       scrollEl.textContent = this.behaviorData.scrollEvents || 0;
       
-      // Факторы риска
       if (this.riskFactors.length > 0) {
         const factorsHTML = this.riskFactors.slice(0, 3).map(factor => `
           <div class="wws-factor-item ${factor.level}">
@@ -625,7 +601,7 @@
         
         factorsList.innerHTML = factorsHTML;
       } else {
-        factorsList.innerHTML = '<div class="wws-no-factors">Не обнаружено</div>';
+        factorsList.innerHTML = '<div class="wws-no-factors">None detected</div>';
       }
     }
     
@@ -645,7 +621,7 @@
           color: white;
         ">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
-            <h2 style="margin: 0; color: #6C63FF;">📊 Детальный отчет WWS</h2>
+            <h2 style="margin: 0; color: #6C63FF;">📊 WWS Detailed Report</h2>
             <button id="wws-close-report" style="
               background: none;
               border: none;
@@ -662,22 +638,22 @@
             margin-bottom: 30px;
           ">
             <div style="background: rgba(108, 99, 255, 0.1); padding: 20px; border-radius: 10px;">
-              <h3 style="margin-top: 0; color: #6C63FF;">👤 Пользователь</h3>
+              <h3 style="margin-top: 0; color: #6C63FF;">👤 User</h3>
               <p><strong>ID:</strong> ${this.userId}</p>
-              <p><strong>Сессия:</strong> ${this.sessionId}</p>
-              <p><strong>Устройство:</strong> ${this.generateDeviceFingerprint()}</p>
+              <p><strong>Session:</strong> ${this.sessionId}</p>
+              <p><strong>Device:</strong> ${this.generateDeviceFingerprint()}</p>
             </div>
             
             <div style="background: rgba(16, 185, 129, 0.1); padding: 20px; border-radius: 10px;">
-              <h3 style="margin-top: 0; color: #10b981;">📈 Статистика риска</h3>
-              <p><strong>Общий риск:</strong> ${(this.riskScore * 100).toFixed(1)}%</p>
-              <p><strong>Вердикт:</strong> ${this.verdict}</p>
-              <p><strong>Факторов:</strong> ${this.riskFactors.length}</p>
+              <h3 style="margin-top: 0; color: #10b981;">📈 Risk Stats</h3>
+              <p><strong>Overall Risk:</strong> ${(this.riskScore * 100).toFixed(1)}%</p>
+              <p><strong>Verdict:</strong> ${this.verdict}</p>
+              <p><strong>Factors:</strong> ${this.riskFactors.length}</p>
             </div>
           </div>
           
           <div style="margin-bottom: 30px;">
-            <h3 style="color: #f59e0b;">⚠️ Детали факторов риска</h3>
+            <h3 style="color: #f59e0b;">⚠️ Risk Factors Details</h3>
             ${this.riskFactors.length > 0 ? this.riskFactors.map(factor => `
               <div style="
                 background: rgba(239, 68, 68, 0.1);
@@ -697,14 +673,14 @@
                   ">${factor.level}</span>
                 </div>
                 <div style="font-size: 12px; color: #94a3b8; margin-top: 5px;">
-                  Тип: ${factor.type} | ${new Date().toLocaleTimeString()}
+                  Type: ${factor.type} | ${new Date().toLocaleTimeString()}
                 </div>
               </div>
-            `).join('') : '<p style="text-align: center; color: #94a3b8;">Факторы риска не обнаружены</p>'}
+            `).join('') : '<p style="text-align: center; color: #94a3b8;">No risk factors detected</p>'}
           </div>
           
           <div style="margin-bottom: 30px;">
-            <h3 style="color: #36D1DC;">📊 Поведенческие данные</h3>
+            <h3 style="color: #36D1DC;">📊 Behavioral Data</h3>
             <div style="
               display: grid;
               grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -712,28 +688,28 @@
             ">
               <div style="text-align: center; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 10px;">
                 <div style="font-size: 24px; margin-bottom: 5px;">🖱️</div>
-                <div style="font-size: 12px; color: #94a3b8;">Клики</div>
+                <div style="font-size: 12px; color: #94a3b8;">Clicks</div>
                 <div style="font-size: 24px; font-weight: bold;">${this.behaviorData.clicks || 0}</div>
               </div>
               <div style="text-align: center; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 10px;">
                 <div style="font-size: 24px; margin-bottom: 5px;">🎮</div>
-                <div style="font-size: 12px; color: #94a3b8;">Движения</div>
+                <div style="font-size: 12px; color: #94a3b8;">Movements</div>
                 <div style="font-size: 24px; font-weight: bold;">${this.behaviorData.mouseMovements || 0}</div>
               </div>
               <div style="text-align: center; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 10px;">
                 <div style="font-size: 24px; margin-bottom: 5px;">⌨️</div>
-                <div style="font-size: 12px; color: #94a3b8;">Клавиши</div>
+                <div style="font-size: 12px; color: #94a3b8;">Keypress</div>
                 <div style="font-size: 24px; font-weight: bold;">${this.behaviorData.keyPresses || 0}</div>
               </div>
               <div style="text-align: center; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 10px;">
                 <div style="font-size: 24px; margin-bottom: 5px;">📜</div>
-                <div style="font-size: 12px; color: #94a3b8;">Скролл</div>
+                <div style="font-size: 12px; color: #94a3b8;">Scroll</div>
                 <div style="font-size: 24px; font-weight: bold;">${this.behaviorData.scrollEvents || 0}</div>
               </div>
             </div>
           </div>
           
-          <button onclick="this.removeOverlay()" style="
+          <button onclick="this.parentElement.parentElement.remove(); document.body.style.overflow='';" style="
             width: 100%;
             padding: 15px;
             background: linear-gradient(135deg, #6C63FF, #36D1DC);
@@ -744,7 +720,7 @@
             cursor: pointer;
             font-size: 16px;
           ">
-            Закрыть отчет
+            Close Report
           </button>
         </div>
       `;
@@ -754,7 +730,6 @@
       });
     }
     
-    // === СБОР ДАННЫХ ===
     collectAllData() {
       this.collectBehaviorData();
       this.collectTechnicalData();
@@ -774,7 +749,6 @@
         interactionSpeed: null
       };
       
-      // Отслеживание поведения
       let mouseMoveCount = 0;
       let mouseMoveTimer = null;
       
@@ -895,55 +869,41 @@
       }
     }
     
-    // === АНАЛИЗ РИСКА ===
     analyzeRisk() {
       let totalRisk = 0;
       this.riskFactors = [];
       
-      // 1. Анализ поведения (35%)
       const behaviorRisk = this.analyzeBehavior();
       totalRisk += behaviorRisk.score * CONFIG.weights.behavior;
       this.riskFactors.push(...behaviorRisk.factors);
       
-      // 2. Технический анализ (35%)
       const technicalRisk = this.analyzeTechnical();
       totalRisk += technicalRisk.score * CONFIG.weights.technical;
       this.riskFactors.push(...technicalRisk.factors);
       
-      // 3. Анализ репутации (20%)
       const reputationRisk = this.analyzeReputation();
       totalRisk += reputationRisk.score * CONFIG.weights.reputation;
       this.riskFactors.push(...reputationRisk.factors);
       
-      // 4. Сетевой анализ (10%)
       const networkRisk = this.analyzeNetwork();
       totalRisk += networkRisk.score * CONFIG.weights.network;
       this.riskFactors.push(...networkRisk.factors);
       
-      // ОБЯЗАТЕЛЬНАЯ ПРОВЕРКА ПРИ ПЕРВОМ ПОСЕЩЕНИИ
       if (this.isFirstVisit) {
-        // Для первого посещения добавляем небольшой риск, чтобы гарантировать проверку
-        totalRisk = Math.max(totalRisk, 0.4); // Минимум 40% риска при первом посещении
+        totalRisk = Math.max(totalRisk, 0.4);
         this.riskFactors.push({
           type: 'system',
           level: 'medium',
-          message: 'Первое посещение сайта - требуется базовая проверка',
+          message: 'First visit - basic verification required',
           details: { firstVisit: true }
         });
       }
       
       this.riskScore = Math.min(1, totalRisk);
       
-      // Определяем вердикт
       this.determineVerdict();
-      
-      // Сохраняем результаты
       this.saveAnalysisResults();
-      
-      // Обновляем виджет
       this.updateWidget();
-      
-      // Выполняем действие
       this.executeVerdict();
     }
     
@@ -952,18 +912,16 @@
       const factors = [];
       const timeSinceLoad = Date.now() - this.behaviorData.pageLoadTime;
       
-      // 1. Слишком быстрое взаимодействие
       if (timeSinceLoad < 1000 && this.behaviorData.clicks > 2) {
         score += 0.4;
         factors.push({
           type: 'behavior',
           level: 'high',
-          message: 'Слишком быстрое взаимодействие после загрузки',
+          message: 'Too fast interaction after page load',
           details: { time: timeSinceLoad, clicks: this.behaviorData.clicks }
         });
       }
       
-      // 2. Отсутствие взаимодействия
       if (timeSinceLoad > 3000 && 
           this.behaviorData.mouseMovements < 2 && 
           this.behaviorData.clicks === 0) {
@@ -971,41 +929,38 @@
         factors.push({
           type: 'behavior',
           level: 'medium',
-          message: 'Отсутствие взаимодействия с сайтом',
+          message: 'No interaction with site',
           details: { time: timeSinceLoad, movements: this.behaviorData.mouseMovements }
         });
       }
       
-      // 3. Неестественная скорость мыши
       if (this.behaviorData.mouseSpeed > 30) {
         score += 0.2;
         factors.push({
           type: 'behavior',
           level: 'medium',
-          message: 'Неестественная скорость движений мыши',
+          message: 'Unnatural mouse movement speed',
           details: { speed: this.behaviorData.mouseSpeed }
         });
       }
       
-      // 4. Прямой доступ
       if (this.behaviorData.directAccess) {
         score += 0.1;
         factors.push({
           type: 'behavior',
           level: 'low',
-          message: 'Прямой доступ к сайту (без реферера)',
+          message: 'Direct access (no referrer)',
           details: { referrer: 'none' }
         });
       }
       
-      // 5. Очень много кликов за короткое время
       const clicksPerSecond = this.behaviorData.clicks / (timeSinceLoad / 1000);
       if (clicksPerSecond > 5) {
         score += 0.3;
         factors.push({
           type: 'behavior',
           level: 'high',
-          message: 'Слишком высокая частота кликов',
+          message: 'Too high click frequency',
           details: { clicksPerSecond }
         });
       }
@@ -1018,7 +973,6 @@
       const factors = [];
       const ua = this.technicalData.userAgent.toLowerCase();
       
-      // 1. Известные боты
       const botPatterns = [
         /bot/i, /crawl/i, /spider/i, /scrape/i,
         /headless/i, /phantom/i, /selenium/i,
@@ -1031,31 +985,29 @@
           factors.push({
             type: 'technical',
             level: 'high',
-            message: `Обнаружен User-Agent бота: ${pattern}`,
+            message: `Bot User-Agent detected: ${pattern}`,
             details: { userAgent: ua }
           });
           break;
         }
       }
       
-      // 2. WebDriver обнаружение
       if (navigator.webdriver === true) {
         score += 0.8;
         factors.push({
           type: 'technical',
           level: 'critical',
-          message: 'Обнаружен WebDriver (headless браузер)',
+          message: 'WebDriver detected (headless browser)',
           details: { webdriver: true }
         });
       }
       
-      // 3. Отсутствие плагинов
       if (this.technicalData.plugins === 0) {
         score += 0.3;
         factors.push({
           type: 'technical',
           level: 'medium',
-          message: 'Отсутствуют плагины браузера',
+          message: 'No browser plugins detected',
           details: { plugins: 0 }
         });
       }
@@ -1067,30 +1019,27 @@
       let score = 0;
       const factors = [];
       
-      // 1. Новый пользователь
       const isNewUser = !this.userHistory.sessions || this.userHistory.sessions.length < 2;
       if (isNewUser) {
         score += 0.2;
         factors.push({
           type: 'reputation',
           level: 'low',
-          message: 'Новый или редко посещающий пользователь',
+          message: 'New or infrequent user',
           details: { sessions: this.userHistory.sessions?.length || 0 }
         });
       }
       
-      // 2. Прошлые инциденты
       if (this.userHistory.incidents > 0) {
         score += Math.min(0.5, this.userHistory.incidents * 0.1);
         factors.push({
           type: 'reputation',
           level: 'medium',
-          message: `Найдены прошлые инциденты: ${this.userHistory.incidents}`,
+          message: `Previous incidents found: ${this.userHistory.incidents}`,
           details: { incidents: this.userHistory.incidents }
         });
       }
       
-      // 3. Частота посещений
       if (this.userHistory.sessions && this.userHistory.sessions.length > 10) {
         const recentSessions = this.userHistory.sessions.slice(-10);
         const timeSpan = recentSessions[recentSessions.length - 1].timestamp - 
@@ -1101,19 +1050,18 @@
           factors.push({
             type: 'reputation',
             level: 'high',
-            message: 'Слишком частые посещения',
+            message: 'Too frequent visits',
             details: { sessions: 10, timeSpan: timeSpan / 1000 + 's' }
           });
         }
       }
       
-      // 4. Доверенное устройство (снижает риск)
       if (this.userHistory.trusted) {
         score -= 0.3;
         factors.push({
           type: 'reputation',
           level: 'trusted',
-          message: 'Доверенное устройство',
+          message: 'Trusted device',
           details: { trusted: true }
         });
       }
@@ -1125,13 +1073,12 @@
       let score = 0;
       const factors = [];
       
-      // 1. Медленное соединение
       if (this.networkData.connection && this.networkData.connection.rtt > 500) {
         score += 0.2;
         factors.push({
           type: 'network',
           level: 'medium',
-          message: 'Высокая задержка сети',
+          message: 'High network latency',
           details: { rtt: this.networkData.connection.rtt + 'ms' }
         });
       }
@@ -1139,7 +1086,6 @@
       return { score: Math.min(1, score), factors };
     }
     
-    // === ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ ===
     detectWebGL() {
       try {
         const canvas = document.createElement('canvas');
@@ -1186,47 +1132,42 @@
                                            typeof chrome.runtime !== 'undefined';
     }
     
-    // === ОПРЕДЕЛЕНИЕ ВЕРДИКТА ===
     determineVerdict() {
       let verdict = 'allow';
       
-      // ОБЯЗАТЕЛЬНАЯ ПРОВЕРКА ПРИ ПЕРВОМ ПОСЕЩЕНИИ
       if (this.isFirstVisit) {
         if (this.riskScore >= CONFIG.riskThresholds.HIGH) {
           verdict = 'full_captcha';
-          this.log(`ПЕРВОЕ ПОСЕЩЕНИЕ: ПОЛНАЯ ПРОВЕРКА (риск: ${(this.riskScore * 100).toFixed(1)}%)`);
+          this.log(`FIRST VISIT: FULL CAPTCHA (risk: ${(this.riskScore * 100).toFixed(1)}%)`);
         } else if (this.riskScore >= CONFIG.riskThresholds.LOW) {
           verdict = 'simple_captcha';
-          this.log(`ПЕРВОЕ ПОСЕЩЕНИЕ: ПРОСТАЯ ПРОВЕРКА (риск: ${(this.riskScore * 100).toFixed(1)}%)`);
+          this.log(`FIRST VISIT: SIMPLE CAPTCHA (risk: ${(this.riskScore * 100).toFixed(1)}%)`);
         } else {
           verdict = 'allow_with_logging';
-          this.log(`ПЕРВОЕ ПОСЕЩЕНИЕ: АВТОМАТИЧЕСКАЯ ПРОВЕРКА (риск: ${(this.riskScore * 100).toFixed(1)}%)`);
+          this.log(`FIRST VISIT: AUTO ALLOW (risk: ${(this.riskScore * 100).toFixed(1)}%)`);
         }
       } 
-      // ПОВТОРНЫЕ ПОСЕЩЕНИЯ
       else if (this.riskScore >= CONFIG.riskThresholds.HIGH) {
         verdict = 'full_captcha';
-        this.log(`Вердикт: ПОЛНАЯ ПРОВЕРКА (риск: ${(this.riskScore * 100).toFixed(1)}%)`);
+        this.log(`Verdict: FULL CAPTCHA (risk: ${(this.riskScore * 100).toFixed(1)}%)`);
       } 
       else if (this.riskScore >= CONFIG.riskThresholds.MEDIUM) {
         verdict = 'simple_captcha';
-        this.log(`Вердикт: ПРОСТАЯ ПРОВЕРКА (риск: ${(this.riskScore * 100).toFixed(1)}%)`);
+        this.log(`Verdict: SIMPLE CAPTCHA (risk: ${(this.riskScore * 100).toFixed(1)}%)`);
       }
       else if (this.riskScore >= CONFIG.riskThresholds.LOW) {
         verdict = 'allow_with_logging';
-        this.log(`Вердикт: ПРОПУСК С ЛОГИРОВАНИЕМ (риск: ${(this.riskScore * 100).toFixed(1)}%)`);
+        this.log(`Verdict: ALLOW WITH LOGGING (risk: ${(this.riskScore * 100).toFixed(1)}%)`);
       }
       else {
         verdict = 'allow';
-        this.log(`Вердикт: ПРОПУСК (риск: ${(this.riskScore * 100).toFixed(1)}%)`);
+        this.log(`Verdict: ALLOW (risk: ${(this.riskScore * 100).toFixed(1)}%)`);
       }
       
       this.verdict = verdict;
     }
     
-    // === ВЫПОЛНЕНИЕ РЕШЕНИЯ ===
     executeVerdict() {
-      // Обновляем виджет перед показом проверки
       this.updateWidget();
       
       switch (this.verdict) {
@@ -1250,26 +1191,25 @@
       }
     }
     
-    // === ИНТЕРФЕЙСЫ ПРОВЕРОК ===
     showFullCaptcha() {
-      this.log('Показываем полную капчу');
+      this.log('Showing full captcha');
       this.saveOriginalContent();
       this.createFullCaptchaUI();
     }
     
     showSimpleCaptcha() {
-      this.log('Показываем простую капчу');
+      this.log('Showing simple captcha');
       this.saveOriginalContent();
       this.createSimpleCaptchaUI();
     }
     
     logAccess() {
-      this.log('Логируем доступ');
+      this.log('Logging access');
       this.sendAnalytics();
     }
     
     allowAccess() {
-      this.log('Пропускаем пользователя');
+      this.log('User allowed access');
       
       this.saveSession();
       
@@ -1281,7 +1221,6 @@
       this.updateWidget();
     }
     
-    // === UI КАПЧИ ===
     createSimpleCaptchaUI() {
       const overlay = this.createOverlay();
       
@@ -1316,9 +1255,9 @@
             ">
               🤖
             </div>
-            <h3 style="color: white; margin: 0 0 10px;">Проверка безопасности</h3>
+            <h3 style="color: white; margin: 0 0 10px;">Security Check</h3>
             <p style="color: #94a3b8; font-size: 14px; margin: 0;">
-              ${this.isFirstVisit ? 'Первое посещение сайта' : 'Обновление сессии'}
+              ${this.isFirstVisit ? 'First visit to site' : 'Session update'}
             </p>
           </div>
           
@@ -1330,7 +1269,7 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
           ">
             <div style="color: #94a3b8; margin-bottom: 10px; font-size: 14px;">
-              Решите простой пример:
+              Solve simple math:
             </div>
             <div style="
               font-size: 36px;
@@ -1344,7 +1283,7 @@
             
             <input type="text" 
                    id="captcha-answer"
-                   placeholder="Введите ответ"
+                   placeholder="Enter answer"
                    style="
                      width: 100%;
                      padding: 15px;
@@ -1367,7 +1306,7 @@
             background: rgba(255, 255, 255, 0.05);
             border-radius: 8px;
           ">
-            Уровень риска: <strong>${(this.riskScore * 100).toFixed(0)}%</strong>
+            Risk Level: <strong>${(this.riskScore * 100).toFixed(0)}%</strong>
           </div>
           
           <button id="captcha-submit"
@@ -1385,7 +1324,7 @@
                   "
                   onmouseover="this.style.transform='translateY(-2px)';"
                   onmouseout="this.style.transform='translateY(0)';">
-            Проверить
+            Verify
           </button>
           
           <div style="
@@ -1395,7 +1334,7 @@
             padding-top: 15px;
             border-top: 1px solid rgba(255, 255, 255, 0.1);
           ">
-            WWS Security • Сессия: ${this.sessionId.substring(0, 8)}
+            WWS Security • Session: ${this.sessionId.substring(0, 8)}
           </div>
         </div>
       `;
@@ -1409,12 +1348,12 @@
         const userAnswer = parseInt(answerInput.value.trim());
         
         if (userAnswer === answer) {
-          this.log('Простая капча пройдена');
+          this.log('Simple captcha passed');
           this.removeOverlay();
           this.allowAccess();
         } else {
           answerInput.value = '';
-          answerInput.placeholder = 'Неверно, попробуйте еще';
+          answerInput.placeholder = 'Wrong, try again';
           answerInput.style.borderColor = '#ef4444';
         }
       };
@@ -1457,10 +1396,10 @@
               ⚠️
             </div>
             <h3 style="color: #f87171; margin: 0 0 10px; font-size: 24px;">
-              Повышенная проверка
+              Enhanced Verification
             </h3>
             <p style="color: #94a3b8; line-height: 1.5; font-size: 15px;">
-              Обнаружены подозрительные факторы. Требуется дополнительная проверка.
+              Suspicious factors detected. Additional verification required.
             </p>
           </div>
           
@@ -1472,7 +1411,7 @@
             border: 1px solid rgba(255, 255, 255, 0.15);
           ">
             <div style="color: #94a3b8; margin-bottom: 15px; font-size: 14px;">
-              Выберите правильное продолжение:
+              Select the correct continuation:
             </div>
             
             <div style="
@@ -1521,7 +1460,7 @@
             text-align: left;
           ">
             <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-              <span>Факторов риска:</span>
+              <span>Risk Factors:</span>
               <strong>${this.riskFactors.filter(f => f.level === 'high' || f.level === 'critical').length}</strong>
             </div>
             <div style="font-size: 12px; color: #fca5a5;">
@@ -1542,7 +1481,7 @@
                       cursor: pointer;
                       font-size: 16px;
                     ">
-              Проверить
+              Verify
             </button>
           </div>
           
@@ -1560,7 +1499,7 @@
             color: #64748b;
             font-size: 12px;
           ">
-            <div>WWS Security • Сессия: ${this.sessionId.substring(0, 8)}</div>
+            <div>WWS Security • Session: ${this.sessionId.substring(0, 8)}</div>
           </div>
         </div>
         
@@ -1578,14 +1517,13 @@
         </style>
       `;
       
-      // Таймер
       let timeLeft = 60;
       const timerElement = overlay.querySelector('#captcha-timer');
       
       const updateTimer = () => {
         const minutes = Math.floor(timeLeft / 60);
         const seconds = timeLeft % 60;
-        timerElement.textContent = `Осталось: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+        timerElement.textContent = `Time left: ${minutes}:${seconds.toString().padStart(2, '0')}`;
         
         if (timeLeft <= 0) {
           clearInterval(timerInterval);
@@ -1597,7 +1535,6 @@
       const timerInterval = setInterval(updateTimer, 1000);
       updateTimer();
       
-      // Обработчики
       const options = overlay.querySelectorAll('.sequence-option');
       const verifyBtn = overlay.querySelector('#verify-btn');
       
@@ -1615,16 +1552,15 @@
         clearInterval(timerInterval);
         
         if (selectedOption === '10') {
-          this.log('Полная капча пройдена');
+          this.log('Full captcha passed');
           this.removeOverlay();
           this.allowAccess();
         } else {
-          this.log('Полная капча не пройдена');
+          this.log('Full captcha failed');
         }
       });
     }
     
-    // === УТИЛИТЫ ===
     createOverlay() {
       const oldOverlay = document.getElementById('wws-security-overlay');
       if (oldOverlay) oldOverlay.remove();
@@ -1690,7 +1626,7 @@
         localStorage.setItem(`wws_history_${this.userId}`, JSON.stringify(this.userHistory));
         sessionStorage.setItem('wws_session_active', 'true');
       } catch (e) {
-        this.log('Ошибка сохранения сессии:', e);
+        this.log('Session save error:', e);
       }
     }
     
@@ -1702,7 +1638,7 @@
       try {
         localStorage.setItem(`wws_history_${this.userId}`, JSON.stringify(this.userHistory));
       } catch (e) {
-        this.log('Ошибка сохранения доверия:', e);
+        this.log('Trust save error:', e);
       }
     }
     
@@ -1738,7 +1674,7 @@
       });
       
       window.dispatchEvent(event);
-      this.log('Доступ предоставлен');
+      this.log('Access granted');
     }
     
     saveAnalysisResults() {
@@ -1770,16 +1706,16 @@
     }
     
     handleTimeout() {
-      this.log('Время проверки истекло');
+      this.log('Verification timeout');
       
       const overlay = document.getElementById('wws-security-overlay');
       if (overlay) {
         overlay.innerHTML = `
           <div style="text-align: center; color: white; max-width: 400px;">
             <div style="font-size: 48px; margin-bottom: 20px;">⏰</div>
-            <h3 style="margin-bottom: 10px;">Время истекло</h3>
+            <h3 style="margin-bottom: 10px;">Time Expired</h3>
             <p style="color: #94a3b8; margin-bottom: 30px;">
-              Обновите страницу и попробуйте снова.
+              Refresh the page and try again.
             </p>
             <button onclick="location.reload()"
                     style="
@@ -1790,7 +1726,7 @@
                       border-radius: 8px;
                       cursor: pointer;
                     ">
-              Обновить
+              Refresh
             </button>
           </div>
         `;
@@ -1804,21 +1740,17 @@
     }
   }
   
-  // === ИНИЦИАЛИЗАЦИЯ СИСТЕМЫ ===
   function initializeWWS() {
-    // Проверяем, не отключена ли система
     if (localStorage.getItem('wws_disabled') === 'true') {
-      console.log('🛡️ WWS отключена пользователем');
+      console.log('🛡️ WWS disabled by user');
       return;
     }
     
-    // Проверяем, не проходили ли мы уже проверку в этой сессии
     if (sessionStorage.getItem('wws_session_passed') === 'true') {
-      console.log('🛡️ Уже проходили проверку в этой сессии');
+      console.log('🛡️ Already verified this session');
       return;
     }
     
-    // Проверяем доверенное устройство
     const userId = localStorage.getItem('wws_user_id');
     if (userId) {
       try {
@@ -1826,9 +1758,8 @@
         if (history.trusted && history.trustedSince) {
           const timeSinceTrusted = Date.now() - history.trustedSince;
           if (timeSinceTrusted < CONFIG.memory.trustedDevice) {
-            console.log('🛡️ Доверенное устройство, проверка не требуется');
+            console.log('🛡️ Trusted device, skip verification');
             sessionStorage.setItem('wws_session_passed', 'true');
-            // Но все равно создаем виджет для отображения информации
             const analyzer = new WWSRiskAnalyzer();
             analyzer.verdict = 'allow';
             analyzer.updateWidget();
@@ -1838,27 +1769,23 @@
       } catch (e) {}
     }
     
-    // Проверяем время последней подозрительной активности
     const lastSuspicious = localStorage.getItem('wws_last_suspicious');
     if (lastSuspicious) {
       const timeSinceSuspicious = Date.now() - parseInt(lastSuspicious);
       if (timeSinceSuspicious < CONFIG.memory.suspiciousActivity) {
-        console.log('🛡️ Недавно была подозрительная активность');
+        console.log('🛡️ Recent suspicious activity detected');
       }
     }
     
-    // Запускаем анализатор (ОБЯЗАТЕЛЬНО при первом запуске)
     window.wwsAnalyzer = new WWSRiskAnalyzer();
   }
   
-  // Запускаем когда страница полностью загружена
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initializeWWS);
   } else {
     initializeWWS();
   }
   
-  // Экспортируем API
   window.WWS = {
     version: CONFIG.version,
     
@@ -1900,7 +1827,6 @@
       }
     },
     
-    // События
     onAccessGranted: (callback) => {
       window.addEventListener('wws:access-granted', callback);
     }
