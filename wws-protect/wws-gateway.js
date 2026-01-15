@@ -1,1866 +1,1268 @@
 /**
- * WWS PROTECT v7.0 - Real Behavior-Based Bot Protection
- * @license MIT
+ * WWS Protect — All-in-One
+ * Версия: 1.0.0
+ * Описание: Чисто фронтенд защита от ботов в одном файле
+ * Использование: <script src="wws-protect-full.js"></script>
  */
 
 (function() {
-  'use strict';
-  
-  // ==================== CONFIGURATION ====================
-  const CONFIG = {
-    version: '7.0',
-    companyName: 'WWS PROTECT',
-    websiteUrl: 'https://reaver.is-a.dev/',
-    
-    // Risk thresholds
-    riskThresholds: {
-      low: 70,      // Score > 70 = low risk
-      medium: 40    // Score 40-70 = medium risk (challenge)
-    },
-    
-    // Block settings
-    blockDuration: 5 * 60 * 1000, // 5 minutes in ms
-    
-    // Behavior analysis settings
-    behavior: {
-      minHumanTime: 2000,        // Minimum time on page (ms)
-      maxBotClicks: 10,          // Max clicks per second for bot detection
-      requiredInteractions: 2,   // Min different interaction types
-      maxMouseSpeed: 2000        // Max mouse speed px/sec for human
-    },
-    
-    widget: {
-      position: 'bottom-right',
-      defaultTheme: 'dark',
-      themes: {
-        dark: {
-          background: '#0F172A',
-          surface: '#1E293B',
-          primary: '#3B82F6',
-          secondary: '#8B5CF6',
-          text: '#F8FAFC',
-          textSecondary: '#94A3B8',
-          success: '#10B981',
-          warning: '#F59E0B',
-          danger: '#EF4444'
-        },
-        light: {
-          background: '#FFFFFF',
-          surface: '#F1F5F9',
-          primary: '#2563EB',
-          secondary: '#7C3AED',
-          text: '#0F172A',
-          textSecondary: '#475569',
-          success: '#10B981',
-          warning: '#F59E0B',
-          danger: '#DC2626'
-        }
-      }
-    }
-  };
-  
-  // ==================== ANTI-DUPLICATE LOAD ====================
-  if (window._wwsPremiumLoaded) {
-    console.log('🛡️ WWS PROTECT уже инициализирован');
-    return;
-  }
-  window._wwsPremiumLoaded = true;
-  
-  // ==================== GLOBAL STATE ====================
-  const State = {
-    verificationComplete: false,
-    currentTheme: localStorage.getItem('wws_theme') || CONFIG.widget.defaultTheme,
-    position: localStorage.getItem('wws_position') || CONFIG.widget.position,
-    notifications: {
-      enabled: localStorage.getItem('wws_notifications') !== 'false',
-      threatAlerts: localStorage.getItem('wws_threat_alerts') !== 'false'
-    }
-  };
-  
-  // ==================== BEHAVIOR ANALYZER ====================
-  class BehaviorAnalyzer {
-    constructor() {
-      this.data = {
-        mouseMoves: [],
-        clicks: 0,
-        keyPresses: 0,
-        scrolls: 0,
-        touches: 0,
-        timeStart: Date.now(),
-        timeOnPage: 0,
-        hasMouseMovement: false,
-        hasNaturalScrolling: false,
-        maxClickSpeed: 0
-      };
-      this.lastClickTime = Date.now();
-      this.init();
-    }
-    
-    init() {
-      // Mouse tracking
-      let lastMousePos = { x: 0, y: 0 };
-      document.addEventListener('mousemove', (e) => {
-        this.data.hasMouseMovement = true;
-        const speed = Math.sqrt(
-          Math.pow(e.clientX - lastMousePos.x, 2) + 
-          Math.pow(e.clientY - lastMousePos.y, 2)
-        );
-        this.data.mouseMoves.push({
-          speed: speed,
-          timestamp: Date.now(),
-          x: e.clientX,
-          y: e.clientY
-        });
-        lastMousePos = { x: e.clientX, y: e.clientY };
-      });
-      
-      // Click tracking
-      document.addEventListener('click', () => {
-        const now = Date.now();
-        const timeBetweenClicks = now - this.lastClickTime;
-        const clickSpeed = timeBetweenClicks > 0 ? 1000 / timeBetweenClicks : 1000;
-        
-        this.data.maxClickSpeed = Math.max(this.data.maxClickSpeed, clickSpeed);
-        this.data.clicks++;
-        this.lastClickTime = now;
-      });
-      
-      // Keyboard tracking
-      document.addEventListener('keydown', () => {
-        this.data.keyPresses++;
-      });
-      
-      // Scroll tracking
-      let lastScrollTime = Date.now();
-      document.addEventListener('scroll', () => {
-        const now = Date.now();
-        if (now - lastScrollTime > 100) { // Natural scroll delay
-          this.data.hasNaturalScrolling = true;
-        }
-        this.data.scrolls++;
-        lastScrollTime = now;
-      });
-      
-      // Touch tracking (mobile)
-      document.addEventListener('touchstart', () => {
-        this.data.touches++;
-      });
-    }
-    
-    calculateScore() {
-      const now = Date.now();
-      this.data.timeOnPage = now - this.data.timeStart;
-      
-      let score = 0;
-      let reasons = [];
-      
-      // 1. Time on page (30 points)
-      if (this.data.timeOnPage > CONFIG.behavior.minHumanTime) {
-        score += 30;
-      } else {
-        reasons.push(`Too fast: ${this.data.timeOnPage}ms < ${CONFIG.behavior.minHumanTime}ms`);
-      }
-      
-      // 2. Mouse movement realism (25 points)
-      if (this.data.hasMouseMovement && this.data.mouseMoves.length > 10) {
-        const avgSpeed = this.data.mouseMoves.reduce((sum, move) => sum + move.speed, 0) / 
-                        this.data.mouseMoves.length;
-        if (avgSpeed < CONFIG.behavior.maxMouseSpeed) {
-          score += 25;
-        } else {
-          reasons.push(`Unnatural mouse speed: ${Math.round(avgSpeed)}px/s`);
-        }
-      } else {
-        reasons.push('No realistic mouse movement');
-      }
-      
-      // 3. Interaction diversity (25 points)
-      const interactionTypes = [
-        this.data.clicks > 0,
-        this.data.keyPresses > 0,
-        this.data.scrolls > 0,
-        this.data.touches > 0
-      ].filter(Boolean).length;
-      
-      if (interactionTypes >= CONFIG.behavior.requiredInteractions) {
-        score += 25;
-      } else {
-        reasons.push(`Limited interactions: ${interactionTypes}/${CONFIG.behavior.requiredInteractions}`);
-      }
-      
-      // 4. Natural behavior (20 points)
-      if (this.data.hasNaturalScrolling && this.data.maxClickSpeed < CONFIG.behavior.maxBotClicks) {
-        score += 20;
-      } else {
-        if (this.data.maxClickSpeed >= CONFIG.behavior.maxBotClicks) {
-          reasons.push(`Abnormal click speed: ${this.data.maxClickSpeed.toFixed(1)}/sec`);
-        }
-        if (!this.data.hasNaturalScrolling) {
-          reasons.push('No natural scrolling');
-        }
-      }
-      
-      // Bot signature detection (-50 points)
-      if (this.detectBotSignature()) {
-        score = Math.max(0, score - 50);
-        reasons.push('Bot signature detected in user agent');
-      }
-      
-      // Normalize score
-      score = Math.min(100, Math.max(0, score));
-      
-      return {
-        score: score,
-        riskLevel: this.getRiskLevel(score),
-        reasons: reasons,
-        rawData: { ...this.data }
-      };
-    }
-    
-    detectBotSignature() {
-      // Check for headless browser
-      if (navigator.webdriver || navigator.automationControlled) return true;
-      
-      // Check for common bot indicators
-      const botIndicators = ['bot', 'crawler', 'spider', 'headless', 'phantom', 'selenium'];
-      const ua = navigator.userAgent.toLowerCase();
-      if (botIndicators.some(ind => ua.includes(ind))) return true;
-      
-      // Check screen resolution (bots often have 0x0 or unusual sizes)
-      if (screen.width === 0 || screen.height === 0) return true;
-      
-      // Check plugins and languages (bots have none)
-      if (navigator.plugins.length === 0 && navigator.languages.length === 0) return true;
-      
-      return false;
-    }
-    
-    getRiskLevel(score) {
-      if (score >= CONFIG.riskThresholds.low) return 'low';
-      if (score >= CONFIG.riskThresholds.medium) return 'medium';
-      return 'high';
-    }
-  }
-  
-  // ==================== RISK MANAGER ====================
-  class RiskManager {
-    constructor() {
-      this.analyzer = new BehaviorAnalyzer();
-      this.assessment = null;
-    }
-    
-    assessRisk() {
-      this.assessment = this.analyzer.calculateScore();
-      return this.assessment;
-    }
-    
-    getDecision() {
-      const assessment = this.assessment || this.assessRisk();
-      
-      switch (assessment.riskLevel) {
-        case 'low':
-          return {
-            action: 'allow',
-            message: 'Access granted',
-            reason: 'Human behavior confirmed',
-            assessment: assessment
-          };
-        
-        case 'medium':
-          return {
-            action: 'challenge',
-            message: 'Verification required',
-            reason: 'Suspicious behavior detected',
-            assessment: assessment,
-            challenge: this.generateChallenge()
-          };
-        
-        case 'high':
-          return {
-            action: 'block',
-            message: 'Access blocked',
-            reason: 'Bot detected',
-            assessment: assessment,
-            unblockTime: Date.now() + CONFIG.blockDuration
-          };
-      }
-    }
-    
-    generateChallenge() {
-      const a = Math.floor(Math.random() * 10) + 1;
-      const b = Math.floor(Math.random() * 10) + 1;
-      const answer = a + b;
-      
-      return {
-        type: 'math',
-        question: `What is ${a} + ${b}?`,
-        answer: answer,
-        attempts: 0,
-        maxAttempts: 3
-      };
-    }
-    
-    verifyChallenge(userAnswer, challenge) {
-      challenge.attempts++;
-      return {
-        success: parseInt(userAnswer) === challenge.answer,
-        attemptsLeft: challenge.maxAttempts - challenge.attempts
-      };
-    }
-  }
-  
-  // ==================== BLOCK MANAGER ====================
-  class BlockManager {
-    static isBlocked() {
-      const blockData = localStorage.getItem('wws_block');
-      if (!blockData) return false;
-      
-      try {
-        const { unblockTime } = JSON.parse(blockData);
-        if (Date.now() > unblockTime) {
-          localStorage.removeItem('wws_block');
-          return false;
-        }
-        return true;
-      } catch (e) {
-        localStorage.removeItem('wws_block');
-        return false;
-      }
-    }
-    
-    static block(duration = CONFIG.blockDuration) {
-      const unblockTime = Date.now() + duration;
-      localStorage.setItem('wws_block', JSON.stringify({ unblockTime }));
-      return unblockTime;
-    }
-    
-    static getUnblockTime() {
-      const blockData = localStorage.getItem('wws_block');
-      if (!blockData) return null;
-      try {
-        return JSON.parse(blockData).unblockTime;
-      } catch (e) {
-        return null;
-      }
-    }
-  }
-  
-  // ==================== PROTECTION SCREEN ====================
-  class ProtectionScreen {
-    constructor() {
-      this.screen = null;
-      this.riskManager = new RiskManager();
-      this.decision = null;
-      this.interval = null;
-    }
-    
-    show() {
-      if (BlockManager.isBlocked()) {
-        this.showBlockScreen();
-        return;
-      }
-      
-      if (this.screen) return;
-      
-      this.screen = document.createElement('div');
-      this.screen.className = 'wws-protection-screen';
-      this.screen.innerHTML = this.getInitialHTML();
-      document.body.appendChild(this.screen);
-      
-      // Show progress animation
-      this.startProgressAnimation();
-      
-      // Run analysis after collection period
-      setTimeout(() => this.runAnalysis(), CONFIG.behavior.minHumanTime);
-    }
-    
-    startProgressAnimation() {
-      let progress = 0;
-      const steps = [
-        'Collecting interaction data...',
-        'Analyzing mouse patterns...',
-        'Checking behavior signatures...',
-        'Calculating risk score...'
-      ];
-      let currentStep = 0;
-      
-      this.interval = setInterval(() => {
-        if (progress >= 100) {
-          clearInterval(this.interval);
-          return;
-        }
-        
-        progress += 1.5;
-        
-        const progressFill = document.getElementById('wws-progress-fill');
-        const progressPercent = document.getElementById('wws-progress-percent');
-        const statusText = document.getElementById('wws-status-text');
-        
-        if (progressFill) progressFill.style.width = `${progress}%`;
-        if (progressPercent) progressPercent.textContent = `${Math.floor(progress)}%`;
-        
-        const stepIndex = Math.floor((progress / 100) * steps.length);
-        if (stepIndex > currentStep && statusText) {
-          currentStep = stepIndex;
-          statusText.textContent = steps[currentStep - 1] || steps[0];
-        }
-      }, 30);
-    }
-    
-    runAnalysis() {
-      this.decision = this.riskManager.getDecision();
-      
-      switch (this.decision.action) {
-        case 'allow':
-          this.showSuccess();
-          break;
-        case 'challenge':
-          this.showChallenge();
-          break;
-        case 'block':
-          this.showBlockScreen();
-          break;
-      }
-    }
-    
-    showSuccess() {
-      if (!this.screen) return;
-      
-      const statusText = document.getElementById('wws-status-text');
-      const progressPercent = document.getElementById('wws-progress-percent');
-      
-      if (statusText) statusText.textContent = '✅ Human verified';
-      if (progressPercent) progressPercent.textContent = 'Complete';
-      
-      localStorage.setItem('wws_verified', 'true');
-      
-      setTimeout(() => {
-        this.hide();
-        Widget.show(this.decision.assessment);
-      }, 1500);
-    }
-    
-    showChallenge() {
-      if (!this.screen) return;
-      
-      const content = this.screen.querySelector('.wws-status-container');
-      const challenge = this.decision.challenge;
-      
-      content.innerHTML = `
-        <div class="wws-status-text" style="color: var(--wws-warning); margin-bottom: 24px; font-size: 18px;">
-          <i class="fas fa-robot"></i> Verify you're human
-        </div>
-        
-        <div style="background: rgba(0,0,0,0.1); padding: 24px; border-radius: 12px; margin-bottom: 20px;">
-          <div style="font-size: 20px; margin-bottom: 16px; font-weight: 600;">${challenge.question}</div>
-          <input type="number" id="wws-challenge-input" 
-                 style="width: 100%; padding: 12px; border-radius: 8px; border: none; font-size: 16px; text-align: center;"
-                 placeholder="Your answer" autocomplete="off">
-        </div>
-        
-        <button id="wws-challenge-submit" 
-                style="width: 100%; padding: 14px; background: var(--wws-primary); color: white; 
-                       border: none; border-radius: 12px; font-size: 16px; cursor: pointer; font-weight: 600;">
-          Verify
-        </button>
-        
-        <div id="wws-challenge-error" style="color: var(--wws-danger); margin-top: 12px; font-size: 14px;"></div>
-      `;
-      
-      const input = document.getElementById('wws-challenge-input');
-      const submit = document.getElementById('wws-challenge-submit');
-      const error = document.getElementById('wws-challenge-error');
-      
-      const verify = () => {
-        const result = this.riskManager.verifyChallenge(input.value, challenge);
-        
-        if (result.success) {
-          this.showSuccess();
-        } else {
-          if (result.attemptsLeft <= 0) {
-            this.decision.action = 'block';
-            BlockManager.block();
-            this.showBlockScreen();
-          } else {
-            error.textContent = `Incorrect. ${result.attemptsLeft} attempts left.`;
-            input.value = '';
-            input.focus();
-          }
-        }
-      };
-      
-      submit.addEventListener('click', verify);
-      input.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') verify();
-      });
-      
-      input.focus();
-    }
-    
-    showBlockScreen() {
-      this.hide();
-      
-      const unblockTime = BlockManager.getUnblockTime() || Date.now() + CONFIG.blockDuration;
-      
-      // Ensure block is recorded
-      if (!BlockManager.isBlocked()) {
-        BlockManager.block();
-      }
-      
-      const blockScreen = document.createElement('div');
-      blockScreen.className = 'wws-protection-screen';
-      blockScreen.innerHTML = `
-        <div class="wws-protection-content">
-          <div class="wws-shield-wrapper">
-            <div class="wws-shield" style="background: var(--wws-danger);">
-              <i class="fas fa-ban"></i>
-            </div>
-          </div>
-          
-          <h1 class="wws-title">Access Blocked</h1>
-          <p class="wws-subtitle">Suspicious activity detected</p>
-          
-          <div class="wws-status-container">
-            <div class="wws-status-text" style="color: var(--wws-danger); font-size: 18px;">
-              <i class="fas fa-clock"></i> Try again in <span id="wws-countdown"></span>
-            </div>
-          </div>
-          
-          <div class="wws-footer">
-            <a href="${CONFIG.websiteUrl}" target="_blank">Contact Support</a>
-          </div>
-        </div>
-      `;
-      
-      document.body.appendChild(blockScreen);
-      this.startCountdown(blockScreen, unblockTime);
-    }
-    
-    startCountdown(element, unblockTime) {
-      const countdownEl = document.getElementById('wws-countdown');
-      
-      const updateCountdown = () => {
-        const now = Date.now();
-        const remaining = unblockTime - now;
-        
-        if (remaining <= 0) {
-          if (element.parentNode) {
-            document.body.removeChild(element);
-          }
-          // Restart verification
-          setTimeout(() => this.show(), 100);
-          return;
-        }
-        
-        const minutes = Math.floor(remaining / 60000);
-        const seconds = Math.floor((remaining % 60000) / 1000);
-        countdownEl.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-        
-        setTimeout(updateCountdown, 1000);
-      };
-      
-      updateCountdown();
-    }
-    
-    getInitialHTML() {
-      return `
-        <div class="wws-protection-content">
-          <div class="wws-shield-wrapper">
-            <div class="wws-shield-ripple"></div>
-            <div class="wws-shield-ripple"></div>
-            <div class="wws-shield">
-              <i class="fas fa-shield-alt"></i>
-            </div>
-          </div>
-          
-          <h1 class="wws-title">${CONFIG.companyName}</h1>
-          <p class="wws-subtitle">Analyzing your behavior...</p>
-          
-          <div class="wws-status-container">
-            <div class="wws-status-text" id="wws-status-text">Collecting interaction data...</div>
+    'use strict';
+
+    class WWSProtect {
+        constructor() {
+            this.riskScore = 0;
+            this.signals = [];
+            this.behavioralData = {
+                mouseMoves: [],
+                clicks: [],
+                scrolls: [],
+                keypresses: [],
+                focusChanges: [],
+                startTime: Date.now()
+            };
+            this.dataCollectionActive = false;
+            this.elements = {};
             
-            <div class="wws-progress-container">
-              <div class="wws-progress-bar">
-                <div class="wws-progress-fill" id="wws-progress-fill"></div>
-              </div>
-              <div class="wws-progress-text">
-                <span>0%</span>
-                <span id="wws-progress-percent">Initializing</span>
-                <span>100%</span>
-              </div>
-            </div>
-          </div>
-          
-          <div class="wws-footer">
-            Powered by <a href="${CONFIG.websiteUrl}" target="_blank">Wandering Wizardry Studios</a>
-          </div>
-        </div>
-      `;
-    }
-    
-    hide() {
-      if (this.interval) {
-        clearInterval(this.interval);
-        this.interval = null;
-      }
-      
-      if (this.screen && this.screen.parentNode) {
-        this.screen.style.opacity = '0';
-        this.screen.style.transition = 'opacity 0.5s ease';
-        
-        setTimeout(() => {
-          if (this.screen && this.screen.parentNode) {
-            this.screen.parentNode.removeChild(this.screen);
-            this.screen = null;
-          }
-        }, 500);
-      }
-    }
-  }
-  
-  // ==================== ENHANCED WIDGET ====================
-  class Widget {
-    constructor() {
-      this.widget = null;
-      this.panel = null;
-      this.isPanelOpen = false;
-      this.currentTab = 'overview';
-      this.riskAssessment = null;
-      this.init();
-    }
-    
-    init() {
-      this.createWidget();
-      this.bindEvents();
-      this.applyTheme();
-      this.updatePanelContent();
-    }
-    
-    createWidget() {
-      // Remove existing widget if any
-      const existingWidget = document.querySelector('.wws-widget');
-      if (existingWidget) existingWidget.remove();
-      
-      this.widget = document.createElement('div');
-      this.widget.className = `wws-widget wws-theme-${State.currentTheme} wws-position-${State.position}`;
-      this.widget.style.display = 'none'; // Hidden by default
-      
-      this.widget.innerHTML = `
-        <div class="wws-widget-toggle" id="wws-widget-toggle">
-          <i class="fas fa-shield-alt"></i>
-          <div class="wws-notification-badge">0</div>
-        </div>
-        
-        <div class="wws-widget-panel" id="wws-widget-panel">
-          <div class="wws-panel-header">
-            <div class="wws-header-left">
-              <div class="wws-header-icon">
-                <i class="fas fa-shield-alt"></i>
-              </div>
-              <div class="wws-header-text">
-                <h3>${CONFIG.companyName}</h3>
-                <p>v${CONFIG.version} • Active</p>
-              </div>
-            </div>
-            <button class="wws-close-panel" id="wws-close-panel">
-              <i class="fas fa-times"></i>
-            </button>
-          </div>
-          
-          <div class="wws-panel-tabs">
-            <button class="wws-tab active" data-tab="overview">
-              <i class="fas fa-chart-simple"></i>
-              <span>Overview</span>
-            </button>
-            <button class="wws-tab" data-tab="security">
-              <i class="fas fa-shield"></i>
-              <span>Security</span>
-            </button>
-            <button class="wws-tab" data-tab="settings">
-              <i class="fas fa-sliders"></i>
-              <span>Settings</span>
-            </button>
-          </div>
-          
-          <div class="wws-panel-content" id="wws-panel-content"></div>
-          
-          <div class="wws-panel-footer">
-            <a href="${CONFIG.websiteUrl}" target="_blank" class="wws-footer-link">
-              <i class="fas fa-external-link-alt"></i> Open Dashboard
-            </a>
-          </div>
-        </div>
-      `;
-      
-      document.body.appendChild(this.widget);
-      this.panel = document.getElementById('wws-widget-panel');
-    }
-    
-    bindEvents() {
-      // Toggle widget panel
-      const toggle = document.getElementById('wws-widget-toggle');
-      if (toggle) {
-        toggle.addEventListener('click', (e) => {
-          e.stopPropagation();
-          this.togglePanel();
-        });
-      }
-      
-      // Close panel
-      const closeBtn = document.getElementById('wws-close-panel');
-      if (closeBtn) {
-        closeBtn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          this.closePanel();
-        });
-      }
-      
-      // Tab switching
-      document.querySelectorAll('.wws-tab').forEach(tab => {
-        tab.addEventListener('click', () => {
-          document.querySelectorAll('.wws-tab').forEach(t => t.classList.remove('active'));
-          tab.classList.add('active');
-          this.currentTab = tab.dataset.tab;
-          this.updatePanelContent();
-        });
-      });
-      
-      // Close panel when clicking outside
-      document.addEventListener('click', (e) => {
-        if (this.isPanelOpen && 
-            !this.panel.contains(e.target) && 
-            !e.target.closest('.wws-widget-toggle')) {
-          this.closePanel();
-        }
-      });
-      
-      // Close panel with Escape key
-      document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && this.isPanelOpen) {
-          this.closePanel();
-        }
-      });
-    }
-    
-    togglePanel() {
-      this.isPanelOpen = !this.isPanelOpen;
-      this.panel.style.display = this.isPanelOpen ? 'block' : 'none';
-      
-      if (this.isPanelOpen) {
-        this.updatePanelContent();
-      }
-    }
-    
-    closePanel() {
-      this.isPanelOpen = false;
-      this.panel.style.display = 'none';
-    }
-    
-    updatePanelContent() {
-      const content = document.getElementById('wws-panel-content');
-      if (!content) return;
-      
-      // Update badge based on risk level
-      this.updateBadge();
-      
-      switch (this.currentTab) {
-        case 'overview':
-          this.renderOverview(content);
-          break;
-        case 'security':
-          this.renderSecurity(content);
-          break;
-        case 'settings':
-          this.renderSettings(content);
-          break;
-      }
-    }
-    
-    renderOverview(container) {
-      if (!this.riskAssessment) {
-        container.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--wws-text-secondary);">No assessment data</div>';
-        return;
-      }
-      
-      const now = new Date();
-      const timeStr = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-      const dateStr = now.toLocaleDateString();
-      
-      container.innerHTML = `
-        <div class="wws-section">
-          <div class="wws-section-title">
-            <i class="fas fa-chart-simple"></i>
-            Risk Assessment
-          </div>
-          
-          <div class="wws-stats-grid">
-            <div class="wws-stat-card">
-              <div class="wws-stat-value">${this.riskAssessment.score}</div>
-              <div class="wws-stat-label">Behavior Score</div>
-            </div>
+            this.config = {
+                weights: {
+                    webdriver: 40,
+                    mouseJitter: 20,
+                    clickInterval: 10,
+                    scrollLinearity: 10,
+                    keyboardSpeed: 10,
+                    focusFrequency: 10,
+                    automationUA: 15,
+                    webGLAnomaly: 10,
+                    audioContext: 5,
+                    fonts: 5,
+                    timezone: 3,
+                    screenMismatch: 8,
+                    touchSupport: 5
+                },
+                randomizeWeights: true
+            };
             
-            <div class="wws-stat-card">
-              <div class="wws-stat-value" style="color: ${this.getRiskColor()}">
-                ${this.riskAssessment.riskLevel.toUpperCase()}
-              </div>
-              <div class="wws-stat-label">Risk Level</div>
-            </div>
-          </div>
-        </div>
-        
-        <div class="wws-section">
-          <div class="wws-section-title">
-            <i class="fas fa-info-circle"></i>
-            Analysis Details
-          </div>
-          
-          <div class="wws-status-list">
-            ${this.riskAssessment.reasons.length > 0 ? 
-              this.riskAssessment.reasons.map(reason => `
-                <div class="wws-status-item">
-                  <div class="wws-status-label">
-                    <i class="fas fa-exclamation-triangle" style="color: var(--wws-warning)"></i>
-                    ${reason}
-                  </div>
-                </div>
-              `).join('') : 
-              '<div class="wws-status-item"><div class="wws-status-label" style="color: var(--wws-success)"><i class="fas fa-check-circle"></i> All checks passed</div></div>'
+            // Рандомизация весов (±20%)
+            if (this.config.randomizeWeights) {
+                Object.keys(this.config.weights).forEach(key => {
+                    const variation = 0.2;
+                    const base = this.config.weights[key];
+                    this.config.weights[key] = base * (1 + (Math.random() * 2 - 1) * variation);
+                });
             }
-          </div>
-        </div>
-        
-        <div class="wws-section">
-          <div class="wws-section-title">
-            <i class="fas fa-clock"></i>
-            Session Info
-          </div>
-          
-          <div class="wws-status-list">
-            <div class="wws-status-item">
-              <div class="wws-status-label">
-                <i class="far fa-clock"></i>
-                Current Time
-              </div>
-              <div class="wws-status-value">${timeStr}</div>
-            </div>
             
-            <div class="wws-status-item">
-              <div class="wws-status-label">
-                <i class="far fa-calendar"></i>
-                Date
-              </div>
-              <div class="wws-status-value">${dateStr}</div>
-            </div>
+            // Создать DOM элементы при инициализации
+            this.createElements();
+            this.injectStyles();
+        }
+
+        /**
+         * Создание всех DOM элементов
+         */
+        createElements() {
+            // Экран защиты
+            const screen = document.createElement('div');
+            screen.id = 'wws-protect-screen';
+            screen.innerHTML = `
+                <div class="wws-protect-container">
+                    <div class="wws-protect-spinner"></div>
+                    <div class="wws-protect-title">WWS Protect</div>
+                    <div class="wws-protect-status" id="wws-status-text">Анализ поведения...</div>
+                    <div class="wws-progress-bar">
+                        <div class="wws-progress-fill" id="wws-progress-fill"></div>
+                    </div>
+                    <div id="wws-protect-content"></div>
+                </div>
+            `;
             
-            <div class="wws-status-item">
-              <div class="wws-status-label">
-                <i class="fas fa-shield-alt"></i>
-                Protection Status
-              </div>
-              <div class="wws-status-value" style="color: var(--wws-success)">Active</div>
-            </div>
-          </div>
-        </div>
-      `;
-    }
-    
-    renderSecurity(container) {
-      container.innerHTML = `
-        <div class="wws-section">
-          <div class="wws-section-title">
-            <i class="fas fa-shield"></i>
-            Protection Status
-          </div>
-          
-          <div class="wws-status-list">
-            <div class="wws-status-item">
-              <div class="wws-status-label">
-                <i class="fas fa-fire"></i>
-                Firewall
-              </div>
-              <div class="wws-status-value" style="color: var(--wws-success)">Active</div>
-            </div>
+            // Виджет риска
+            const widget = document.createElement('div');
+            widget.id = 'wws-protect-widget';
+            widget.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>WWS Protect</span>
+                    <span id="wws-risk-value">0</span>
+                </div>
+                <div id="wws-risk-meter">
+                    <div id="wws-risk-fill"></div>
+                </div>
+                <div id="wws-status">Safe</div>
+                <div id="wws-timer"></div>
+                <div class="wws-reasons" id="wws-reasons"></div>
+            `;
             
-            <div class="wws-status-item">
-              <div class="wws-status-label">
-                <i class="fas fa-robot"></i>
-                Bot Protection
-              </div>
-              <div class="wws-status-value" style="color: var(--wws-success)">Enabled</div>
-            </div>
+            // Добавить в DOM
+            document.body.appendChild(screen);
+            document.body.appendChild(widget);
             
-            <div class="wws-status-item">
-              <div class="wws-status-label">
-                <i class="fas fa-broadcast-tower"></i>
-                DDoS Protection
-              </div>
-              <div class="wws-status-value" style="color: var(--wws-success)">Enabled</div>
-            </div>
+            // Сохранить ссылки
+            this.elements = {
+                screen,
+                widget,
+                content: document.getElementById('wws-protect-content'),
+                statusText: document.getElementById('wws-status-text'),
+                progressFill: document.getElementById('wws-progress-fill'),
+                riskValue: document.getElementById('wws-risk-value'),
+                riskFill: document.getElementById('wws-risk-fill'),
+                status: document.getElementById('wws-status'),
+                timer: document.getElementById('wws-timer'),
+                reasons: document.getElementById('wws-reasons')
+            };
+        }
+
+        /**
+         * Внедрение CSS стилей
+         */
+        injectStyles() {
+            const styles = `
+                /* === WWS Protect Screen === */
+                #wws-protect-screen {
+                    position: fixed;
+                    inset: 0;
+                    background: #0a0a0a;
+                    z-index: 999999;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                    transition: opacity 0.5s ease;
+                }
+                
+                #wws-protect-screen.hidden {
+                    opacity: 0;
+                    pointer-events: none;
+                }
+                
+                .wws-protect-container {
+                    text-align: center;
+                    color: #e0e0e0;
+                    max-width: 500px;
+                    padding: 2rem;
+                }
+                
+                .wws-protect-spinner {
+                    width: 60px;
+                    height: 60px;
+                    border: 3px solid #1a1a1a;
+                    border-top-color: #00ff88;
+                    border-radius: 50%;
+                    animation: wws-spin 1s linear infinite;
+                    margin: 0 auto 2rem;
+                }
+                
+                @keyframes wws-spin {
+                    to { transform: rotate(360deg); }
+                }
+                
+                .wws-protect-title {
+                    font-size: 1.5rem;
+                    margin-bottom: 1rem;
+                    color: #fff;
+                }
+                
+                .wws-protect-status {
+                    font-size: 0.9rem;
+                    opacity: 0.8;
+                    margin-bottom: 2rem;
+                }
+                
+                .wws-progress-bar {
+                    width: 100%;
+                    height: 4px;
+                    background: #1a1a1a;
+                    border-radius: 2px;
+                    overflow: hidden;
+                    margin-bottom: 1rem;
+                }
+                
+                .wws-progress-fill {
+                    height: 100%;
+                    background: linear-gradient(90deg, #00ff88, #00cc6a);
+                    width: 0%;
+                    transition: width 0.3s ease;
+                }
+                
+                /* === Risk Widget === */
+                #wws-protect-widget {
+                    position: fixed;
+                    bottom: 20px;
+                    right: 20px;
+                    background: rgba(0, 0, 0, 0.9);
+                    backdrop-filter: blur(10px);
+                    color: #fff;
+                    padding: 1rem;
+                    border-radius: 8px;
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                    font-size: 0.8rem;
+                    z-index: 999998;
+                    min-width: 200px;
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    display: none;
+                }
+                
+                #wws-protect-widget.visible {
+                    display: block;
+                }
+                
+                #wws-risk-meter {
+                    width: 100%;
+                    height: 6px;
+                    background: #1a1a1a;
+                    border-radius: 3px;
+                    overflow: hidden;
+                    margin: 0.5rem 0;
+                }
+                
+                #wws-risk-fill {
+                    height: 100%;
+                    width: 0%;
+                    transition: width 0.5s ease, background 0.3s ease;
+                }
+                
+                .wws-risk-low { background: #00ff88; }
+                .wws-risk-medium { background: #ffaa00; }
+                .wws-risk-high { background: #ff4444; }
+                
+                #wws-status {
+                    font-weight: 600;
+                    margin: 0.5rem 0;
+                }
+                
+                #wws-timer {
+                    font-size: 0.7rem;
+                    opacity: 0.8;
+                }
+                
+                .wws-reasons {
+                    font-size: 0.7rem;
+                    opacity: 0.7;
+                    margin-top: 0.5rem;
+                    max-height: 60px;
+                    overflow-y: auto;
+                }
+                
+                /* === Verification Screen === */
+                .wws-verification-container {
+                    background: #1a1a1a;
+                    padding: 2rem;
+                    border-radius: 12px;
+                    border: 1px solid #333;
+                }
+                
+                .wws-verification-title {
+                    font-size: 1.2rem;
+                    margin-bottom: 1.5rem;
+                    color: #fff;
+                }
+                
+                .wws-verification-task {
+                    margin: 1.5rem 0;
+                }
+                
+                .wws-btn {
+                    background: #00ff88;
+                    color: #000;
+                    border: none;
+                    padding: 0.75rem 2rem;
+                    border-radius: 6px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                }
+                
+                .wws-btn:hover {
+                    background: #00cc6a;
+                    transform: translateY(-1px);
+                }
+                
+                .wws-btn:active {
+                    transform: translateY(0);
+                }
+                
+                /* === Drag & Drop === */
+                #wws-drag-area {
+                    width: 300px;
+                    height: 200px;
+                    background: #0a0a0a;
+                    border: 2px dashed #444;
+                    border-radius: 8px;
+                    position: relative;
+                    margin: 1rem auto;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                
+                #wws-drag-object {
+                    width: 60px;
+                    height: 60px;
+                    background: radial-gradient(circle, #00ff88, #00cc6a);
+                    border-radius: 50%;
+                    cursor: grab;
+                    position: absolute;
+                    box-shadow: 0 4px 15px rgba(0, 255, 136, 0.3);
+                    transition: transform 0.1s;
+                    left: 50%;
+                    top: 50%;
+                    transform: translate(-50%, -50%);
+                }
+                
+                #wws-drag-object.dragging {
+                    cursor: grabbing;
+                    transform: scale(1.1);
+                }
+                
+                /* === Hold Button === */
+                #wws-hold-button {
+                    width: 200px;
+                    height: 60px;
+                    background: #1a1a1a;
+                    border: 2px solid #444;
+                    border-radius: 8px;
+                    color: #fff;
+                    font-size: 1rem;
+                    cursor: pointer;
+                    position: relative;
+                    overflow: hidden;
+                }
+                
+                #wws-hold-button:active {
+                    border-color: #00ff88;
+                }
+                
+                #wws-hold-progress {
+                    position: absolute;
+                    bottom: 0;
+                    left: 0;
+                    height: 4px;
+                    background: #00ff88;
+                    width: 0%;
+                    transition: width 0.1s linear;
+                }
+                
+                /* === Canvas Game === */
+                #wws-canvas-game {
+                    width: 300px;
+                    height: 250px;
+                    background: #0a0a0a;
+                    border: 2px solid #333;
+                    border-radius: 8px;
+                    display: block;
+                    margin: 1rem auto;
+                    cursor: crosshair;
+                }
+                
+                /* === Block Screen === */
+                .wws-block-timer {
+                    font-size: 2rem;
+                    font-weight: bold;
+                    color: #ff4444;
+                    margin: 1.5rem 0;
+                }
+                
+                .wws-block-reasons {
+                    text-align: left;
+                    background: #1a1a1a;
+                    padding: 1rem;
+                    border-radius: 6px;
+                    margin: 1rem 0;
+                    font-size: 0.85rem;
+                }
+            `;
             
-            <div class="wws-status-item">
-              <div class="wws-status-label">
-                <i class="fas fa-lock"></i>
-                Encryption
-              </div>
-              <div class="wws-status-value" style="color: var(--wws-success)">TLS 1.3</div>
-            </div>
+            const styleSheet = document.createElement('style');
+            styleSheet.id = 'wws-protect-styles';
+            styleSheet.textContent = styles;
+            document.head.appendChild(styleSheet);
+        }
+
+        /**
+         * Инициализация защиты
+         */
+        async init() {
+            console.log('[WWS Protect] Инициализация...');
             
-            <div class="wws-status-item">
-              <div class="wws-status-label">
-                <i class="fas fa-mouse"></i>
-                Behavior Analysis
-              </div>
-              <div class="wws-status-value" style="color: var(--wws-success)">Active</div>
-            </div>
-          </div>
-        </div>
-        
-        <div class="wws-section">
-          <div class="wws-section-title">
-            <i class="fas fa-history"></i>
-            Recent Activity
-          </div>
-          
-          <div class="wws-status-list">
-            <div class="wws-status-item">
-              <div class="wws-status-label">
-                <i class="fas fa-check-circle"></i>
-                Last Scan
-              </div>
-              <div class="wws-status-value">Just now</div>
-            </div>
+            // Проверка блокировки
+            const blockedUntil = localStorage.getItem('wwsProtectBlockedUntil');
+            if (blockedUntil && Date.now() < parseInt(blockedUntil)) {
+                this.showBlockScreen(parseInt(blockedUntil));
+                return;
+            }
             
-            <div class="wws-status-item">
-              <div class="wws-status-label">
-                <i class="fas fa-shield-alt"></i>
-                This Session
-              </div>
-              <div class="wws-status-value" style="color: var(--wws-success)">Verified</div>
-            </div>
+            // Начать сбор данных
+            this.startDataCollection();
             
-            <div class="wws-status-item">
-              <div class="wws-status-label">
-                <i class="fas fa-sync-alt"></i>
-                Auto Updates
-              </div>
-              <div class="wws-status-value" style="color: var(--wws-success)">Enabled</div>
-            </div>
-          </div>
-        </div>
-      `;
-    }
-    
-    renderSettings(container) {
-      container.innerHTML = `
-        <div class="wws-section">
-          <div class="wws-section-title">
-            <i class="fas fa-sliders"></i>
-            Widget Settings
-          </div>
-          
-          <div class="wws-status-list">
-            <div class="wws-settings-item">
-              <div>
-                <div class="wws-settings-label">Widget Position</div>
-                <div class="wws-settings-desc">Choose where to display widget</div>
-              </div>
-              <select class="wws-select" id="wws-position-select">
-                <option value="bottom-right" ${State.position === 'bottom-right' ? 'selected' : ''}>Bottom Right</option>
-                <option value="bottom-left" ${State.position === 'bottom-left' ? 'selected' : ''}>Bottom Left</option>
-                <option value="top-right" ${State.position === 'top-right' ? 'selected' : ''}>Top Right</option>
-                <option value="top-left" ${State.position === 'top-left' ? 'selected' : ''}>Top Left</option>
-              </select>
-            </div>
+            // Собрать fingerprint
+            await this.collectFingerprint();
             
-            <div class="wws-settings-item">
-              <div>
-                <div class="wws-settings-label">Theme</div>
-                <div class="wws-settings-desc">Choose color theme</div>
-              </div>
-              <select class="wws-select" id="wws-theme-select">
-                <option value="dark" ${State.currentTheme === 'dark' ? 'selected' : ''}>Dark</option>
-                <option value="light" ${State.currentTheme === 'light' ? 'selected' : ''}>Light</option>
-              </select>
-            </div>
-          </div>
-        </div>
-        
-        <div class="wws-section">
-          <div class="wws-section-title">
-            <i class="fas fa-bell"></i>
-            Notifications
-          </div>
-          
-          <div class="wws-status-list">
-            <div class="wws-settings-item">
-              <div>
-                <div class="wws-settings-label">Enable Notifications</div>
-                <div class="wws-settings-desc">Show security alerts</div>
-              </div>
-              <label class="wws-switch">
-                <input type="checkbox" id="wws-notifications" ${State.notifications.enabled ? 'checked' : ''}>
-                <span class="wws-switch-slider"></span>
-              </label>
-            </div>
+            // Показать прогресс
+            this.updateProgress(30);
             
-            <div class="wws-settings-item">
-              <div>
-                <div class="wws-settings-label">Threat Alerts</div>
-                <div class="wws-settings-desc">Show threat notifications</div>
-              </div>
-              <label class="wws-switch">
-                <input type="checkbox" id="wws-threat-alerts" ${State.notifications.threatAlerts ? 'checked' : ''}>
-                <span class="wws-switch-slider"></span>
-              </label>
-            </div>
-          </div>
-        </div>
-      `;
-      
-      this.bindSettingsEvents();
-    }
-    
-    bindSettingsEvents() {
-      // Position selector
-      const positionSelect = document.getElementById('wws-position-select');
-      if (positionSelect) {
-        positionSelect.addEventListener('change', (e) => {
-          State.position = e.target.value;
-          localStorage.setItem('wws_position', State.position);
-          this.updatePosition();
-        });
-      }
-      
-      // Theme selector
-      const themeSelect = document.getElementById('wws-theme-select');
-      if (themeSelect) {
-        themeSelect.addEventListener('change', (e) => {
-          State.currentTheme = e.target.value;
-          localStorage.setItem('wws_theme', State.currentTheme);
-          this.applyTheme();
-        });
-      }
-      
-      // Notification toggles
-      const notificationToggle = document.getElementById('wws-notifications');
-      if (notificationToggle) {
-        notificationToggle.addEventListener('change', (e) => {
-          State.notifications.enabled = e.target.checked;
-          localStorage.setItem('wws_notifications', e.target.checked);
-        });
-      }
-      
-      const threatToggle = document.getElementById('wws-threat-alerts');
-      if (threatToggle) {
-        threatToggle.addEventListener('change', (e) => {
-          State.notifications.threatAlerts = e.target.checked;
-          localStorage.setItem('wws_threat_alerts', e.target.checked);
-        });
-      }
-    }
-    
-    applyTheme() {
-      if (this.widget) {
-        this.widget.className = `wws-widget wws-theme-${State.currentTheme} wws-position-${State.position}`;
-      }
-    }
-    
-    updatePosition() {
-      if (this.widget) {
-        this.widget.className = `wws-widget wws-theme-${State.currentTheme} wws-position-${State.position}`;
-      }
-    }
-    
-    updateBadge() {
-      if (!this.riskAssessment) return;
-      
-      const badge = document.querySelector('.wws-notification-badge');
-      if (badge) {
-        const count = this.riskAssessment.score < 70 ? 1 : 0;
-        badge.textContent = count;
-        badge.style.display = count > 0 ? 'block' : 'none';
-      }
-    }
-    
-    getRiskColor() {
-      if (!this.riskAssessment) return 'var(--wws-text-secondary)';
-      
-      switch (this.riskAssessment.riskLevel) {
-        case 'low': return 'var(--wws-success)';
-        case 'medium': return 'var(--wws-warning)';
-        case 'high': return 'var(--wws-danger)';
-        default: return 'var(--wws-text-secondary)';
-      }
-    }
-    
-    // Статические методы для внешнего доступа
-    static show(assessment = null) {
-      if (!window.wwsWidgetInstance) {
-        window.wwsWidgetInstance = new Widget();
-      }
-      
-      const instance = window.wwsWidgetInstance;
-      instance.widget.style.display = 'block';
-      
-      if (assessment) {
-        instance.riskAssessment = assessment;
-        instance.updateBadge();
-        instance.updatePanelContent();
-      }
-    }
-    
-    static hide() {
-      if (window.wwsWidgetInstance) {
-        window.wwsWidgetInstance.widget.style.display = 'none';
-      }
-    }
-  }
-  
-  // ==================== STYLES ====================
-  const styles = document.createElement('style');
-  styles.textContent = `
-    :root {
-      --wws-bg: ${CONFIG.widget.themes.dark.background};
-      --wws-surface: ${CONFIG.widget.themes.dark.surface};
-      --wws-primary: ${CONFIG.widget.themes.dark.primary};
-      --wws-secondary: ${CONFIG.widget.themes.dark.secondary};
-      --wws-text: ${CONFIG.widget.themes.dark.text};
-      --wws-text-secondary: ${CONFIG.widget.themes.dark.textSecondary};
-      --wws-success: ${CONFIG.widget.themes.dark.success};
-      --wws-warning: ${CONFIG.widget.themes.dark.warning};
-      --wws-danger: ${CONFIG.widget.themes.dark.danger};
-      --wws-border: rgba(255, 255, 255, 0.1);
-      --wws-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-      --wws-radius: 16px;
-      --wws-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    
-    .wws-theme-light {
-      --wws-bg: ${CONFIG.widget.themes.light.background};
-      --wws-surface: ${CONFIG.widget.themes.light.surface};
-      --wws-primary: ${CONFIG.widget.themes.light.primary};
-      --wws-secondary: ${CONFIG.widget.themes.light.secondary};
-      --wws-text: ${CONFIG.widget.themes.light.text};
-      --wws-text-secondary: ${CONFIG.widget.themes.light.textSecondary};
-      --wws-success: ${CONFIG.widget.themes.light.success};
-      --wws-warning: ${CONFIG.widget.themes.light.warning};
-      --wws-danger: ${CONFIG.widget.themes.light.danger};
-      --wws-border: rgba(0, 0, 0, 0.1);
-      --wws-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
-    }
-    
-    /* ANIMATIONS */
-    @keyframes wwsFadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    
-    @keyframes wwsShieldGlow {
-      0%, 100% { filter: drop-shadow(0 0 20px var(--wws-primary)); }
-      50% { filter: drop-shadow(0 0 30px var(--wws-primary)); }
-    }
-    
-    @keyframes wwsProgress {
-      0% { background-position: 0% 50%; }
-      100% { background-position: 100% 50%; }
-    }
-    
-    @keyframes wwsPulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.05); }
-    }
-    
-    @keyframes wwsRipple {
-      0% { transform: scale(0.8); opacity: 0.5; }
-      100% { transform: scale(2); opacity: 0; }
-    }
-    
-    /* MINIMAL PROTECTION SCREEN */
-    .wws-protection-screen {
-      position: fixed !important;
-      top: 0 !important;
-      left: 0 !important;
-      width: 100vw !important;
-      height: 100vh !important;
-      background: linear-gradient(135deg, #0a0a1a 0%, #121226 100%) !important;
-      z-index: 2147483647 !important;
-      display: flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-      animation: wwsFadeIn 0.4s ease-out;
-      overflow: hidden !important;
-    }
-    
-    .wws-protection-content {
-      width: 100%;
-      max-width: 500px;
-      padding: 40px;
-      text-align: center;
-    }
-    
-    .wws-shield-wrapper {
-      position: relative;
-      margin: 0 auto 40px;
-      width: 140px;
-      height: 140px;
-    }
-    
-    .wws-shield {
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(135deg, var(--wws-primary), var(--wws-secondary));
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      animation: wwsShieldGlow 3s ease-in-out infinite;
-      position: relative;
-      z-index: 2;
-    }
-    
-    .wws-shield i {
-      font-size: 60px;
-      color: white;
-    }
-    
-    .wws-shield-ripple {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 160px;
-      height: 160px;
-      border: 2px solid rgba(59, 130, 246, 0.3);
-      border-radius: 50%;
-      animation: wwsRipple 2s ease-out infinite;
-    }
-    
-    .wws-shield-ripple:nth-child(3) {
-      width: 180px;
-      height: 180px;
-      animation-delay: 0.5s;
-    }
-    
-    .wws-title {
-      color: white;
-      font-size: 40px;
-      font-weight: 700;
-      margin: 0 0 15px;
-      letter-spacing: -0.5px;
-    }
-    
-    .wws-subtitle {
-      color: #94A3B8;
-      font-size: 18px;
-      font-weight: 400;
-      margin: 0 0 50px;
-      line-height: 1.5;
-    }
-    
-    .wws-status-container {
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 16px;
-      padding: 30px;
-      margin: 0 0 30px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-    
-    .wws-status-text {
-      color: #94A3B8;
-      font-size: 16px;
-      margin: 0 0 20px;
-    }
-    
-    .wws-progress-container {
-      width: 100%;
-    }
-    
-    .wws-progress-bar {
-      width: 100%;
-      height: 6px;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 3px;
-      overflow: hidden;
-      margin-bottom: 10px;
-    }
-    
-    .wws-progress-fill {
-      height: 100%;
-      width: 0%;
-      background: linear-gradient(90deg, var(--wws-primary), var(--wws-secondary));
-      animation: wwsProgress 2s linear infinite;
-      transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
-      border-radius: 3px;
-    }
-    
-    .wws-progress-text {
-      display: flex;
-      justify-content: space-between;
-      color: #94A3B8;
-      font-size: 14px;
-    }
-    
-    .wws-footer {
-      color: #64748B;
-      font-size: 14px;
-      margin-top: 40px;
-    }
-    
-    .wws-footer a {
-      color: #60A5FA;
-      text-decoration: none;
-      font-weight: 500;
-    }
-    
-    /* WIDGET STYLES */
-    .wws-widget {
-      position: fixed;
-      z-index: 2147483646;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    }
-    
-    /* Position classes */
-    .wws-position-bottom-right { bottom: 24px; right: 24px; }
-    .wws-position-bottom-left { bottom: 24px; left: 24px; }
-    .wws-position-top-right { top: 24px; right: 24px; }
-    .wws-position-top-left { top: 24px; left: 24px; }
-    
-    .wws-widget-toggle {
-      width: 64px;
-      height: 64px;
-      background: linear-gradient(135deg, var(--wws-primary), var(--wws-secondary));
-      border-radius: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      box-shadow: 0 10px 40px rgba(59, 130, 246, 0.3);
-      transition: var(--wws-transition);
-      border: 2px solid rgba(255, 255, 255, 0.2);
-      backdrop-filter: blur(10px);
-      position: relative;
-    }
-    
-    .wws-widget-toggle:hover {
-      transform: translateY(-4px) scale(1.05);
-      box-shadow: 0 15px 50px rgba(59, 130, 246, 0.4);
-    }
-    
-    .wws-widget-toggle i {
-      font-size: 28px;
-      color: white;
-      position: relative;
-      z-index: 1;
-    }
-    
-    .wws-notification-badge {
-      position: absolute;
-      top: -8px;
-      right: -8px;
-      background: linear-gradient(135deg, var(--wws-danger), #DC2626);
-      color: white;
-      font-size: 11px;
-      font-weight: 800;
-      padding: 5px 10px;
-      border-radius: 12px;
-      min-width: 28px;
-      text-align: center;
-      border: 3px solid rgba(255, 255, 255, 0.9);
-      box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
-      animation: wwsPulse 2s ease-in-out infinite;
-      z-index: 2;
-      pointer-events: none;
-    }
-    
-    .wws-position-bottom-left .wws-notification-badge { right: -8px; left: auto; }
-    .wws-position-bottom-right .wws-notification-badge { right: -8px; left: auto; }
-    .wws-position-top-left .wws-notification-badge { right: -8px; left: auto; bottom: -8px; top: auto; }
-    .wws-position-top-right .wws-notification-badge { right: -8px; left: auto; bottom: -8px; top: auto; }
-    
-    .wws-widget-panel {
-      position: absolute;
-      width: 380px;
-      background: var(--wws-surface);
-      backdrop-filter: blur(20px);
-      border-radius: 20px;
-      border: 1px solid var(--wws-border);
-      box-shadow: var(--wws-shadow);
-      display: none;
-      overflow: hidden;
-      z-index: 2147483647;
-      max-height: 70vh;
-      animation: wwsFadeIn 0.3s ease-out;
-      color: var(--wws-text);
-    }
-    
-    .wws-position-bottom-right .wws-widget-panel { bottom: 80px; right: 0; }
-    .wws-position-bottom-left .wws-widget-panel { bottom: 80px; left: 0; }
-    .wws-position-top-right .wws-widget-panel { top: 80px; right: 0; bottom: auto; }
-    .wws-position-top-left .wws-widget-panel { top: 80px; left: 0; bottom: auto; }
-    
-    .wws-panel-header {
-      padding: 24px;
-      background: linear-gradient(135deg, 
-        rgba(59, 130, 246, 0.1), 
-        rgba(139, 92, 246, 0.1));
-      border-bottom: 1px solid var(--wws-border);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    
-    .wws-header-left {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-    
-    .wws-header-icon {
-      width: 48px;
-      height: 48px;
-      background: linear-gradient(135deg, var(--wws-primary), var(--wws-secondary));
-      border-radius: 14px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    
-    .wws-header-icon i {
-      font-size: 24px;
-      color: white;
-    }
-    
-    .wws-header-text h3 {
-      font-size: 18px;
-      font-weight: 700;
-      margin: 0 0 4px;
-      color: var(--wws-text);
-    }
-    
-    .wws-header-text p {
-      font-size: 12px;
-      margin: 0;
-      color: var(--wws-text-secondary);
-    }
-    
-    .wws-close-panel {
-      width: 36px;
-      height: 36px;
-      background: rgba(255, 255, 255, 0.1);
-      border: none;
-      border-radius: 10px;
-      color: var(--wws-text-secondary);
-      font-size: 16px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: var(--wws-transition);
-    }
-    
-    .wws-close-panel:hover {
-      background: rgba(239, 68, 68, 0.2);
-      color: var(--wws-danger);
-      transform: rotate(90deg);
-    }
-    
-    .wws-panel-tabs {
-      display: flex;
-      padding: 8px;
-      background: rgba(0, 0, 0, 0.05);
-      border-bottom: 1px solid var(--wws-border);
-    }
-    
-    .wws-tab {
-      flex: 1;
-      padding: 12px 8px;
-      background: none;
-      border: none;
-      color: var(--wws-text-secondary);
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      border-radius: 10px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 6px;
-      transition: var(--wws-transition);
-    }
-    
-    .wws-tab i {
-      font-size: 16px;
-    }
-    
-    .wws-tab span {
-      font-size: 12px;
-    }
-    
-    .wws-tab:hover {
-      color: var(--wws-primary);
-      background: rgba(59, 130, 246, 0.1);
-    }
-    
-    .wws-tab.active {
-      color: var(--wws-primary);
-      background: rgba(59, 130, 246, 0.15);
-    }
-    
-    .wws-panel-content {
-      padding: 24px;
-      overflow-y: auto;
-      max-height: calc(70vh - 180px);
-    }
-    
-    .wws-panel-content::-webkit-scrollbar {
-      width: 6px;
-    }
-    
-    .wws-panel-content::-webkit-scrollbar-track {
-      background: rgba(0, 0, 0, 0.05);
-      border-radius: 3px;
-    }
-    
-    .wws-panel-content::-webkit-scrollbar-thumb {
-      background: var(--wws-primary);
-      border-radius: 3px;
-    }
-    
-    .wws-panel-footer {
-      padding: 20px 24px;
-      border-top: 1px solid var(--wws-border);
-      text-align: center;
-    }
-    
-    .wws-footer-link {
-      color: var(--wws-text-secondary);
-      font-size: 13px;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      transition: var(--wws-transition);
-      padding: 10px 20px;
-      border-radius: 10px;
-      background: rgba(0, 0, 0, 0.05);
-    }
-    
-    .wws-footer-link:hover {
-      color: var(--wws-primary);
-      background: rgba(59, 130, 246, 0.1);
-      transform: translateY(-2px);
-    }
-    
-    .wws-section {
-      margin-bottom: 24px;
-    }
-    
-    .wws-section:last-child {
-      margin-bottom: 0;
-    }
-    
-    .wws-section-title {
-      font-size: 15px;
-      font-weight: 700;
-      margin-bottom: 16px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      color: var(--wws-text);
-    }
-    
-    .wws-section-title i {
-      color: var(--wws-primary);
-      font-size: 16px;
-    }
-    
-    .wws-stats-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 16px;
-      margin-bottom: 20px;
-    }
-    
-    .wws-stat-card {
-      background: rgba(0, 0, 0, 0.05);
-      border-radius: 12px;
-      padding: 20px;
-      text-align: center;
-    }
-    
-    .wws-stat-value {
-      font-size: 24px;
-      font-weight: 800;
-      margin-bottom: 8px;
-      color: var(--wws-text);
-    }
-    
-    .wws-stat-label {
-      font-size: 12px;
-      color: var(--wws-text-secondary);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-    
-    .wws-status-list {
-      background: rgba(0, 0, 0, 0.05);
-      border-radius: 12px;
-      padding: 20px;
-    }
-    
-    .wws-status-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 12px 0;
-      border-bottom: 1px solid var(--wws-border);
-    }
-    
-    .wws-status-item:last-child {
-      border-bottom: none;
-    }
-    
-    .wws-status-label {
-      font-size: 14px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      color: var(--wws-text);
-    }
-    
-    .wws-status-label i {
-      width: 20px;
-      text-align: center;
-    }
-    
-    .wws-status-value {
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--wws-text);
-    }
-    
-    .wws-settings-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 16px 0;
-      border-bottom: 1px solid var(--wws-border);
-    }
-    
-    .wws-settings-item:last-child {
-      border-bottom: none;
-    }
-    
-    .wws-settings-label {
-      font-size: 14px;
-      color: var(--wws-text);
-    }
-    
-    .wws-settings-desc {
-      font-size: 12px;
-      color: var(--wws-text-secondary);
-      margin-top: 4px;
-    }
-    
-    .wws-switch {
-      position: relative;
-      display: inline-block;
-      width: 52px;
-      height: 28px;
-    }
-    
-    .wws-switch input {
-      opacity: 0;
-      width: 0;
-      height: 0;
-    }
-    
-    .wws-switch-slider {
-      position: absolute;
-      cursor: pointer;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.2);
-      transition: var(--wws-transition);
-      border-radius: 34px;
-    }
-    
-    .wws-switch-slider:before {
-      position: absolute;
-      content: "";
-      height: 22px;
-      width: 22px;
-      left: 3px;
-      bottom: 3px;
-      background: white;
-      transition: var(--wws-transition);
-      border-radius: 50%;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-    }
-    
-    input:checked + .wws-switch-slider {
-      background: var(--wws-primary);
-    }
-    
-    input:checked + .wws-switch-slider:before {
-      transform: translateX(24px);
-    }
-    
-    .wws-select {
-      padding: 8px 16px;
-      border-radius: 10px;
-      border: 1px solid var(--wws-border);
-      background: var(--wws-surface);
-      color: var(--wws-text);
-      font-size: 14px;
-      cursor: pointer;
-      min-width: 120px;
-      transition: var(--wws-transition);
-    }
-    
-    .wws-select:hover {
-      border-color: var(--wws-primary);
-    }
-    
-    .wws-select:focus {
-      outline: none;
-      border-color: var(--wws-primary);
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-    }
-    
-    /* Responsive */
-    @media (max-width: 480px) {
-      .wws-protection-content {
-        padding: 20px;
-      }
-      
-      .wws-title {
-        font-size: 32px;
-      }
-      
-      .wws-subtitle {
-        font-size: 16px;
-      }
-      
-      .wws-widget-panel {
-        width: calc(100vw - 40px);
-      }
-      
-      .wws-position-bottom-right .wws-widget-panel,
-      .wws-position-bottom-left .wws-widget-panel {
-        bottom: 80px;
-        left: 20px;
-        right: 20px;
-        width: auto;
-      }
-      
-      .wws-position-top-right .wws-widget-panel,
-      .wws-position-top-left .wws-widget-panel {
-        top: 80px;
-        left: 20px;
-        right: 20px;
-        width: auto;
-      }
-    }
-    
-    @media (max-height: 600px) {
-      .wws-protection-content {
-        padding: 20px;
-        max-width: 400px;
-      }
-      
-      .wws-shield-wrapper {
-        width: 120px;
-        height: 120px;
-        margin-bottom: 30px;
-      }
-      
-      .wws-shield i {
-        font-size: 50px;
-      }
-    }
-  `;
-  
-  document.head.appendChild(styles);
-  
-  // ==================== FONT AWESOME LOAD ====================
-  if (!document.getElementById('wws-fa-css')) {
-    const faLink = document.createElement('link');
-    faLink.id = 'wws-fa-css';
-    faLink.rel = 'stylesheet';
-    faLink.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css';
-    document.head.appendChild(faLink);
-  }
-  
-  // ==================== MAIN INITIALIZATION ====================
-  function initializeWWS() {
-    // Check if blocked
-    if (BlockManager.isBlocked()) {
-      const screen = new ProtectionScreen();
-      screen.showBlockScreen();
-      return;
-    }
-    
-    // Check if already verified
-    if (localStorage.getItem('wws_verified') === 'true') {
-      console.log('✅ WWS PROTECT: Session already verified');
-      // Quick re-verification for returning users
-      const analyzer = new BehaviorAnalyzer();
-      setTimeout(() => {
-        const assessment = analyzer.calculateScore();
-        Widget.show(assessment);
-      }, 500);
-      return;
-    }
-    
-    // Show protection screen for new users
-    const screen = new ProtectionScreen();
-    screen.show();
-  }
-  
-  // ==================== PUBLIC API ====================
-  window.WWS = {
-    version: CONFIG.version,
-    
-    getStatus: () => ({
-      verified: localStorage.getItem('wws_verified') === 'true',
-      blocked: BlockManager.isBlocked(),
-      position: State.position,
-      theme: State.currentTheme,
-      riskAssessment: window.wwsWidgetInstance?.riskAssessment || null
-    }),
-    
-    verify: () => {
-      localStorage.removeItem('wws_verified');
-      localStorage.removeItem('wws_block');
-      if (window.wwsWidgetInstance) {
-        Widget.hide();
-        window.wwsWidgetInstance = null;
-      }
-      initializeWWS();
-    },
-    
-    resetBlock: () => {
-      localStorage.removeItem('wws_block');
-    },
-    
-    showWidget: (assessment = null) => Widget.show(assessment),
-    hideWidget: () => Widget.hide(),
-    
-    testNotification: (type = 'info') => {
-      // Implementation would go here if needed
-      console.log(`Test ${type} notification`);
-    }
-  };
-  
-  // Initialize on DOM ready
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeWWS);
-  } else {
-    setTimeout(initializeWWS, 100);
-  }
-  
+            // Собрать поведенческие данные (2 секунды)
+            await this.wait(2000);
+            this.updateProgress(60);
+            
+            // Рассчитать риск
+            this.calculateRiskScore();
+            this.updateProgress(90);
+            
+            // Принять решение
+            this.makeDecision();
+            this.updateProgress(100);
+        }
+
+        /**
+         * Старт сбора поведенческих данных
+         */
+        startDataCollection() {
+            if (this.dataCollectionActive) return;
+            this.dataCollectionActive = true;
+
+            // Mouse tracking
+            let lastMove = Date.now();
+            let lastX = 0, lastY = 0;
+            
+            document.addEventListener('mousemove', (e) => {
+                const now = Date.now();
+                const deltaTime = now - lastMove;
+                const deltaX = e.clientX - lastX;
+                const deltaY = e.clientY - lastY;
+                const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+                const velocity = distance / deltaTime;
+                const angle = Math.atan2(deltaY, deltaX);
+                
+                this.behavioralData.mouseMoves.push({
+                    x: e.clientX,
+                    y: e.clientY,
+                    time: now,
+                    deltaTime,
+                    velocity,
+                    angle,
+                    isTrusted: e.isTrusted
+                });
+                
+                lastX = e.clientX;
+                lastY = e.clientY;
+                lastMove = now;
+            }, true);
+
+            // Click tracking
+            let lastClickTime = 0;
+            document.addEventListener('click', (e) => {
+                const now = Date.now();
+                const interval = now - lastClickTime;
+                
+                this.behavioralData.clicks.push({
+                    x: e.clientX,
+                    y: e.clientY,
+                    time: now,
+                    interval: interval,
+                    isTrusted: e.isTrusted
+                });
+                
+                lastClickTime = now;
+            }, true);
+
+            // Scroll tracking
+            let lastScrollTime = 0;
+            let lastScrollY = 0;
+            
+            window.addEventListener('scroll', () => {
+                const now = Date.now();
+                const deltaY = window.scrollY - lastScrollY;
+                const velocity = deltaY / (now - lastScrollTime);
+                
+                this.behavioralData.scrolls.push({
+                    y: window.scrollY,
+                    time: now,
+                    deltaY,
+                    velocity
+                });
+                
+                lastScrollY = window.scrollY;
+                lastScrollTime = now;
+            }, true);
+
+            // Keyboard tracking
+            let lastKeyTime = 0;
+            document.addEventListener('keydown', (e) => {
+                const now = Date.now();
+                const interval = now - lastKeyTime;
+                
+                this.behavioralData.keypresses.push({
+                    key: e.key,
+                    time: now,
+                    interval: interval
+                });
+                
+                lastKeyTime = now;
+            }, true);
+
+            // Focus tracking
+            document.addEventListener('visibilitychange', () => {
+                this.behavioralData.focusChanges.push({
+                    hidden: document.hidden,
+                    time: Date.now()
+                });
+            });
+
+            // Idle time
+            let idleTimer;
+            const resetIdle = () => {
+                clearTimeout(idleTimer);
+                idleTimer = setTimeout(() => {
+                    this.behavioralData.idleTime = (Date.now() - this.behavioralData.startTime) / 1000;
+                }, 3000);
+            };
+            
+            document.addEventListener('mousemove', resetIdle);
+            document.addEventListener('keydown', resetIdle);
+            resetIdle();
+        }
+
+        /**
+         * Сбор fingerprint данных
+         */
+        async collectFingerprint() {
+            const fp = {};
+
+            // 1. WebDriver check
+            fp.webdriver = navigator.webdriver || false;
+
+            // 2. UserAgent анализ
+            const ua = navigator.userAgent.toLowerCase();
+            fp.userAgent = navigator.userAgent;
+            fp.automationUA = /headless|phantomjs|selenium|puppeteer|playwright/.test(ua);
+
+            // 3. Screen данные
+            fp.screenWidth = screen.width;
+            fp.screenHeight = screen.height;
+            fp.windowWidth = window.innerWidth;
+            fp.windowHeight = window.innerHeight;
+            fp.devicePixelRatio = window.devicePixelRatio;
+            fp.screenMismatch = Math.abs(screen.width - window.innerWidth) > 100;
+
+            // 4. Timezone
+            try {
+                fp.timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                fp.timezoneOffset = new Date().getTimezoneOffset();
+            } catch (e) {
+                fp.timezone = 'unknown';
+            }
+
+            // 5. WebGL
+            try {
+                const canvas = document.createElement('canvas');
+                const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+                if (gl) {
+                    const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+                    fp.webGLVendor = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL);
+                    fp.webGLRenderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+                    fp.webGLAnomaly = /Mesa|SwiftShader|Google|llvmpipe/.test(fp.webGLRenderer);
+                }
+            } catch (e) {
+                fp.webGLAnomaly = true;
+            }
+
+            // 6. AudioContext
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                fp.audioContext = audioCtx.destination.channelInterpretation === 'speakers';
+                await audioCtx.close();
+            } catch (e) {
+                fp.audioContext = false;
+            }
+
+            // 7. Fonts enumeration
+            const fontList = [
+                'Arial', 'Arial Black', 'Comic Sans MS', 'Courier New', 'Georgia',
+                'Impact', 'Times New Roman', 'Trebuchet MS', 'Verdana', 'Segoe UI'
+            ];
+            
+            const testFonts = (font) => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                const testString = 'abcdefghijklmnopqrstuvwxyz0123456789';
+                const baseFont = 'monospace';
+                
+                canvas.width = 100;
+                canvas.height = 30;
+                
+                ctx.font = `16px ${baseFont}`;
+                const baseWidth = ctx.measureText(testString).width;
+                
+                ctx.font = `16px ${font}, ${baseFont}`;
+                const fontWidth = ctx.measureText(testString).width;
+                
+                return baseWidth !== fontWidth;
+            };
+            
+            fp.fonts = fontList.filter(testFonts);
+            fp.fontCount = fp.fonts.length;
+
+            // 8. Touch support
+            fp.touchSupport = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
+            // 9. Permissions API
+            try {
+                const permissions = await navigator.permissions.query({ name: 'notifications' });
+                fp.permissionsState = permissions.state;
+            } catch (e) {
+                fp.permissionsState = 'unsupported';
+            }
+
+            // 10. Language
+            fp.language = navigator.language;
+            fp.languages = navigator.languages || [navigator.language];
+
+            // 11. Platform
+            fp.platform = navigator.platform;
+            fp.hardwareConcurrency = navigator.hardwareConcurrency || 1;
+
+            this.fingerprint = fp;
+            console.log('[WWS Protect] Fingerprint:', fp);
+        }
+
+        /**
+         * Расчет риск-скора
+         */
+        calculateRiskScore() {
+            let score = 0;
+            this.signals = [];
+
+            // Проверка webdriver
+            if (this.fingerprint.webdriver) {
+                score += this.config.weights.webdriver;
+                this.signals.push('Обнаружен WebDriver');
+            }
+
+            // Аномальный UserAgent
+            if (this.fingerprint.automationUA) {
+                score += this.config.weights.automationUA;
+                this.signals.push('Подозрительный UserAgent');
+            }
+
+            // WebGL аномалия
+            if (this.fingerprint.webGLAnomaly) {
+                score += this.config.weights.webGLAnomaly;
+                this.signals.push('Аномальный WebGL renderer');
+            }
+
+            // Анализ поведения мыши
+            if (this.behavioralData.mouseMoves.length > 0) {
+                const jitters = this.calculateMouseJitter();
+                if (jitters.avgJitter < 0.2) {
+                    score += this.config.weights.mouseJitter;
+                    this.signals.push('Слишком плавное движение мыши');
+                }
+                if (jitters.automationRate > 0.3) {
+                    score += 15;
+                    this.signals.push('События мыши без isTrusted');
+                }
+            } else {
+                score += 25;
+                this.signals.push('Отсутствуют события мыши');
+            }
+
+            // Анализ кликов
+            if (this.behavioralData.clicks.length > 1) {
+                const intervals = this.behavioralData.clicks.slice(1).map((c, i) => c.interval);
+                const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+                const stdDev = this.calculateStdDev(intervals);
+                
+                if (stdDev < 15) {
+                    score += this.config.weights.clickInterval;
+                    this.signals.push('Регулярные интервалы кликов');
+                }
+                if (avgInterval < 100) {
+                    score += this.config.weights.clickInterval / 2;
+                    this.signals.push('Слишком быстрые клики');
+                }
+            } else if (this.behavioralData.clicks.length === 0) {
+                score += 15;
+                this.signals.push('Нет кликов');
+            }
+
+            // Анализ скролла
+            if (this.behavioralData.scrolls.length > 0) {
+                const linearity = this.calculateScrollLinearity();
+                if (linearity.isLinear) {
+                    score += this.config.weights.scrollLinearity;
+                    this.signals.push('Линейная прокрутка');
+                }
+            }
+
+            // Анализ клавиатуры
+            if (this.behavioralData.keypresses.length > 5) {
+                const intervals = this.behavioralData.keypresses.slice(1).map(k => k.interval);
+                const avgSpeed = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+                
+                if (avgSpeed < 30) {
+                    score += this.config.weights.keyboardSpeed;
+                    this.signals.push('Сверхбыстрая печать');
+                }
+                if (this.isTooUniform(intervals)) {
+                    score += this.config.weights.keyboardSpeed / 2;
+                    this.signals.push('Равномерные интервалы печати');
+                }
+            }
+
+            // Анализ фокуса
+            if (this.behavioralData.focusChanges.length > 5) {
+                score += this.config.weights.focusFrequency;
+                this.signals.push('Частые потери фокуса');
+            }
+
+            // Screen mismatch
+            if (this.fingerprint.screenMismatch) {
+                score += this.config.weights.screenMismatch;
+                this.signals.push('Несоответствие размеров экрана');
+            }
+
+            // AudioContext
+            if (!this.fingerprint.audioContext) {
+                score += this.config.weights.audioContext;
+                this.signals.push('AudioContext недоступен');
+            }
+
+            // Fonts
+            if (this.fingerprint.fontCount < 3) {
+                score += this.config.weights.fonts;
+                this.signals.push('Мало системных шрифтов');
+            }
+
+            // Touch support
+            if (this.fingerprint.touchSupport && !this.behavioralData.mouseMoves.length) {
+                score += this.config.weights.touchSupport;
+                this.signals.push('Touch без mouse событий');
+            }
+
+            // Ограничение 0-100
+            this.riskScore = Math.min(100, Math.round(score));
+            
+            console.log('[WWS Protect] Risk Score:', this.riskScore);
+            console.log('[WWS Protect] Signals:', this.signals);
+        }
+
+        /**
+         * Расчет джиттера мыши
+         */
+        calculateMouseJitter() {
+            const moves = this.behavioralData.mouseMoves;
+            if (moves.length < 2) return { avgJitter: 1, automationRate: 0 };
+
+            let jitters = [];
+            let automationEvents = 0;
+
+            for (let i = 1; i < moves.length; i++) {
+                const prev = moves[i - 1];
+                const curr = moves[i];
+                
+                const angleDiff = Math.abs(curr.angle - prev.angle);
+                const velocityDiff = Math.abs(curr.velocity - prev.velocity);
+                
+                const jitter = angleDiff / (velocityDiff + 0.001);
+                jitters.push(jitter);
+
+                if (!curr.isTrusted) automationEvents++;
+            }
+
+            const avgJitter = jitters.reduce((a, b) => a + b, 0) / jitters.length;
+            const automationRate = automationEvents / moves.length;
+
+            return { avgJitter, automationRate };
+        }
+
+        /**
+         * Расчет линейности скролла
+         */
+        calculateScrollLinearity() {
+            const scrolls = this.behavioralData.scrolls;
+            if (scrolls.length < 3) return { isLinear: false };
+
+            const velocities = scrolls.map(s => s.velocity);
+            const stdDev = this.calculateStdDev(velocities);
+            
+            const isLinear = stdDev < 0.1 && Math.abs(velocities[0]) > 0;
+            
+            return { isLinear, stdDev };
+        }
+
+        /**
+         * Расчет стандартного отклонения
+         */
+        calculateStdDev(arr) {
+            const mean = arr.reduce((a, b) => a + b, 0) / arr.length;
+            const variance = arr.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / arr.length;
+            return Math.sqrt(variance);
+        }
+
+        /**
+         * Проверка на слишком равномерные интервалы
+         */
+        isTooUniform(arr) {
+            if (arr.length < 3) return false;
+            const stdDev = this.calculateStdDev(arr);
+            const mean = arr.reduce((a, b) => a + b, 0) / arr.length;
+            return (stdDev / mean) < 0.1;
+        }
+
+        /**
+         * Принятие решения по доступу
+         */
+        makeDecision() {
+            this.updateWidget();
+            
+            if (this.riskScore <= 30) {
+                this.allowAccess();
+            } else if (this.riskScore <= 65) {
+                this.requestVerification();
+            } else {
+                this.blockAccess();
+            }
+        }
+
+        /**
+         * Разрешить доступ
+         */
+        allowAccess() {
+            console.log('[WWS Protect] ✅ Доступ разрешен');
+            this.hideScreen();
+            this.updateStatus('Safe');
+        }
+
+        /**
+         * Запросить верификацию
+         */
+        requestVerification() {
+            console.log('[WWS Protect] ⚠ Требуется верификация');
+            this.updateStatus('Suspicious');
+            this.showVerificationScreen();
+        }
+
+        /**
+         * Блокировать доступ
+         */
+        blockAccess() {
+            console.log('[WWS Protect] 🚫 Доступ заблокирован');
+            this.updateStatus('Blocked');
+            
+            const blockDuration = 5 * 60 * 1000;
+            const blockedUntil = Date.now() + blockDuration;
+            localStorage.setItem('wwsProtectBlockedUntil', blockedUntil);
+            
+            this.showBlockScreen(blockedUntil);
+        }
+
+        /**
+         * Показать экран верификации
+         */
+        showVerificationScreen() {
+            const tasks = ['dragdrop', 'hold', 'canvas', 'pattern'];
+            const task = tasks[Math.floor(Math.random() * tasks.length)];
+            
+            switch(task) {
+                case 'dragdrop':
+                    this.elements.content.innerHTML = `
+                        <div class="wws-verification-container">
+                            <div class="wws-verification-title">Перетащите круг в зону</div>
+                            <div id="wws-drag-area">
+                                <div id="wws-drag-object"></div>
+                            </div>
+                            <div class="wws-verification-task">
+                                <small>Перетащите зеленый круг в правый верхний угол</small>
+                            </div>
+                        </div>
+                    `;
+                    this.setupDragDrop();
+                    break;
+                    
+                case 'hold':
+                    this.elements.content.innerHTML = `
+                        <div class="wws-verification-container">
+                            <div class="wws-verification-title">Удерживайте кнопку</div>
+                            <div class="wws-verification-task">
+                                <button id="wws-hold-button">
+                                    Удерживайте 3 секунды
+                                    <div id="wws-hold-progress"></div>
+                                </button>
+                            </div>
+                            <div style="margin-top: 1rem;">
+                                <small>Чтобы подтвердить, что вы человек</small>
+                            </div>
+                        </div>
+                    `;
+                    this.setupHoldButton();
+                    break;
+                    
+                case 'canvas':
+                    this.elements.content.innerHTML = `
+                        <div class="wws-verification-container">
+                            <div class="wws-verification-title">Кликните по цели</div>
+                            <canvas id="wws-canvas-game"></canvas>
+                            <div class="wws-verification-task">
+                                <small>Кликните по движущемуся кружку</small>
+                            </div>
+                        </div>
+                    `;
+                    this.setupCanvasGame();
+                    break;
+                    
+                case 'pattern':
+                    this.elements.content.innerHTML = `
+                        <div class="wws-verification-container">
+                            <div class="wws-verification-title">Нажмите на красные круги</div>
+                            <div id="wws-pattern-game" style="width: 300px; height: 200px; margin: 1rem auto; position: relative; background: #0a0a0a; border: 1px solid #333; border-radius: 8px;"></div>
+                            <div class="wws-verification-task">
+                                <small id="wws-pattern-counter">Нажато: 0/5</small>
+                            </div>
+                        </div>
+                    `;
+                    this.setupPatternGame();
+                    break;
+            }
+        }
+
+        /**
+         * Drag & Drop верификация
+         */
+        setupDragDrop() {
+            const obj = document.getElementById('wws-drag-object');
+            const area = document.getElementById('wws-drag-area');
+            let isDragging = false;
+            let startX, startY, currentX, currentY;
+            
+            obj.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                obj.classList.add('dragging');
+                startX = e.clientX - obj.offsetLeft;
+                startY = e.clientY - obj.offsetTop;
+                e.preventDefault();
+            });
+            
+            document.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                
+                currentX = e.clientX - startX;
+                currentY = e.clientY - startY;
+                
+                const maxX = area.clientWidth - obj.clientWidth;
+                const maxY = area.clientHeight - obj.clientHeight;
+                
+                currentX = Math.max(0, Math.min(currentX, maxX));
+                currentY = Math.max(0, Math.min(currentY, maxY));
+                
+                obj.style.left = currentX + 'px';
+                obj.style.top = currentY + 'px';
+            });
+            
+            document.addEventListener('mouseup', () => {
+                if (!isDragging) return;
+                
+                isDragging = false;
+                obj.classList.remove('dragging');
+                
+                // Проверка успешности (правый верхний угол)
+                const areaRect = area.getBoundingClientRect();
+                const objRect = obj.getBoundingClientRect();
+                
+                const thresholdX = areaRect.width * 0.7;
+                const thresholdY = areaRect.height * 0.3;
+                
+                if (currentX > thresholdX && currentY < thresholdY) {
+                    this.completeVerification();
+                } else {
+                    obj.style.left = '50%';
+                    obj.style.top = '50%';
+                    obj.style.transform = 'translate(-50%, -50%)';
+                }
+            });
+        }
+
+        /**
+         * Hold button верификация
+         */
+        setupHoldButton() {
+            const btn = document.getElementById('wws-hold-button');
+            const progress = document.getElementById('wws-hold-progress');
+            let holdStart = 0;
+            let holdInterval;
+            const requiredMs = 3000;
+            
+            btn.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                holdStart = Date.now();
+                
+                holdInterval = setInterval(() => {
+                    const elapsed = Date.now() - holdStart;
+                    const percent = Math.min(100, (elapsed / requiredMs) * 100);
+                    progress.style.width = percent + '%';
+                    
+                    if (elapsed >= requiredMs) {
+                        clearInterval(holdInterval);
+                        this.completeVerification();
+                    }
+                }, 50);
+            });
+            
+            btn.addEventListener('mouseup', () => {
+                clearInterval(holdInterval);
+                progress.style.width = '0%';
+                holdStart = 0;
+            });
+            
+            btn.addEventListener('mouseleave', () => {
+                clearInterval(holdInterval);
+                progress.style.width = '0%';
+                holdStart = 0;
+            });
+        }
+
+        /**
+         * Canvas game верификация
+         */
+        setupCanvasGame() {
+            const canvas = document.getElementById('wws-canvas-game');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 300;
+            canvas.height = 250;
+            
+            let target = {
+                x: Math.random() * (canvas.width - 40) + 20,
+                y: Math.random() * (canvas.height - 40) + 20,
+                vx: (Math.random() - 0.5) * 2,
+                vy: (Math.random() - 0.5) * 2,
+                radius: 20
+            };
+            
+            let animationId;
+            let clicked = false;
+            
+            const animate = () => {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                target.x += target.vx;
+                target.y += target.vy;
+                
+                if (target.x - target.radius <= 0 || target.x + target.radius >= canvas.width) {
+                    target.vx = -target.vx;
+                }
+                if (target.y - target.radius <= 0 || target.y + target.radius >= canvas.height) {
+                    target.vy = -target.vy;
+                }
+                
+                ctx.beginPath();
+                ctx.arc(target.x, target.y, target.radius, 0, Math.PI * 2);
+                ctx.fillStyle = '#ff4444';
+                ctx.fill();
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                animationId = requestAnimationFrame(animate);
+            };
+            
+            animate();
+            
+            canvas.addEventListener('click', (e) => {
+                if (clicked) return;
+                
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                const distance = Math.sqrt(Math.pow(x - target.x, 2) + Math.pow(y - target.y, 2));
+                
+                if (distance <= target.radius) {
+                    clicked = true;
+                    cancelAnimationFrame(animationId);
+                    this.completeVerification();
+                }
+            });
+        }
+
+        /**
+         * Pattern game верификация
+         */
+        setupPatternGame() {
+            const container = document.getElementById('wws-pattern-game');
+            let clickedCount = 0;
+            const requiredClicks = 5;
+            
+            for (let i = 0; i < 10; i++) {
+                const circle = document.createElement('div');
+                circle.style.position = 'absolute';
+                circle.style.width = '30px';
+                circle.style.height = '30px';
+                circle.style.borderRadius = '50%';
+                circle.style.cursor = 'pointer';
+                circle.style.left = Math.random() * (container.offsetWidth - 30) + 'px';
+                circle.style.top = Math.random() * (container.offsetHeight - 30) + 'px';
+                
+                const isRed = Math.random() > 0.6;
+                circle.style.background = isRed ? '#ff4444' : '#4444ff';
+                circle.dataset.red = isRed;
+                circle.style.border = '2px solid #fff';
+                circle.style.boxSizing = 'border-box';
+                
+                circle.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (e.target.dataset.clicked === 'true') return;
+                    
+                    e.target.dataset.clicked = 'true';
+                    e.target.style.opacity = '0.3';
+                    e.target.style.pointerEvents = 'none';
+                    
+                    if (e.target.dataset.red === 'true') {
+                        clickedCount++;
+                        document.getElementById('wws-pattern-counter').textContent = `Нажато: ${clickedCount}/${requiredClicks}`;
+                        
+                        if (clickedCount >= requiredClicks) {
+                            setTimeout(() => this.completeVerification(), 300);
+                        }
+                    } else {
+                        setTimeout(() => {
+                            container.querySelectorAll('[data-clicked="true"]').forEach(el => {
+                                if (el.dataset.red === 'true') {
+                                    el.dataset.clicked = 'false';
+                                    el.style.opacity = '1';
+                                    el.style.pointerEvents = 'auto';
+                                }
+                            });
+                            clickedCount = 0;
+                            document.getElementById('wws-pattern-counter').textContent = `Нажато: 0/${requiredClicks}`;
+                        }, 500);
+                    }
+                });
+                
+                container.appendChild(circle);
+            }
+        }
+
+        /**
+         * Успешная верификация
+         */
+        completeVerification() {
+            console.log('[WWS Protect] Верификация пройдена');
+            this.riskScore = Math.max(0, this.riskScore - 30);
+            this.allowAccess();
+        }
+
+        /**
+         * Показать экран блокировки
+         */
+        showBlockScreen(blockedUntil) {
+            this.elements.statusText.textContent = 'Обнаружена подозрительная активность';
+            
+            const remaining = Math.ceil((blockedUntil - Date.now()) / 1000);
+            
+            this.elements.content.innerHTML = `
+                <div class="wws-verification-container">
+                    <div style="text-align: center;">
+                        <div style="font-size: 4rem; margin-bottom: 1rem;">🚫</div>
+                        <div class="wws-block-timer">${this.formatTime(remaining)}</div>
+                        <p style="margin-bottom: 1rem;">Повторная попытка через</p>
+                        <div class="wws-block-reasons">
+                            <strong>Возможные причины:</strong><br>
+                            ${this.signals.slice(0, 3).map(s => `• ${s}`).join('<br>')}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            const timerInterval = setInterval(() => {
+                const now = Date.now();
+                if (now >= blockedUntil) {
+                    clearInterval(timerInterval);
+                    localStorage.removeItem('wwsProtectBlockedUntil');
+                    location.reload();
+                    return;
+                }
+                
+                const remaining = Math.ceil((blockedUntil - now) / 1000);
+                const timerEl = document.querySelector('.wws-block-timer');
+                if (timerEl) timerEl.textContent = this.formatTime(remaining);
+            }, 1000);
+        }
+
+        /**
+         * Скрыть защитный экран
+         */
+        hideScreen() {
+            this.elements.screen.classList.add('hidden');
+            
+            setTimeout(() => {
+                this.elements.screen.style.display = 'none';
+            }, 500);
+        }
+
+        /**
+         * Обновить прогресс
+         */
+        updateProgress(percent) {
+            if (this.elements.progressFill) {
+                this.elements.progressFill.style.width = percent + '%';
+            }
+        }
+
+        /**
+         * Обновить виджет риска
+         */
+        updateWidget() {
+            this.elements.widget.classList.add('visible');
+            this.elements.riskValue.textContent = this.riskScore;
+            
+            this.elements.riskFill.style.width = this.riskScore + '%';
+            this.elements.riskFill.className = this.riskScore <= 30 ? 'wws-risk-low' : 
+                                              this.riskScore <= 65 ? 'wws-risk-medium' : 'wws-risk-high';
+            
+            // Показать причины
+            if (this.signals.length > 0) {
+                this.elements.reasons.innerHTML = '<strong>Обнаружено:</strong><br>' + 
+                    this.signals.slice(0, 2).map(s => `• ${s}`).join('<br>');
+            }
+        }
+
+        /**
+         * Обновить статус
+         */
+        updateStatus(status) {
+            const text = status === 'Safe' ? 'Безопасно' : 
+                        status === 'Suspicious' ? 'Требуется проверка' : 'Заблокировано';
+            this.elements.status.textContent = text;
+        }
+
+        /**
+         * Форматировать время
+         */
+        formatTime(seconds) {
+            const m = Math.floor(seconds / 60);
+            const s = seconds % 60;
+            return `${m}:${s.toString().padStart(2, '0')}`;
+        }
+
+        /**
+         * Ожидание
+         */
+        wait(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+    }
+
+    // Авто-инициализация при загрузке DOM
+    function initWWSProtect() {
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                window.WWSProtect = new WWSProtect();
+                // Небольшая задержка для демонстрации
+                setTimeout(() => window.WWSProtect.init(), 500);
+            });
+        } else {
+            window.WWSProtect = new WWSProtect();
+            setTimeout(() => window.WWSProtect.init(), 500);
+        }
+    }
+
+    // Запуск
+    initWWSProtect();
 })();
