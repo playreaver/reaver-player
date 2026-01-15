@@ -1,7 +1,8 @@
 /**
  * WWS Protect — All-in-One Frontend Protection
- * Версия: 2.0.0
+ * Версия: 2.1.0
  * Описание: Фронтенд-защита от ботов с капчей и виджетом риска
+ * Акцентный цвет: #007BFF (синий)
  */
 
 (function() {
@@ -27,7 +28,7 @@
       this.widgetExpanded = false;
       this.elements = {};
       
-      // Конфигурация (можно переопределить до инициализации)
+      // Конфигурация
       this.config = {
         // Веса сигналов риска
         weights: {
@@ -51,13 +52,11 @@
           suspicious: 65,
           block: 100
         },
-        // Длительность блокировки (базовая, увеличивается с blockCount)
-        baseBlockDuration: 30 * 1000, // 30 секунд
-        // Таймауты
+        // Длительность блокировки (динамическая)
+        baseBlockDuration: 30 * 1000,
+        behavioralCollectionTime: 2000,
+        verifyHoldDuration: 3000,
         captchaTypes: ['math', 'hold'], // 'math', 'hold', или ['math', 'hold']
-        verifyHoldDuration: 3000, // ms для hold-капчи
-        behavioralCollectionTime: 2000, // ms сбора данных
-        // Рандомизация весов для усложнения обхода
         randomizeWeights: true
       };
       
@@ -69,9 +68,9 @@
         });
       }
       
-      // Иконки (Aviosom style SVG data-uri)
+      // Иконки (Aviosom style SVG data-uri, синий акцент)
       this.icons = {
-        shield: `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2300ff88'%3E%3Cpath d='M12 2l7 4v6c0 5.55-3.84 10.74-7 12-3.16-1.26-7-6.45-7-12V6l7-4z'/%3E%3C/svg%3E`,
+        shield: `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23007BFF'%3E%3Cpath d='M12 2l7 4v6c0 5.55-3.84 10.74-7 12-3.16-1.26-7-6.45-7-12V6l7-4z'/%3E%3C/svg%3E`,
         warning: `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ffaa00'%3E%3Cpath d='M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z'/%3E%3C/svg%3E`,
         lock: `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ff4444'%3E%3Cpath d='M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z'/%3E%3C/svg%3E`,
         arrowRight: `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23e0e0e0'%3E%3Cpath d='M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z'/%3E%3C/svg%3E`,
@@ -162,7 +161,7 @@
           align-items: center;
           justify-content: center;
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-          transition: opacity 0.5s ease;
+          transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
         #wws-protect-screen.hidden {
@@ -174,21 +173,22 @@
           text-align: center;
           color: #e0e0e0;
           max-width: 500px;
-          padding: 2rem;
+          padding: 2.5rem;
           background: #1a1a1a;
           border-radius: 16px;
           border: 1px solid #333;
-          box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+          box-shadow: 0 15px 50px rgba(0, 123, 255, 0.2);
+          backdrop-filter: blur(10px);
         }
         
         .wws-protect-spinner {
-          width: 60px;
-          height: 60px;
+          width: 70px;
+          height: 70px;
           border: 3px solid #1a1a1a;
-          border-top-color: #00ff88;
+          border-top-color: #007BFF;
           border-radius: 50%;
-          animation: wws-spin 1s linear infinite;
-          margin: 0 auto 2rem;
+          animation: wws-spin 1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+          margin: 0 auto 2.5rem;
         }
         
         @keyframes wws-spin {
@@ -196,47 +196,51 @@
         }
         
         .wws-protect-title {
-          font-size: 1.8rem;
+          font-size: 2rem;
           margin-bottom: 1rem;
           color: #fff;
-          font-weight: 600;
+          font-weight: 700;
+          letter-spacing: -0.5px;
         }
         
         .wws-protect-status {
-          font-size: 0.9rem;
+          font-size: 0.95rem;
           opacity: 0.8;
           margin-bottom: 2rem;
         }
         
         .wws-progress-bar {
           width: 100%;
-          height: 4px;
+          height: 5px;
           background: #1a1a1a;
-          border-radius: 2px;
+          border-radius: 3px;
           overflow: hidden;
           margin-bottom: 2rem;
+          box-shadow: inset 0 1px 2px rgba(0,0,0,0.5);
         }
         
         .wws-progress-fill {
           height: 100%;
-          background: linear-gradient(90deg, #00ff88, #00cc6a);
+          background: linear-gradient(90deg, #007BFF, #0056b3);
           width: 0%;
-          transition: width 0.3s ease;
+          transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
         /* === CAPTCHA === */
         .wws-captcha-container {
           background: #0a0a0a;
-          padding: 2rem;
+          padding: 2.5rem;
           border-radius: 12px;
           border: 1px solid #333;
+          box-shadow: 0 5px 20px rgba(0,0,0,0.3);
         }
         
         .wws-captcha-title {
-          font-size: 1.3rem;
+          font-size: 1.4rem;
           margin-bottom: 1.5rem;
           color: #fff;
           font-weight: 600;
+          letter-spacing: -0.25px;
         }
         
         .wws-math-captcha {
@@ -247,14 +251,15 @@
         }
         
         .wws-math-question {
-          font-size: 2rem;
-          font-weight: 600;
-          color: #00ff88;
+          font-size: 2.2rem;
+          font-weight: 700;
+          color: #007BFF;
           letter-spacing: 0.1em;
+          font-variant-numeric: tabular-nums;
         }
         
         .wws-math-input {
-          width: 120px;
+          width: 140px;
           padding: 0.75rem;
           font-size: 1.2rem;
           text-align: center;
@@ -262,28 +267,33 @@
           border: 2px solid #333;
           border-radius: 8px;
           color: #fff;
-          transition: border-color 0.2s;
+          transition: all 0.2s;
+          box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
         
         .wws-math-input:focus {
           outline: none;
-          border-color: #00ff88;
+          border-color: #007BFF;
+          transform: translateY(-1px);
+          box-shadow: 0 4px 10px rgba(0, 123, 255, 0.3);
         }
         
         .wws-math-submit {
-          background: #00ff88;
-          color: #000;
+          background: #007BFF;
+          color: #fff;
           border: none;
           padding: 0.75rem 2rem;
           border-radius: 8px;
           font-weight: 600;
           cursor: pointer;
           transition: all 0.2s;
+          box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
         }
         
         .wws-math-submit:hover {
-          background: #00cc6a;
-          transform: translateY(-1px);
+          background: #0056b3;
+          transform: translateY(-2px);
+          box-shadow: 0 6px 20px rgba(0, 123, 255, 0.4);
         }
         
         .wws-math-submit:active {
@@ -298,10 +308,10 @@
         }
         
         .wws-hold-button {
-          width: 280px;
-          height: 70px;
+          width: 300px;
+          height: 75px;
           background: #1a1a1a;
-          border: 2px solid #444;
+          border: 2px solid #333;
           border-radius: 12px;
           color: #fff;
           font-size: 1.1rem;
@@ -310,11 +320,13 @@
           overflow: hidden;
           transition: all 0.2s;
           user-select: none;
+          box-shadow: 0 5px 15px rgba(0,0,0,0.3);
         }
         
         .wws-hold-button:active {
-          border-color: #00ff88;
-          transform: scale(0.98);
+          border-color: #007BFF;
+          transform: scale(0.97);
+          box-shadow: 0 2px 10px rgba(0, 123, 255, 0.5);
         }
         
         .wws-hold-progress {
@@ -322,7 +334,7 @@
           bottom: 0;
           left: 0;
           height: 4px;
-          background: #00ff88;
+          background: #007BFF;
           width: 0%;
           transition: width 0.1s linear;
         }
@@ -330,6 +342,7 @@
         .wws-hold-text {
           position: relative;
           z-index: 1;
+          font-weight: 500;
         }
         
         /* === Widget === */
@@ -345,19 +358,19 @@
           font-size: 0.8rem;
           z-index: 999998;
           min-width: 220px;
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+          border: 1px solid #333;
+          box-shadow: -4px 4px 20px rgba(0, 0, 0, 0.4);
           transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
         #wws-widget.collapsed {
           width: 140px;
-          height: 50px;
+          height: 52px;
           overflow: hidden;
         }
         
         #wws-widget.expanded {
-          width: 280px;
+          width: 300px;
           height: auto;
           padding: 1rem;
         }
@@ -365,9 +378,10 @@
         .wws-widget-header {
           display: flex;
           align-items: center;
-          gap: 0.5rem;
+          gap: 0.75rem;
           padding: 0.75rem 1rem;
           cursor: pointer;
+          user-select: none;
         }
         
         .wws-icon {
@@ -379,6 +393,7 @@
           font-weight: 600;
           font-size: 0.9rem;
           flex: 1;
+          letter-spacing: -0.25px;
         }
         
         .wws-toggle {
@@ -387,7 +402,7 @@
           color: #e0e0e0;
           font-size: 1.2rem;
           cursor: pointer;
-          transition: transform 0.3s;
+          transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
           padding: 0;
           width: 24px;
           height: 24px;
@@ -422,15 +437,16 @@
           border-radius: 3px;
           overflow: hidden;
           margin: 0.75rem 0;
+          box-shadow: inset 0 1px 2px rgba(0,0,0,0.5);
         }
         
         .wws-risk-fill {
           height: 100%;
           width: 0%;
-          transition: width 0.5s ease, background 0.3s ease;
+          transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s;
         }
         
-        .wws-risk-fill.safe { background: #00ff88; }
+        .wws-risk-fill.safe { background: #00c851; }
         .wws-risk-fill.warning { background: #ffaa00; }
         .wws-risk-fill.danger { background: #ff4444; }
         
@@ -438,12 +454,13 @@
           font-size: 0.85rem;
           font-weight: 600;
           margin-bottom: 0.75rem;
+          color: #e0e0e0;
         }
         
         .wws-signals {
           font-size: 0.7rem;
-          opacity: 0.8;
-          line-height: 1.4;
+          opacity: 0.85;
+          line-height: 1.5;
           max-height: 120px;
           overflow-y: auto;
           padding-right: 0.5rem;
@@ -470,11 +487,12 @@
         }
         
         .wws-block-timer {
-          font-size: 2.5rem;
-          font-weight: bold;
+          font-size: 2.8rem;
+          font-weight: 700;
           color: #ff4444;
           margin: 1.5rem 0;
           font-variant-numeric: tabular-nums;
+          letter-spacing: -1px;
         }
         
         .wws-block-reasons {
@@ -485,11 +503,18 @@
           margin: 1rem 0;
           font-size: 0.85rem;
           border: 1px solid #333;
+          box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
         
         /* === Utilities === */
         .wws-hidden {
           display: none !important;
+        }
+        
+        /* Глобальные стили для страницы */
+        body {
+          margin: 0;
+          min-height: 100vh;
         }
       `;
       
@@ -639,7 +664,8 @@
       
       const startHold = () => {
         holdStart = Date.now();
-        button.style.borderColor = '#00ff88';
+        button.style.borderColor = '#007BFF';
+        button.style.boxShadow = '0 0 20px rgba(0, 123, 255, 0.5)';
         
         holdInterval = setInterval(() => {
           const elapsed = Date.now() - holdStart;
@@ -656,7 +682,8 @@
       const endHold = () => {
         clearInterval(holdInterval);
         progress.style.width = '0%';
-        button.style.borderColor = '#444';
+        button.style.borderColor = '#333';
+        button.style.boxShadow = '0 5px 15px rgba(0,0,0,0.3)';
         holdStart = 0;
       };
       
@@ -1060,7 +1087,6 @@
       const velocities = scrolls.map(s => s.velocity);
       const stdDev = this.calculateStdDev(velocities);
       
-      // Если стандартное отклонение очень мало — линейный
       const isLinear = stdDev < 0.1 && Math.abs(velocities.filter(v => v !== 0).length) > 0;
       
       return { isLinear, stdDev };
@@ -1082,7 +1108,7 @@
       if (arr.length < 3) return false;
       const stdDev = this.calculateStdDev(arr);
       const mean = arr.reduce((a, b) => a + b, 0) / arr.length;
-      return stdDev / mean < 0.1; // Коэффициент вариации < 10%
+      return stdDev / mean < 0.1;
     }
 
     /**
@@ -1142,7 +1168,7 @@
      * Показать экран блокировки
      */
     showBlockScreen(blockedUntil) {
-      this.elements.statusText.textContent = 'Достог временно ограничен';
+      this.elements.statusText.textContent = 'Доступ временно ограничен';
       
       const remaining = Math.ceil((blockedUntil - Date.now()) / 1000);
       
@@ -1156,7 +1182,7 @@
             ${this.signals.slice(0, 4).map(s => `• ${s}`).join('<br>')}
           </div>
           <div style="margin-top: 1rem; font-size: 0.8rem; opacity: 0.7;">
-            Повторная проверка через ${this.formatTime(remaining)}
+            Повторная проверка через <span id="wws-remaining-time">${this.formatTime(remaining)}</span>
           </div>
         </div>
       `;
@@ -1173,9 +1199,9 @@
         
         const remaining = Math.ceil((blockedUntil - now) / 1000);
         const timerEl = document.getElementById('wws-block-timer');
-        if (timerEl) {
-          timerEl.textContent = this.formatTime(remaining);
-        }
+        const remainingEl = document.getElementById('wws-remaining-time');
+        if (timerEl) timerEl.textContent = this.formatTime(remaining);
+        if (remainingEl) remainingEl.textContent = this.formatTime(remaining);
       }, 1000);
     }
 
@@ -1281,7 +1307,6 @@
       
       // Ограничение на количество данных
       setInterval(() => {
-        // Оставить последние 1000 событий
         Object.keys(this.behavioralData).forEach(key => {
           if (Array.isArray(this.behavioralData[key])) {
             if (this.behavioralData[key].length > 1000) {
