@@ -7,7 +7,7 @@
   const RISK_THRESHOLD = 30; // после чего снова проверка
   const SUPER_RISK = 66; // выше чего блокируем
   const WIDGET_POS = 'bottom-right'; // где виджет
-  
+
   // -----------------------------
   // Helper функции
   // -----------------------------
@@ -25,32 +25,9 @@
     return {question:`${a} ${op} ${b}`, answer};
   }
 
-  function createWidget(){
-    const w = document.createElement('div');
-    w.id = 'wws-widget';
-    w.style.cssText = 'position:fixed;right:20px;bottom:20px;width:200px;background:rgba(0,0,0,0.8);color:#fff;font-family:sans-serif;border-radius:8px;padding:8px;box-shadow:0 4px 12px rgba(0,0,0,0.5);z-index:9999;transition:all 0.3s;cursor:pointer;';
-    w.innerHTML = `
-      <div id="wws-header" style="display:flex;justify-content:space-between;align-items:center;">
-        <span id="wws-risk-label">Safe</span>
-        <span id="wws-toggle" style="cursor:pointer;">⯈</span>
-      </div>
-      <div id="wws-body" style="display:none;margin-top:5px;font-size:12px;">
-        <ul style="padding-left:18px;">
-          <li id="wws-mouse">Mouse jitter: 0</li>
-          <li id="wws-click">Click variance: 0ms</li>
-          <li id="wws-scroll">Scroll pattern: normal</li>
-          <li id="wws-focus">Focus changes: 0</li>
-        </ul>
-      </div>
-    `;
-    document.body.appendChild(w);
-
-    const header = document.getElementById('wws-header');
-    const body = document.getElementById('wws-body');
-    document.getElementById('wws-toggle').onclick = ()=>body.style.display = body.style.display==='none'?'block':'none';
-    return w;
-  }
-
+  // -----------------------------
+  // Fullscreen Overlay WWS Protect
+  // -----------------------------
   function showProtectScreen(type){
     const overlay = document.createElement('div');
     overlay.id='wws-protect-overlay';
@@ -58,9 +35,11 @@
     
     if(type==='math'){
       const {question, answer} = randomMathExpression();
-      overlay.innerHTML = `<div style="text-align:center;"><p>Solve: <strong>${question}</strong></p>
-      <input id="wws-math-input" style="padding:5px;margin-top:5px;"><br>
-      <button id="wws-math-btn" style="margin-top:5px;padding:5px 10px;">Submit</button></div>`;
+      overlay.innerHTML = `<div style="text-align:center;">
+        <p>Solve: <strong>${question}</strong></p>
+        <input id="wws-math-input" style="padding:5px;margin-top:5px;"><br>
+        <button id="wws-math-btn" style="margin-top:5px;padding:5px 10px;">Submit</button>
+      </div>`;
       document.body.appendChild(overlay);
       document.getElementById('wws-math-btn').onclick = ()=>{
         const val = document.getElementById('wws-math-input').value;
@@ -100,7 +79,35 @@
   }
 
   // -----------------------------
-  // Поведенческие сборы
+  // Mini Widget
+  // -----------------------------
+  function createWidget(){
+    const w = document.createElement('div');
+    w.id = 'wws-widget';
+    w.style.cssText = 'position:fixed;right:20px;bottom:20px;width:220px;background:rgba(0,0,0,0.8);color:#fff;font-family:sans-serif;border-radius:8px;padding:8px;box-shadow:0 4px 12px rgba(0,0,0,0.5);z-index:9999;transition:all 0.3s;cursor:pointer;';
+    w.innerHTML = `
+      <div id="wws-header" style="display:flex;justify-content:space-between;align-items:center;">
+        <span id="wws-risk-label">Safe</span>
+        <span id="wws-toggle" style="cursor:pointer;">⯈</span>
+      </div>
+      <div id="wws-body" style="display:none;margin-top:5px;font-size:12px;">
+        <ul style="padding-left:18px;">
+          <li id="wws-mouse">Mouse jitter: 0</li>
+          <li id="wws-click">Click variance: 0ms</li>
+          <li id="wws-scroll">Scroll pattern: normal</li>
+          <li id="wws-focus">Focus changes: 0</li>
+        </ul>
+      </div>
+    `;
+    document.body.appendChild(w);
+
+    const body = document.getElementById('wws-body');
+    document.getElementById('wws-toggle').onclick = ()=>body.style.display = body.style.display==='none'?'block':'none';
+    return w;
+  }
+
+  // -----------------------------
+  // Behavioral Tracking
   // -----------------------------
   let mouseMoves=[], clickIntervals=[], lastClick=Date.now(), focusChanges=0, lastScroll=0;
   document.addEventListener('mousemove', e=>{
@@ -116,7 +123,6 @@
   });
   window.addEventListener('focus', ()=>focusChanges++);
   window.addEventListener('blur', ()=>focusChanges++);
-
   let scrollPattern='normal';
   window.addEventListener('scroll', ()=>{
     const pos=window.scrollY;
@@ -125,13 +131,11 @@
   });
 
   // -----------------------------
-  // Risk calculation
+  // Risk Calculation
   // -----------------------------
   function calcRisk(){
     let risk=0;
     if(navigator.webdriver) risk+=40;
-
-    // mouse jitter
     if(mouseMoves.length>=2){
       let jitter=0;
       for(let i=1;i<mouseMoves.length;i++){
@@ -142,25 +146,18 @@
       jitter/=mouseMoves.length;
       if(jitter<2) risk+=20;
     }
-
-    // click variance
     if(clickIntervals.length>=2){
       const avg = clickIntervals.reduce((a,b)=>a+b,0)/clickIntervals.length;
       const variance = clickIntervals.reduce((a,b)=>a+Math.pow(b-avg,2),0)/clickIntervals.length;
       if(variance<15) risk+=10;
     }
-
     if(scrollPattern==='fast') risk+=10;
     if(focusChanges>5) risk+=10;
-
     risk=Math.min(100,risk);
     localStorage.setItem('wwsProtectLastRisk',risk);
     return risk;
   }
 
-  // -----------------------------
-  // Widget
-  // -----------------------------
   const widget=createWidget();
   const riskLabel=document.getElementById('wws-risk-label');
   const mouseLi=document.getElementById('wws-mouse');
@@ -180,7 +177,7 @@
   setInterval(updateWidget,500);
 
   // -----------------------------
-  // Проверка блокировки / капчи
+  // Init Protect
   // -----------------------------
   function initProtect(){
     const blockedUntil = parseInt(localStorage.getItem('wwsProtectBlockedUntil')||0);
@@ -201,7 +198,6 @@
     const passed = localStorage.getItem('wwsProtectPassed')==='true';
     const lastRisk = parseInt(localStorage.getItem('wwsProtectLastRisk')||0);
     if(!passed || lastRisk>RISK_THRESHOLD){
-      // выбор варианта капчи случайно
       const type = Math.random()>0.5?'math':'hold';
       showProtectScreen(type);
     }
